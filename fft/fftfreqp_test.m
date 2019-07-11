@@ -1,0 +1,6 @@
+assert(isempty(fftfreqp(0)))
+assert(all(fftfreqp(1) == 0))
+assert(all(fftfreqp(2) == 0))
+assert(all(fftfreqp(3) == [0,1/3]))
+assert(all(fftfreqp(4) == [0,1/4]))
+assert(all(fftfreqp(5) == [0,1/5,2/5]))
