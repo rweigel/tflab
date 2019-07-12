@@ -1,5 +1,8 @@
 clear;
 
+addpath([fileparts(mfilename('fullpath')),'/../deps/printstruct']);
+addpath([fileparts(mfilename('fullpath')),'/../plot']);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Create signals
 
@@ -117,10 +120,12 @@ close all;
 opts = transferfnFD_options(0);
 
 opts.transferfnFD.log = 1;
-opts.transferfnFD.plot.timeseries = [0,0,0];
+opts.transferfnFD.plot.timeseries = [1,0,0];
 opts.transferfnFD.plot.spectrum   = [0,0,0];
 opts.transferfnFD.plot.Z = [0,0,0];
 opts.transferfnFD.plot.H = [0,0,0];
+
+set(0,'defaultFigureWindowStyle','docked');
 
 S2 = transferfnFD(B,E,opts);
 plot(S2.H(1:20)-b(1:20)');

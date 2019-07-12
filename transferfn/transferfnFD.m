@@ -48,6 +48,11 @@ function S = transferfnFD(B,E,t,opts)
 %
 %  See also TRANSFERFNFD_OPTIONS, TRANSFERFNFD_TEST, TRANSFERFNFD_DEMO.
 
+addpath([fileparts(mfilename('fullpath')),'/../fft']);
+addpath([fileparts(mfilename('fullpath')),'/../spectra']);
+addpath([fileparts(mfilename('fullpath')),'/../regression']);
+addpath([fileparts(mfilename('fullpath')),'/../stats']);
+
 if nargin == 2
     t = [];
     opts = [];
