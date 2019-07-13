@@ -52,6 +52,7 @@ addpath([fileparts(mfilename('fullpath')),'/../fft']);
 addpath([fileparts(mfilename('fullpath')),'/../spectra']);
 addpath([fileparts(mfilename('fullpath')),'/../regression']);
 addpath([fileparts(mfilename('fullpath')),'/../stats']);
+addpath([fileparts(mfilename('fullpath')),'/../deps/printstruct']);
 
 if nargin == 2
     t = [];
@@ -69,7 +70,7 @@ if nargin == 3
         % transferfnFD(B,E,t)        
         opts = [];
         assert(size(t,1) == size(B,1),...
-            'Required: size(t,1) == size(B,1) == size(E,1)');    
+                'Required: size(t,1) == size(B,1) == size(E,1)');    
     end
 end
 
@@ -78,12 +79,10 @@ if nargin < 3 || isempty(opts)
     % transferfnFD(B,E,t)
     % Use default options.
     opts = transferfnFD_options(1);
-    if verbose
+    if opts.transferfnFD.loglevel
         fprintf('transferfnFD.m: No options given. Using options returned by transferfnFD_options(1)\n');
     end
 end
-
-verbose = opts.transferfnFD.log; 
 
 if iscell(B)
     % Each cell element is an interval and an arbitrary gap in time is
@@ -133,6 +132,7 @@ if iscell(B)
             S.Segment = combineStructs(S.Segment,Sc.Segment,3);
         end
     end
+    
     if isempty(opts.fd.stack.average.function)
         
         % Remove fields from top level of S as they are calculations for
@@ -143,8 +143,9 @@ if iscell(B)
                 S = rmfield(S,fns{i});
             end
         end
+        
         % Compute Z at each fe by regressing on all segment DFTs near fe.
-        S.Segment = stackCombine(S.Segment,opts);
+        S.Segment = stackRegression(S.Segment,opts);
         S.Z = S.Segment.Z;
         S.fe = S.Segment.fe;
         S.Segment = rmfield(S.Segment,'Z');
@@ -194,7 +195,7 @@ if size(E,2) > 1
     % Ey = ZyxBx + ZyyBy + ...
     % ...
     for c = 1:size(E,2)
-        if verbose
+        if opts.transferfnFD.loglevel > 0
             fprintf('transferfnFD.m: Calling transferfnFD(B,E(:,%d),...)\n',c);
         end
         Sc = transferfnFD(B,E(:,c),t,opts);    
@@ -207,14 +208,16 @@ if size(E,2) > 1
     return;
 end
 
-if verbose
+if opts.transferfnFD.loglevel > 0
     fprintf('transferfnFD.m: Computing transfer function for input/output sizes [%d,%d]/[%d,1]\n',size(B),size(E,1));
-    fprintf('trasnferfnFD.m: Options:\n');
-    printstruct(opts);
+    if opts.transferfnFD.loglevel > 1
+        fprintf('trasnferfnFD.m: Options:\n');
+        printstruct(opts);
+    end
 end
 
 if isnan(opts.td.window.width)
-    if opts.td.window.log
+    if opts.td.window.loglevel
         fprintf('transferfnFD.m: opts.td.window.with is NaN. Using size(B,1).\n');
     end
     % Set default window width and shift equal to the number of time points.
@@ -245,12 +248,12 @@ else
     % Compute TF for each segment
     for s = 1:length(a)
         Iseg = a(s):b(s);
-        if verbose
+        if opts.transferfnFD.loglevel > 0
             fprintf('transferfnFD.m: Starting computation for segment %d of %d\n',s,length(a));
         end
         % Ss = Segment struct.
         Ss = transferfnFD(B(Iseg,:),E(Iseg,:),t(Iseg),optsx);
-        if verbose
+        if opts.transferfnFD.loglevel > 0 && ~isempty(opts.fd.stack.average.function)
             % Summarize results for each column of E
             for j = 1:size(E,2)
                 fprintf('transferfnFD.m: Segment %d of %d PE/CC/MSE of Out(%d:%d,%d) = %.2f/%.2f/%.3f\n',...
@@ -265,7 +268,7 @@ else
         end
     end
     if isempty(opts.fd.stack.average.function)
-        S = stackCombine(S,opts);
+        S = stackRegression(S,opts);
         S.Segment = S;
         S.Segment = rmfield(S.Segment,'Z');
         S = rmfield(S,'DFT');
@@ -298,7 +301,8 @@ end
 E = bsxfun(@minus, E, mean(E, 1));
 B = bsxfun(@minus, B, mean(B, 1));
 
-[fe,Ic,Ne] = opts.fd.evalfreq.function(size(B,1),opts.fd.evalfreq.functionargs{:});
+[fe,Ic,Ne] = opts.fd.evalfreq.function(...
+                size(B,1),opts.fd.evalfreq.functionargs{:});
 
 S = struct();
     S.In = B;
@@ -320,7 +324,7 @@ if opts.transferfnFD.plot.spectrum(1)
 end
 
 if ~isempty(opts.td.window.function)
-    if opts.transferfnFD.log
+    if opts.transferfnFD.loglevel > 0
         fprintf('transferfnFD.m: Computing windowed data.\n');
     end
     [B,W] = opts.td.window.function(B,opts.td.window.functionargs{:});
@@ -340,7 +344,7 @@ if ~isempty(opts.td.window.function)
     end
     
 else
-    if opts.transferfnFD.log
+    if opts.transferfnFD.loglevel > 0
         fprintf('transferfnFD.m: No time domain window applied b/c no function given.\n');
     end
 end
@@ -356,17 +360,17 @@ if ~isempty(opts.td.prewhiten.function)
     if opts.td.prewhiten.plot
         prewhiten_plot(S,opts);
     end
-    if opts.td.prewhiten.log
+    if opts.td.prewhiten.loglevel
         prewhiten_log(S,opts);
     end
 else
-    if opts.td.prewhiten.log
+    if opts.td.prewhiten.loglevel
         fprintf('transferfnFD.m: No time domain prewhitening performed b/c no function given.\n');
     end
 end
 
-if verbose
-    fprintf('transferfnFD.m: Computing raw DFTs.\n');
+if opts.transferfnFD.loglevel > 0
+    fprintf('transferfnFD.m: Computing raw DFTs of input and output.\n');
 end
 
 ftB = fft(B);
@@ -383,16 +387,20 @@ end
 ftB = ftB(1:Np,:);
 ftE = ftE(1:Np,:);
 
-if verbose
-    fprintf('transferfnFD.m: Starting regression for %d frequencies.\n',length(Ic)-1);
+if opts.transferfnFD.loglevel > 0
+    if isempty(opts.fd.stack.average.function)
+        fprintf('transferfnFD.m: Starting freqency window calculations for %d frequencies.\n',length(Ic)-1);
+    else
+        fprintf('transferfnFD.m: Starting freqency window and regression calculations for %d frequencies.\n',length(Ic)-1);
+    end
 end
 
 winfn = opts.fd.window.function;
-if opts.fd.window.log
+if opts.fd.window.loglevel
     fprintf('transferfnFD.m: Using FD window function %s\n',func2str(winfn));
 end
 
-if opts.fd.evalfreq.log
+if opts.fd.evalfreq.loglevel
     evalfreq_log(size(B,1),opts.fd.evalfreq.functionargs{:});
 end
 if opts.fd.evalfreq.plot(1)
@@ -407,8 +415,8 @@ end
 
 for j = 2:length(Ic) % Skip fe = 0.
 
-    if opts.fd.regression.log
-        fprintf('transferfnFD.m: Performing regression on frequency %d of %d\n',fe(j),length(fe)-1);
+    if opts.fd.regression.loglevel && ~isempty(opts.fd.stack.average.function)
+        fprintf('transferfnFD.m: Starting freqency window and regression calculation on frequency %d of %d\n',fe(j),length(fe)-1);
     end
     
     W = winfn(2*Ne(j)+1);
@@ -423,7 +431,7 @@ for j = 2:length(Ic) % Skip fe = 0.
     S.DFT.f{j,1} = f(r);
     S.DFT.Weights{j,1} = W;
     
-    if opts.fd.window.log
+    if opts.fd.window.loglevel
         fprintf('transferfnFD.m: Window with center of fe = %.8f has %d points; fl = %.8f fh = %.8f\n',...
                 fe(j),length(r),f(Ic(j)-Ne(j)),f(Ic(j)+Ne(j)));
     end
@@ -479,23 +487,29 @@ for j = 2:length(Ic) % Skip fe = 0.
 
 end
 
-if verbose
-    fprintf('transferfnFD.m: Finished regression for %d frequencies.\n',length(Ic)-1);
+if opts.transferfnFD.loglevel > 0
+    if isempty(opts.fd.stack.average.function)
+        fprintf('transferfnFD.m: Finished freqency window calculations for %d frequencies.\n',length(Ic)-1);
+    else
+        fprintf('transferfnFD.m: Finished freqency window and regression calculations for %d frequencies.\n',length(Ic)-1);
+    end
 end
 
 % TODO: Allow TD window and prewhiten to not be same for input and output
 % and then compute corrected Z?
 
 if ~isempty(opts.fd.stack.average.function)
+    % Compute metrics for predicting segment output based on Z computed
+    % using segment's input and output.
     S.Z = Z;
     S.Phi = atan2(imag(Z),real(Z));
     [S.H,S.tH] = Z2H(S.Z,S.fe,size(S.In,1));
-    if verbose
-        fprintf('transferfnFD.m: Computing metrics for computed transfer function.\n');
+    if opts.transferfnFD.loglevel > 0
+        fprintf('transferfnFD.m: Computing segment metrics for segement transfer function.\n');
     end
     S = transferfnMetrics(S,opts);
-    if verbose
-        fprintf('transferfnFD.m: Finished computing metrics for computed transfer function.\n');
+    if opts.transferfnFD.loglevel > 0
+        fprintf('transferfnFD.m: Finished segment metrics for segment transfer function.\n');
         fprintf('transferfnFD.m: Metrics:\n');
         S.Metrics
     end
@@ -567,7 +581,7 @@ function S = transferfnMetrics(S,opts)
     end
 end
 
-function S = stackCombine(S,opts)
+function S = stackRegression(S,opts)
 
     for i = 2:size(S.DFT.In,1) % Eval frequencies
         for c = 1:size(S.DFT.Out,2) % E columns

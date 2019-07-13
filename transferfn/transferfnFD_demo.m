@@ -61,7 +61,8 @@ if dim == 2
     end
     B(:,1) = randn(N,1);
     B(:,2) = randn(N,1);
-    E(:,1) = NE(:,1) + filter(H(:,1),1,B(:,1) + NB(:,1)) + filter(H(:,2),1,B(:,2) + NB(:,2));
+    E(:,1) = NE(:,1) + filter(H(:,1),1,B(:,1) + ...
+        NB(:,1)) + filter(H(:,2),1,B(:,2) + NB(:,2));
 end
 if dim == 4
     H = zeros(length(h),dim);
@@ -79,8 +80,10 @@ if dim == 4
     end
     B(:,1) = randn(N,1);
     B(:,2) = randn(N,1);
-    E(:,1) = NE(:,1) + filter(H(:,1),1,B(:,1) + NB(:,1)) + filter(H(:,2),1,B(:,2) + NB(:,2));
-    E(:,2) = NE(:,2) + filter(H(:,3),1,B(:,1) + NB(:,1)) + filter(H(:,4),1,B(:,2) + NB(:,2));
+    E(:,1) = NE(:,1) + filter(H(:,1),1,B(:,1) + ...
+             NB(:,1)) + filter(H(:,2),1,B(:,2) + NB(:,2));
+    E(:,2) = NE(:,2) + filter(H(:,3),1,B(:,1) + ...
+             NB(:,1)) + filter(H(:,4),1,B(:,2) + NB(:,2));
 end
 
 % Remove non-steady-state part of signals
@@ -109,18 +112,20 @@ S1.Options.description = 'Actual';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Estimate transfer function using transferfnFD
 
+if 0
 b = zeros(1,100);
 b(2) = 1;
 B = rand(2*length(b)+1,1);
 E = filter(b,1,B);
 B = B(length(b):end);
 E = E(length(b):end);
+end
 
 close all;
 opts = transferfnFD_options(0);
 
-opts.transferfnFD.log = 1;
-opts.transferfnFD.plot.timeseries = [1,0,0];
+opts.transferfnFD.loglevel = 1;
+opts.transferfnFD.plot.timeseries = [0,0,0];
 opts.transferfnFD.plot.spectrum   = [0,0,0];
 opts.transferfnFD.plot.Z = [0,0,0];
 opts.transferfnFD.plot.H = [0,0,0];
@@ -128,13 +133,15 @@ opts.transferfnFD.plot.H = [0,0,0];
 set(0,'defaultFigureWindowStyle','docked');
 
 S2 = transferfnFD(B,E,opts);
-plot(S2.H(1:20)-b(1:20)');
-hold on;grid on;
+%plot(S2.H(1:20)-b(1:20)');
+%hold on;grid on;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Compare
-S1.Options.info = S2.Options.info; % Set variable labels to be same
+S1.Time = S2.Time;
+S1.Options.info = S2.Options.info;   % Set variable labels to be same
 
+timeseries_plot(S1,'raw');
 transferfnZ_plot(S1,S2);
 transferfnH_plot(S1,S2);
 

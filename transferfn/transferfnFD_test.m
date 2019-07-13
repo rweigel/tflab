@@ -1,13 +1,5 @@
 clear;
 
-addpath('../misc/printstruct');
-addpath('../spectra');
-addpath('../plot');
-addpath('../stats');
-addpath('../fft');
-addpath('../regression');
-addpath('../window');
-
 close all;
 set(0,'defaultFigureWindowStyle','docked');
 
@@ -47,8 +39,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Calculation test
 %
-% With these evalfreqs, should produce perfect predictions b/c # of
-% free parameters in fitted Z equals number of data points.
+% B = randn(), E = B. With evalfreqs = DFT frequencies, should produce
+% perfect predictions b/c # of free parameters in fitted Z equals number of
+% data points.
 
 N = [99,100];
 for n = N
@@ -70,8 +63,9 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Calculation Test
-% No leakage
+% B = cos(w*t), E = A(w)*cos(w*t + phi(w)). No leakage
 
+clear E B
 N = 101;
 f = fftfreqp(N);
 t = (0:N-1)';
@@ -86,7 +80,7 @@ B = sum(B,2);
 E = sum(E,2);
 
 opts = transferfnFD_options(0);
-S2 = transferfnFD(B,E,opts)
+S2 = transferfnFD(B,E,opts);
 
 if 0
     figure(1);clf
@@ -130,6 +124,8 @@ assert(all(S2.Predicted == S3.Predicted(:,2)));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% API Test - Segmenting
+% E and B are split into segments and transfer functions are computed for
+% each segment.
 
 N = 1000;
 B = randn(N,1);
@@ -176,6 +172,10 @@ assert(all(S3.Z(:) == S4.Z(:)));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% API Test - Intervals
+% When there are gaps in time in the input/data, one can pass a cell array
+% of intervals and then the transfer function is computed on each interval.
+% The intervals may be segemented by specifying a window width and window
+% shift that is less than the interval length.
 
 N = 1000;
 B = randn(N,1);
@@ -203,50 +203,58 @@ assert(all(S1.Z(:)-S3.Z(:) < 2*eps))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% API Test - Non-stack average
+%% API Test - Stack Regression
+% When intervals and/or segments are used, the default is to compute a
+% transfer function that is the average of each segment. 
 
 N = 1000;
 B = randn(N,2);
 E = B;
 
-%%% 1 input/1 output
-% When using 1 segment, non-stack average should be same as
-% stack average result
+% 1 input/1 output. When using 1 segment, non-stack average should be same
+% as stack average result
 opts = transferfnFD_options(1);
-opts.td.window.width = N;
-opts.td.window.shift = N;
+opts.transferfnFD.loglevel = 1;
+opts.td.window.width = N; % Not needed as this is default when width = NaN.
+opts.td.window.shift = N; % Not needed as this is default when window = NaN.
 
 S1 = transferfnFD(B(:,1),E(:,1),opts);
-opts.fd.stack.average.function = '';
+opts.fd.stack.average.function = ''; % Don't compute stack average.
 S2 = transferfnFD(B(:,1),E(:,1),opts);
 assert(all(S1.Z(:) == S2.Z(:)))
 
-%%% 2 inputs/2 outputs
-% When using 1 segment, non-stack average should be same as
-% stack average result
+% 2 inputs/2 outputs. When using 1 segment, stack regression should be
+% same as stack average result
 opts = transferfnFD_options(1);
-opts.td.window.width = N;
-opts.td.window.shift = N;
+opts.td.window.width = N; % Not needed as this is default.
+opts.td.window.shift = N; % Not needed as this is default.
 
 S1 = transferfnFD(B,E,opts);
-opts.fd.stack.average.function = '';
+opts.fd.stack.average.function = ''; % Don't compute stack average.
 S2 = transferfnFD(B,E,opts);
 assert(all(S1.Z(:) == S2.Z(:)))
 
-%%%
-% Results not expected to be identical. With stack average, Z is computed
-% for each segment and then averages. With non-stack, one Z is computed
-% using DFTs of each segment.
+% Compare stack average Z to stack regression Z. Results not expected to be
+% identical. For the stack average method, Z for each segment in a given
+% frequency band is computed by regressing on the DFTs in that band segment
+% Z values are averaged. For the stack regression method, the DFTs in a
+% given frequency band are computed for each segment and then the segment
+% frequency band DFTs are combined and a single regression is performed.
+% DFTs.
+N = 1000;
+B = randn(N,1);
+E = B;
+
 opts = transferfnFD_options(1);
-opts.td.window.width = N;
-opts.td.window.shift = N;
+opts.transferfnFD.loglevel = 1;
+opts.td.window.width = N; % Will result in two intervals.
+opts.td.window.shift = N; % Will result in two intervals.
 
 S3 = transferfnFD([B;B],[E;E],opts);
 opts.fd.stack.average.function = '';
-S4 = transferfnFD([B;B],[E;E],opts);
+S4 = transferfnFD([B;B],[E;E],opts); % window.width and window.shift ignored.
 assert(all(abs(S3.Z(:) - S4.Z(:)) < 10*eps))
 
-%%% 
 % Expect identical result because intervals are identical to segments and
 % both compute non-stack Z.
 opts = transferfnFD_options(1);

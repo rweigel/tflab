@@ -1,6 +1,7 @@
 function transferfnH_plot(S1,S2,xl)
 
 figure;
+figprep();
 
 if nargin < 2
     S2 = [];
@@ -15,10 +16,14 @@ if isstruct(S1) && ~isstruct(S2)
     tH1 = fftshift(S1.tH);
     plot(tH1(a:b),H1(a:b));
     grid on;box on;hold on;
-    unitstr = sprintf('[%s/%s]',S1.Options.info.inunit,S1.Options.info.outunit);
-    title(sprintf('Method: %s',S1.Options.description),'FontWeight','Normal');
-    legend(sprintf('H %s',unitstr),'Location','NorthEast');
-    xlabel(sprintf('t [%s]',S1.Options.info.timeunit));
+    unitstr = sprintf('[%s/%s]',...
+                    S1.Options.info.inunit,...
+                    S1.Options.info.outunit);
+    title(sprintf('Method: %s',...
+                    S1.Options.description),...
+                    'FontWeight','Normal');
+    legend(sprintf('$H$ %s',unitstr), 'Location', 'NorthEast');
+    xlabel(sprintf('$t$ [%s]', S1.Options.info.timeunit));
     if nargin > 2
         set(gca(),'XLim',xl);
     end
@@ -38,11 +43,13 @@ if nargin > 1 && isstruct(S2)
     plot(tH1(a1:b1),H1(a1:b1));
     grid on;box on;hold on;
     plot(tH2(a2:b2),H2(a2:b2));
-    ylabel(sprintf('[%s/%s]',S1.Options.info.inunit,S1.Options.info.outunit));
-    legend(['H Method: ',S1.Options.description],...
-            ['H Method: ',S2.Options.description],...
-            'Location','NorthEast');
-    xlabel(sprintf('t [%s]',S1.Options.info.timeunit));
+    ylabel(sprintf('[%s/%s]',...
+                S1.Options.info.inunit,...
+                S1.Options.info.outunit));
+    legend(['$H$ Method: ', S1.Options.description],...
+           ['$H$ Method: ', S2.Options.description],...
+           'Location','NorthEast');
+    xlabel(sprintf('$t$ [%s]', S1.Options.info.timeunit));
     if nargin > 2
         set(gca(),'XLim',xl);
     end
@@ -71,5 +78,4 @@ function [a,b] = findss(x,w,t)
     a = w*find(xs/max(xs) > t,1,'first')-w+1;
     % ss end is end of window where this condition is true.
     b = w*find(xs/max(xs) > t,1,'last'); 
-
 end
