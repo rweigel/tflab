@@ -1,4 +1,4 @@
-function adjust_exponent(direction,force)
+function adjust_exponent(direction, force)
 %ADJUST_EXPONENT - Relabel axes number with exponents
 %
 %  ADJUST_EXPONENT() Relabels x, y, and z labels
@@ -13,8 +13,7 @@ function adjust_exponent(direction,force)
 %     10^{2} to 100
 %
 %  On linear axes, removes an offsetted x10^{N} if it appears near last
-%  axis label and makes it not offset and uses a center dot instead of and
-%  x.
+%  axis label and appends $\cdot 10^{N}$ to the last axis label.
 %
 
 if nargin < 2
@@ -30,7 +29,7 @@ if nargin == 0
     return;
 end
 
-assert(any(strcmp(direction,{'x','y','z'})),'dir must be x, y, or z');
+assert(any(strcmp(direction,{'x','y','z'})), 'dir must be x, y, or z');
 
 drawnow;
 
@@ -66,21 +65,20 @@ if strcmp(get(gca, [direction,'Scale']), 'log')
             labels{i} = '$100$';
         end
     end
-    set(gca,[direction,'TickLabel'],labels);
+    set(gca,[direction,'TickLabel'], labels);
 end
 
 % Remove the offsetted x10^{N} notation that appears on last axis label
 % and add it to the last label.
 if strcmp(get(gca, [direction,'Scale']),'linear')
-    labels = get(gca,[direction,'TickLabel'])
-    ticks = get(gca, [direction,'Tick'])
+    labels = get(gca, [direction,'TickLabel']);
+    ticks = get(gca, [direction,'Tick']);
     if isempty(labels)
         return;
     end
     if force || ticks(end) > 1000 % Check 1
         % There does not seem to be a direct way of determining if the
         % offset notation is used, so Check 1 and Check 2 are used.
-
         if ~iscell(labels)
             for i = 1:length(ticks)
                 labelsc{i} = labels(i,:);
@@ -91,15 +89,11 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
             % Check 2.
             % E.g., ticks(end) = 2000 and labels{end} = '2';
             return;
-        end
-        
-        labels
+        end        
         for i = 1:length(ticks)-1
-            labels_new{i} = sprintf('%s',labels{i});
+            labels_new{i} = sprintf('%s', labels{i});
         end
-        labels_new{i+1} = sprintf('%s$\\cdot 10^{3}$',labels{i+1});
-        %set(gca,[dir,'TickLabel'],labels_new);
-        labels_new
+        labels_new{i+1} = sprintf('%s$\\cdot 10^{3}$', labels{i+1});
         set(gca, [direction,'TickLabel'], labels_new);
     end
 end

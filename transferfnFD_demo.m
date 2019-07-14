@@ -1,7 +1,7 @@
 clear;
 
-addpath([fileparts(mfilename('fullpath')),'/../deps/printstruct']);
-addpath([fileparts(mfilename('fullpath')),'/../plot']);
+addpath([fileparts(mfilename('fullpath')),'/plot']);
+addpath([fileparts(mfilename('fullpath')),'/lib']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Create signals
@@ -66,13 +66,15 @@ if dim == 2
 end
 if dim == 4
     H = zeros(length(h),dim);
-    if tn == 1 % Doing all equal will lead to rank deficient warnings.
+    if tn == 1 
+        % Doing all equal will lead to rank deficient warnings.
         H(:,1) = 0.1*h;
         H(:,2) = 0.2*h;
         H(:,1) = 0.3*h;
         H(:,2) = 0.4*h;
     end
-    if tn == 2 % Need to explain why Zxx and Zyy are not zero for this case.
+    if tn == 2
+        % Need to explain why Zxx and Zyy are not zero for this case.
         H(:,1) = 0*h; 
         H(:,2) = h;
         H(:,3) = 0*h;
@@ -80,10 +82,10 @@ if dim == 4
     end
     B(:,1) = randn(N,1);
     B(:,2) = randn(N,1);
-    E(:,1) = NE(:,1) + filter(H(:,1),1,B(:,1) + ...
-             NB(:,1)) + filter(H(:,2),1,B(:,2) + NB(:,2));
-    E(:,2) = NE(:,2) + filter(H(:,3),1,B(:,1) + ...
-             NB(:,1)) + filter(H(:,4),1,B(:,2) + NB(:,2));
+    E(:,1) = NE(:,1) + filter(H(:,1),1,B(:,1) + NB(:,1)) ...
+                     + filter(H(:,2),1,B(:,2) + NB(:,2));
+    E(:,2) = NE(:,2) + filter(H(:,3),1,B(:,1) + NB(:,1)) ...
+                     + filter(H(:,4),1,B(:,2) + NB(:,2));
 end
 
 % Remove non-steady-state part of signals

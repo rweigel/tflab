@@ -48,11 +48,11 @@ function S = transferfnFD(B,E,t,opts)
 %
 %  See also TRANSFERFNFD_OPTIONS, TRANSFERFNFD_TEST, TRANSFERFNFD_DEMO.
 
-addpath([fileparts(mfilename('fullpath')),'/../fft']);
-addpath([fileparts(mfilename('fullpath')),'/../spectra']);
-addpath([fileparts(mfilename('fullpath')),'/../regression']);
-addpath([fileparts(mfilename('fullpath')),'/../stats']);
-addpath([fileparts(mfilename('fullpath')),'/../deps/printstruct']);
+addpath([fileparts(mfilename('fullpath')),'/fft']);
+addpath([fileparts(mfilename('fullpath')),'/spectra']);
+addpath([fileparts(mfilename('fullpath')),'/regression']);
+addpath([fileparts(mfilename('fullpath')),'/stats']);
+addpath([fileparts(mfilename('fullpath')),'/deps/printstruct']);
 
 if nargin == 2
     t = [];
@@ -80,7 +80,8 @@ if nargin < 3 || isempty(opts)
     % Use default options.
     opts = transferfnFD_options(1);
     if opts.transferfnFD.loglevel
-        fprintf('transferfnFD.m: No options given. Using options returned by transferfnFD_options(1)\n');
+        fprintf(['transferfnFD.m: No options given. '...
+                 'Using options returned by transferfnFD_options(1)\n']);
     end
 end
 
@@ -112,7 +113,8 @@ if iscell(B)
     if isnan(opts.td.window.width) && length(unique(Nr)) ~= 1
         warning(['opts.td.window.width not given and intervals do not', ...
                 'all have the same length.\n', ...
-                'Using shortest interval length (%d) for width and shift'],min(Nr));
+                'Using shortest interval length (%d) for width and shift'],...
+                min(Nr));
         opts.td.window.width = min(Nr);
         opts.td.window.shift = min(Nr);
     end
@@ -239,8 +241,11 @@ else
         b = b(1:end-1);
     end
     if b(end) ~= size(B,1)
-        warning('opts.td.window.width = %d, opts.td.window.shift = %d, size(B,1) = %d.\n\t Last %d point(s) will not be used.\n',...
-                Tw,Ts,size(B,1),size(B,1)-b(end));
+        warning(...
+            ['opts.td.window.width = %d,'...
+             'opts.td.window.shift = %d, size(B,1) = %d.'...
+             '\n\t Last %d point(s) will not be used.\n'],...
+             Tw,Ts,size(B,1),size(B,1)-b(end));
     end
     optsx = opts;
     optsx.td.window.width = NaN;
@@ -249,16 +254,26 @@ else
     for s = 1:length(a)
         Iseg = a(s):b(s);
         if opts.transferfnFD.loglevel > 0
-            fprintf('transferfnFD.m: Starting computation for segment %d of %d\n',s,length(a));
+            fprintf(...
+                ['transferfnFD.m: Starting computation for segment %d of %d\n',...
+                s,length(a)]);
         end
         % Ss = Segment struct.
         Ss = transferfnFD(B(Iseg,:),E(Iseg,:),t(Iseg),optsx);
         if opts.transferfnFD.loglevel > 0 && ~isempty(opts.fd.stack.average.function)
             % Summarize results for each column of E
             for j = 1:size(E,2)
-                fprintf('transferfnFD.m: Segment %d of %d PE/CC/MSE of Out(%d:%d,%d) = %.2f/%.2f/%.3f\n',...
-                        s,length(a),Iseg(1),Iseg(end),j,...
-                        Ss.Metrics.PE(j),Ss.Metrics.CC(j),Ss.Metrics.MSE(j));
+                fprintf(...
+                    ['transferfnFD.m: Segment %d of %d PE/CC/MSE '...
+                     'of Out(%d:%d,%d) = %.2f/%.2f/%.3f\n'],...
+                     s,...
+                     length(a),...
+                     Iseg(1),...
+                     Iseg(end),...
+                     j,...
+                     Ss.Metrics.PE(j),...
+                     Ss.Metrics.CC(j),...
+                     Ss.Metrics.MSE(j));
             end
         end
         if s == 1
@@ -345,7 +360,8 @@ if ~isempty(opts.td.window.function)
     
 else
     if opts.transferfnFD.loglevel > 0
-        fprintf('transferfnFD.m: No time domain window applied b/c no function given.\n');
+        fprintf(['transferfnFD.m: No time domain window applied '...
+                 'b/c no function given.\n']);
     end
 end
 
@@ -356,7 +372,9 @@ if ~isempty(opts.td.prewhiten.function)
     S.Prewhiten.InFilter = Bf;
     S.Prewhiten.Out = E;
     S.Prewhiten.OutFilter = Ef;
-    S.Window.Comment = 'S.Prewhiten.In (S.Prewhiten.Out) are S.Window.In (S.Window.Out) after application of S.Prewhiten.InFilter (S.Prewhiten.OutFilter)';
+    S.Window.Comment = ...
+        ['S.Prewhiten.In (S.Prewhiten.Out) are S.Window.In (S.Window.Out) '...
+         'after application of S.Prewhiten.InFilter (S.Prewhiten.OutFilter)'];
     if opts.td.prewhiten.plot
         prewhiten_plot(S,opts);
     end
@@ -365,7 +383,8 @@ if ~isempty(opts.td.prewhiten.function)
     end
 else
     if opts.td.prewhiten.loglevel
-        fprintf('transferfnFD.m: No time domain prewhitening performed b/c no function given.\n');
+        fprintf(['transferfnFD.m: No time domain prewhitening performed '...
+                 'b/c no function given.\n']);
     end
 end
 
@@ -389,9 +408,11 @@ ftE = ftE(1:Np,:);
 
 if opts.transferfnFD.loglevel > 0
     if isempty(opts.fd.stack.average.function)
-        fprintf('transferfnFD.m: Starting freqency window calculations for %d frequencies.\n',length(Ic)-1);
+        fprintf(['transferfnFD.m: Starting freqency window calculations '...
+                 'for %d frequencies.\n'],length(Ic)-1);
     else
-        fprintf('transferfnFD.m: Starting freqency window and regression calculations for %d frequencies.\n',length(Ic)-1);
+        fprintf(['transferfnFD.m: Starting freqency window and regression '...
+                 'calculations for %d frequencies.\n'],length(Ic)-1);
     end
 end
 
@@ -416,7 +437,9 @@ end
 for j = 2:length(Ic) % Skip fe = 0.
 
     if opts.fd.regression.loglevel && ~isempty(opts.fd.stack.average.function)
-        fprintf('transferfnFD.m: Starting freqency window and regression calculation on frequency %d of %d\n',fe(j),length(fe)-1);
+        fprintf(['transferfnFD.m: Starting freqency window and regression '...
+                 'calculation on frequency %d of %d\n'],...
+                 fe(j),length(fe)-1);
     end
     
     W = winfn(2*Ne(j)+1);
@@ -432,7 +455,8 @@ for j = 2:length(Ic) % Skip fe = 0.
     S.DFT.Weights{j,1} = W;
     
     if opts.fd.window.loglevel
-        fprintf('transferfnFD.m: Window with center of fe = %.8f has %d points; fl = %.8f fh = %.8f\n',...
+        fprintf(['transferfnFD.m: Window with center of fe = %.8f has %d '...
+                 'points; fl = %.8f fh = %.8f\n'],...
                 fe(j),length(r),f(Ic(j)-Ne(j)),f(Ic(j)+Ne(j)));
     end
 
@@ -440,14 +464,16 @@ for j = 2:length(Ic) % Skip fe = 0.
         % If not computing Z based on stack averages, don't need to do
         % regression as it is done later.
         args = opts.fd.regression.functionargs;    
-        [Z(j,:),stats] = opts.fd.regression.function(Wr.*ftB(r,:),W.*ftE(r,1),args{:});
+        [Z(j,:),stats] = opts.fd.regression.function(...
+                                Wr.*ftB(r,:),W.*ftE(r,1),args{:});
         S.Regression.Stats{j,1} = stats;
     end
     
     if 0
         
-        ts = sprintf('Frequency band centered on fe(%d); [fe(%d),fe(%d)] = [%.4d,%.4d]',...
-                j-1,j-2,j,fe(j-2),fe(j));
+        ts = sprintf(['Frequency band centered on fe(%d); [fe(%d),fe(%d)] '...
+                      '= [%.4d,%.4d]'],...
+                      j-1,j-2,j,fe(j-2),fe(j));
         
         if Ne(j) > 5
             Ea = W.*ftE(r,1);
@@ -479,7 +505,9 @@ for j = 2:length(Ic) % Skip fe = 0.
                 ls = sprintf('E_p PE/CC/MSE/SN = %.2g/%.2g/%.2g/%.2g',...
                     CC,PE,MSE,SN);
 
-                title(sprintf('Frequency band centered on fe(%d); [fe(%d),fe(%d)] = [%.4d,%.4d]',...
+                title(sprintf(...
+                    ['Frequency band centered on fe(%d); '...
+                     '[fe(%d),fe(%d)] = [%.4d,%.4d]'],...
                     j-1,j-2,j,fe(j-2),fe(j)),'FontWeight','normal');
                 legend('E',ls,'Location','Best','Orientation','Horizontal');
         end
@@ -489,9 +517,13 @@ end
 
 if opts.transferfnFD.loglevel > 0
     if isempty(opts.fd.stack.average.function)
-        fprintf('transferfnFD.m: Finished freqency window calculations for %d frequencies.\n',length(Ic)-1);
+        fprintf(['transferfnFD.m: Finished freqency window calculations '...
+                 'for %d frequencies.\n'],...
+                 length(Ic)-1);
     else
-        fprintf('transferfnFD.m: Finished freqency window and regression calculations for %d frequencies.\n',length(Ic)-1);
+        fprintf(['transferfnFD.m: Finished freqency window and regression '...
+                 'calculations for %d frequencies.\n'],...
+                 length(Ic)-1);
     end
 end
 
@@ -505,11 +537,13 @@ if ~isempty(opts.fd.stack.average.function)
     S.Phi = atan2(imag(Z),real(Z));
     [S.H,S.tH] = Z2H(S.Z,S.fe,size(S.In,1));
     if opts.transferfnFD.loglevel > 0
-        fprintf('transferfnFD.m: Computing segment metrics for segement transfer function.\n');
+        fprintf(['transferfnFD.m: Computing segment metrics for segement '...
+                 'transfer function.\n']);
     end
     S = transferfnMetrics(S,opts);
     if opts.transferfnFD.loglevel > 0
-        fprintf('transferfnFD.m: Finished segment metrics for segment transfer function.\n');
+        fprintf(['transferfnFD.m: Finished segment metrics for segment '...
+                 'transfer function.\n']);
         fprintf('transferfnFD.m: Metrics:\n');
         S.Metrics
     end
@@ -570,14 +604,17 @@ function S = transferfnMetrics(S,opts)
 
         S.PSD.In(:,:,k)    = smoothSpectra(S.In(:,:,k),opts,N);
         S.PSD.Out(:,:,k)   = smoothSpectra(S.Out(:,:,k),opts,N);
-        S.PSD.Error(:,:,k) = smoothSpectra(S.Out(:,:,k)-S.Predicted(:,:,k),opts,N);
+        S.PSD.Error(:,:,k) = smoothSpectra( ...
+                                   S.Out(:,:,k) - S.Predicted(:,:,k),opts,N);
         S.PSD.Predicted(:,:,k) = smoothSpectra(S.Predicted(:,:,k),opts,N);
 
         S.Metrics.PE(1,:,k)  = pe_nonflag(S.Out(:,:,k),S.Predicted(:,:,k));
         S.Metrics.MSE(1,:,k) = mse(S.Out(:,:,k),S.Predicted(:,:,k));
         S.Metrics.CC(1,:,k)  = cc_nonflag(S.Out(:,:,k),S.Predicted(:,:,k));
         S.Metrics.SN(:,:,k)  = S.PSD.Out(:,:,k)./S.PSD.Error(:,:,k);
-        S.Metrics.Coherence(:,:,k) = smoothCoherence(S.Out(:,:,k),S.Predicted(:,:,k),opts,N);
+        S.Metrics.Coherence(:,:,k) = smoothCoherence(...
+                                        S.Out(:,:,k),...
+                                        S.Predicted(:,:,k),opts,N);
     end
 end
 

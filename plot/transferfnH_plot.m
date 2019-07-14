@@ -14,7 +14,7 @@ if isstruct(S1) && ~isstruct(S2)
     H1 = fftshift(S1.H);
     [a,b] = findss(H1);
     tH1 = fftshift(S1.tH);
-    plot(tH1(a:b),H1(a:b));
+    plot(tH1(a:b), H1(a:b));
     grid on;box on;hold on;
     unitstr = sprintf('[%s/%s]',...
                     S1.Options.info.inunit,...
@@ -46,8 +46,8 @@ if nargin > 1 && isstruct(S2)
     ylabel(sprintf('[%s/%s]',...
                 S1.Options.info.inunit,...
                 S1.Options.info.outunit));
-    legend(['$H$ Method: ', S1.Options.description],...
-           ['$H$ Method: ', S2.Options.description],...
+    legend(['$H$ $\,$ Method: ', S1.Options.description],...
+           ['$H$ $\,$ Method: ', S2.Options.description],...
            'Location','NorthEast');
     xlabel(sprintf('$t$ [%s]', S1.Options.info.timeunit));
     if nargin > 2
@@ -57,7 +57,8 @@ end
 
 end
 
-function [a,b] = findss(x,w,t)
+function [a,b] = findss(x, w, t)
+    % Find limits above/below which x is "steady state".
     if nargin < 2
         w = 10;
     end
@@ -67,15 +68,17 @@ function [a,b] = findss(x,w,t)
     if length(x) < w
         a = 1;
         b = length(x);
-        return
+        return;
     end
-    % Compute std in non-overlaping windows of length w
+
+    % Compute std in non-overlaping windows of length w.
     x = x(1:w*floor(length(x)/w));
     xr = reshape(x,w,round(length(x)/w));
     xs = std(xr);
 
     % ss start is start of window where this condition true.
     a = w*find(xs/max(xs) > t,1,'first')-w+1;
+
     % ss end is end of window where this condition is true.
-    b = w*find(xs/max(xs) > t,1,'last'); 
+    b = w*find(xs/max(xs) > t,1,'last');
 end

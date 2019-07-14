@@ -10,13 +10,14 @@ PositionBottom = [0.1300 0.1100 0.7750 0.4];
 fh = figure();
 figprep();
 
+if size(S.In,2) > 1,
+    s1 = 's';
+else
+    s1 = '';
+end
+
 if strcmp(pt,'raw')
-    if size(S.In,2) > 1,
-        s1='s';
-    else
-        s1='';
-    end
-    ts = sprintf('Raw Input%s (top) and Output (bottom)',s1);
+    ts = sprintf('Raw Input%s (top) and Raw Output (bottom)', s1);
     
     subplot('Position',PositionTop);
         plot(t,S.In);
@@ -53,6 +54,7 @@ if strcmp(pt,'raw')
         end
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_ylim();
+        adjust_exponent();
         if isfield(opts,'td') && ischar(opts.td.start)
             datetick('x');
         else
@@ -61,7 +63,6 @@ if strcmp(pt,'raw')
                             opts.info.timeunit));        
         end
 elseif strcmp(pt,'windowed')
-    if size(S.In,2) > 1,s1='s';else,s1='';end  
     if strcmp(pt,'windowed')
         ts = sprintf('%s-windowed Input%s (top) and Output (bottom)',...
                      opts.td.window.functionstr,...
@@ -101,7 +102,8 @@ elseif strcmp(pt,'windowed')
                     opts.info.outunit);
         end
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
-        adjust_ylim();        
+        adjust_ylim();
+        adjust_exponent();
         xlabel(sprintf('%s [%s]',...
                         opts.info.timestr,...
                         opts.info.timeunit));
@@ -122,7 +124,7 @@ elseif strcmp(pt,'error')
                         opts.info.outstr,...
                         opts.info.outunit);    
         end
-        title(['Raw output (top) predicted raw output (bottom)',ts],...
+        title(['Raw Output (top) Predicted Raw Output (bottom)',ts],...
                 'FontWeight','Normal');
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_ylim();
@@ -130,7 +132,7 @@ elseif strcmp(pt,'error')
     subplot('Position',PositionBottom);
         plot(t,S.Out-S.Predicted);
         grid on;box on;
-        if iscell(opts.info.outstr)        
+        if iscell(opts.info.outstr)
             ls = sprintf('%s - %s [%s]',...
                         opts.info.outstr{1},...
                         opts.info.outstr{1},...
@@ -158,11 +160,17 @@ elseif strcmp(pt,'error')
 end
 
 try
-    if opts.transferfnFD.plot.timeseries(2)
-        % Print png
-    end
-    if opts.transferfnFD.plot.timeseries(3)
-        % Print pdf
-    end
+    n = length(opts.transferfnFD.plot);
+    assert(n == 3,'opts.transferfnFD.plot must have at least 3 elements');
 catch
+    fprintf(['opts.transferfnFD.plot not available or invalid. '...
+             'No images can be written.\n']);
+    return;
+end
+
+if opts.transferfnFD.plot.timeseries(2)
+    % Print png
+end
+if opts.transferfnFD.plot.timeseries(3)
+    % Print pdf
 end
