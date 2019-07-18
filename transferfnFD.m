@@ -436,7 +436,7 @@ if opts.transferfnFD.loglevel > 0
         logmsg(dbstack,...
                     'Starting freq band calcs for %d frequencies.\n',...
                      length(Ic)-1);
-        fprintf(logmsg,...
+        logmsg(dbstack,...
             ['opts.fd.stack.average.function = ''''. \n' ...
             ' No regression performed for each freq. band of segement\n']);
     else
@@ -475,7 +475,7 @@ if opts.fd.evalfreq.plot(1)
     end    
 end
 
-for j = 2:length(Ic) % Skip fe = 0.
+for j = 1:length(Ic)
 
     if opts.fd.regression.loglevel && ~isempty(opts.fd.stack.average.function)
         logmsg(dbstack,...
@@ -674,7 +674,7 @@ end
 
 function S = stackRegression(S,opts)
 
-    for i = 2:size(S.DFT.In,1) % Eval frequencies
+    for i = 1:size(S.DFT.In,1) % Eval frequencies
         for c = 1:size(S.DFT.Out,2) % E columns
             
             % size(S.DFT.In,1) will always be 1. Each segment
