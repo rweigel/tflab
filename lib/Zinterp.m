@@ -25,7 +25,8 @@ function Zi = Zinterp(fe,Z,fg,varargin)
 
 % TODO: Allow interpolation in log space.
 
-verbose = 0;
+addpath([fileparts(mfilename('fullpath')),'/logging']);
+verbose = 1;
 
 if nargin < 4
     varargin = {'linear',0};
@@ -53,7 +54,9 @@ end
 if nargin == 3 && (length(fe) == length(fg))
     if all(fe(:) == fg(:))
         if verbose
-            warning('all(fe == fg) returned true.  No interpolation will be performed.');
+            logmsg(dbstack,...
+                ['all(fe == fg) returned true. '...
+                 'No interpolation will be performed.\n']);
         end
         Zi = Z;
         return;
@@ -61,10 +64,10 @@ if nargin == 3 && (length(fe) == length(fg))
 end
 
 if verbose
-    fprintf('Zinterp.m: First grid frequency       : %.4f\n',fg(1));
-    fprintf('Zinterp.m: First evaluation frequency : %.4f\n',fe(1));
-    fprintf('Zinterp.m: Last grid frequency        : %.4f\n',fg(end));
-    fprintf('Zinterp.m: Last evaluation frequency  : %.4f\n',fe(end));
+    logmsg(dbstack, 'First grid frequency       : %.4f\n',fg(1));
+    logmsg(dbstack, 'First evaluation frequency : %.4f\n',fe(1));
+    logmsg(dbstack, 'Last grid frequency        : %.4f\n',fg(end));
+    logmsg(dbstack, 'Last evaluation frequency  : %.4f\n',fe(end));
 end
 
 % Remove fe = 0
@@ -94,7 +97,9 @@ for k = 1:size(Z,2)
     
     Ig = ~isnan(Z(:,k)); % "good" values
     if verbose && (length(Ig) ~= size(Z,1))
-        fprintf('Zinterp.m: Dropping %d NaN values in Z(:,%d)\n',size(Z,1)-length(Ig),k);
+        logmsg(dbstack, ...
+            'Dropping %d NaN values in Z(:,%d)\n',...
+            size(Z,1)-length(Ig),k);
     end
     
     fek = fe(Ig);

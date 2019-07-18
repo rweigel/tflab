@@ -18,9 +18,14 @@ function [h,t,zg,fg] = Z2H(Z,fe,N,verbose)
 %
 %   See also H2Z, ZINTERP.
 
+
 if nargin < 4
     verbose = 0;
+else
+    addpath([fileparts(mfilename('fullpath')),'/logging']);
 end
+
+verbose = 1;
 
 assert(nargin ~= 2,'Number of inputs must be 1, 3, or 4.');
 assert(ndims(Z) <= 2,'Required: ndims(Z) <= 2');
@@ -39,7 +44,8 @@ end
 
 flip = 0;
 if numel(Z) == length(Z) && size(Z,2) > 1
-    assert(length(Z) == length(fe),'length(Z) == length(fe) is required when ndims(Z) == 1.');
+    assert(length(Z) == length(fe),...
+        'length(Z) == length(fe) is required when ndims(Z) == 1.');
     Z = transpose(Z);
     flip = 1;
 end
@@ -47,10 +53,15 @@ assert(size(Z,1) == length(fe),'size(Z,1) == length(fe) is required');
 
 if nargin > 2
     if verbose
-        fprintf('Z2H.m: Interpolating Z onto frequency grid with spacing of 1/%d\n',N);
+        logmsg(dbstack,...
+            'Interpolating Z onto frequency grid with spacing of 1/%d\n',...
+            N);
     end
-    [~,fg] = fftfreq(N); % Unique fft frequencies
+    
+    % fg = Unique fft frequencies (with -0.5 mapped to +0.5)
+    [~,fg] = fftfreq(N);
     Zi = Zinterp(fe,Z,fg');
+
     if verbose == 2
         for i = 1:size(Z,2)
             figure()
@@ -76,7 +87,9 @@ fg = fftfreq(size(Zfull,1))';
 h = ifft(Zfull);
 t = N*fftfreq(N)';
 
-assert(isreal(h),'Computed impulse response has imaginary component. Check calculation of Z');
+assert(isreal(h),...
+            ['Computed impulse response has imaginary component.'...
+            'Check calculation of Z']);
 
 if flip
     h = h';
