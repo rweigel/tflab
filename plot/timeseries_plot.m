@@ -4,6 +4,8 @@ function fh = timeseries_plot(S, pt)
 %  TIMESERIES(S, pt), where S is the output of TRANSFERFNFD and pt is the
 %  plot type - one of 'raw', 'windowed', or 'error'.
 
+addpath([fileparts(mfilename('fullpath')),'/logging']);
+
 opts = S.Options;
 t = S.Time;
 
@@ -146,11 +148,14 @@ elseif strcmp(pt,'error')
         end
 end
 
+return
+
 try
     n = length(opts.transferfnFD.plot);
     assert(n == 3,'opts.transferfnFD.plot must have at least 3 elements');
 catch
-    fprintf(['opts.transferfnFD.plot not available or invalid. '...
+    logmsg(dbstack,...
+            ['opts.transferfnFD.plot not available or invalid. '...
              'No images can be written.\n']);
     return;
 end
