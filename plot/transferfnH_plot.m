@@ -40,9 +40,18 @@ if nargin > 1 && isstruct(S2)
     tH1 = fftshift(S1.tH);
     tH2 = fftshift(S2.tH);
 
-    plot(tH1(a1:b1),H1(a1:b1));
+    if b1-a1 > 1
+        plot(tH1(a1:b1),H1(a1:b1));
+    else
+        stem(tH1(a1:b1),H1(a1:b1));    
+    end
     grid on;box on;hold on;
-    plot(tH2(a2:b2),H2(a2:b2));
+
+    if b1-a1 > 1    
+        plot(tH2(a2:b2),H2(a2:b2));
+    else
+        stem(tH2(a2:b2),H2(a2:b2));
+    end
 
     ylabel(sprintf('[%s/%s]', S1.Options.info.inunit, S1.Options.info.outunit));
     legend(['$H$ $\,$ ', S1.Options.description],...
