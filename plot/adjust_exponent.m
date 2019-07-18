@@ -76,24 +76,38 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
     if isempty(labels)
         return;
     end
-    if force || ticks(end) > 1000 % Check 1
+    if force || ticks(end) > 1000 || ticks(end) < 0.001 % Check 1
         % There does not seem to be a direct way of determining if the
-        % offset notation is used, so Check 1 and Check 2 are used.
+        % offset notation is used (or what it is), so Check 1 and Check 2
+        % are used.
         if ~iscell(labels)
             for i = 1:length(ticks)
                 labelsc{i} = labels(i,:);
             end
             labels = labelsc;
         end
-        if force || ticks(end) < 10*str2double(labels{end})
-            % Check 2.
+        r = abs(ticks(end)/str2double(labels{end}));
+        if force || (r < 1.1 && r > 0.9) % Check 2.
             % E.g., ticks(end) = 2000 and labels{end} = '2';
             return;
-        end        
+        end
+        % Exponent digit
+        ed = floor(log10(r));
+        if abs(r-10^ed) > eps
+            warning('Relabeling failed')
+            fprintf('Original: %.6e, New: %.6e\n',r,10^ed);
+            return;
+        end
         for i = 1:length(ticks)-1
             labels_new{i} = sprintf('%s', labels{i});
         end
-        labels_new{i+1} = sprintf('%s$\\cdot 10^{3}$', labels{i+1});
+        labels_new{i+1} = sprintf('%s$\\cdot 10^{%d}$', labels{i+1}, ed);
         set(gca, [direction,'TickLabel'], labels_new);
+        if direction == 'x'
+            set(get(gca,'XLabel'),'HorizontalAlignment','top')
+        end
+        if direction == 'y'
+            set(get(gca,'YLabel'),'VerticalAlignment','top')
+        end
     end
 end

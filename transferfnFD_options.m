@@ -26,7 +26,7 @@ opts.info = struct();
     opts.info.timeunit = 's';
     
 opts.transferfnFD = struct();
-    opts.transferfnFD.loglevel = 0;
+    opts.transferfnFD.loglevel = 1;
     % Elements of arrays for plot.* are 0 or 1 and
     % [showplot, savepng, savepdf] 
     opts.transferfnFD.plot = struct();
@@ -43,8 +43,10 @@ opts.td.detrend.function = @removemean;
 opts.td.detrend.functionstr = '';  % Optional descriptive name
 opts.td.detrend.functionargs = {}; % Arguments after first argument to fn.
 
-opts.td.dt    = 1;  % Dimensionless time; ignored if time array passed to transferfnFD.
-opts.td.start = 1;  % Dimensionless start; ignored if time array passed to transferfnFD.
+% Dimensionless time; ignored if time array passed to transferfnFD.
+opts.td.dt    = 1;  
+% Dimensionless start; ignored if time array passed to transferfnFD.
+opts.td.start = 1; 
 
 % opts.td.start can also be a time string of the form
 % 'yyyy-mm-ddTHH:MM:SS.FFF'. In this case, opts.td.dt units are milliseconds.
@@ -110,13 +112,13 @@ opts.fd.stack = struct();
 opts.fd.interpolation = struct();
     opts.fd.interpolation.function = @interp1;
     opts.fd.interpolation.functionstr = 'interp1()';
-    opts.fd.interpolation.functionargs = {'linear',0};
+    opts.fd.interpolation.functionargs = {'linear', 0};
     %opts.fd.interpolation.functionargs = {'linear','extrap'};
     
 opts.fd.regression = struct();
     opts.fd.regression.function = @ols_regress;
     opts.fd.regression.functionstr = 'OLS using regress() function';
-    opts.fd.regression.functionargs = {};
+    opts.fd.regression.functionargs = {struct('realvalued',0,'loglevel',0)};
     opts.fd.regression.plot = 0;
     opts.fd.regression.loglevel = 0;
 
@@ -142,11 +144,11 @@ opts.fd.regression = struct();
 if os == 0
     % When no noise, should get exact TF used to generate the output data
     % (within limits of numerical precision).
-    opts.description = 'Default except dN = 0, w = 0.';
+    opts.description = 'OLS and $\Delta_f = 0$, $N_f = 0$.';
     opts.fd.evalfreq.functionargs = {[1,0], 'linear'};
-    opts.fd.evalfreq.functionstr  = 'dN = 0, w = 0';
+    opts.fd.evalfreq.functionstr  = '1 DFT point per freq. band';
 elseif os == 1 || nargs == 0
-    opts.description = 'Default';
+    opts.description = 'OLS and 7 pts/decade';
 elseif os == 2
     opts.description = 'yulewalker(10) prewhiten';
     opts.td.prewhiten.method = 'yulewalker';

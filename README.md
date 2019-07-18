@@ -1,2 +1,2 @@
 # transferfn
-Data-derived transfer function calculations
+Estimate transfer functions from data

@@ -1,5 +1,8 @@
-function fh = timeseries_plot(S,pt)
-%TIMESERIES_PLOT
+function fh = timeseries_plot(S, pt)
+%TIMESERIES_PLOT - Plot timeseries in output of TRANSFERFNFD.
+%
+%  TIMESERIES(S, pt), where S is the output of TRANSFERFNFD and pt is the
+%  plot type - one of 'raw', 'windowed', or 'error'.
 
 opts = S.Options;
 t = S.Time;
@@ -25,9 +28,7 @@ if strcmp(pt,'raw')
         for j = 1:size(S.In,2)
             if iscell(opts.info.instr)
                 instr = opts.info.instr{j};
-                ls{j} = sprintf('%s [%s]\n',...
-                            instr,...
-                            opts.info.inunit);
+                ls{j} = sprintf('%s [%s]\n', instr, opts.info.inunit);
             else
                 instr = opts.info.instr;
                 ls{j} = sprintf('%s(:,%d) [%s]\n',...
@@ -44,9 +45,7 @@ if strcmp(pt,'raw')
         plot(t,S.Out);
         grid on;box on;    
         if iscell(opts.info.outstr)
-            ls = sprintf('%s [%s]\n',...
-                    opts.info.outstr{1},...
-                    opts.info.outunit);
+            ls = sprintf('%s [%s]\n', opts.info.outstr{1}, opts.info.outunit);
         else
             ls = sprintf('%s(:,1) [%s]\n',...
                     opts.info.outstr,...
@@ -58,9 +57,7 @@ if strcmp(pt,'raw')
         if isfield(opts,'td') && ischar(opts.td.start)
             datetick('x');
         else
-            xlabel(sprintf('%s [%s]',...
-                            opts.info.timestr,...
-                            opts.info.timeunit));        
+            xlabel(sprintf('%s [%s]', opts.info.timestr, opts.info.timeunit));        
         end
 elseif strcmp(pt,'windowed')
     if strcmp(pt,'windowed')
@@ -93,20 +90,14 @@ elseif strcmp(pt,'windowed')
         plot(t,S.Window.Out);
         grid on;box on;    
         if iscell(opts.info.outstr)
-            ls = sprintf('%s [%s]\n',...
-                        opts.outstr{1},...
-                        opts.info.outunit);
+            ls = sprintf('%s [%s]\n', opts.outstr{1}, opts.info.outunit);
         else
-            ls = sprintf('%s(:,1) [%s]\n',...
-                    opts.info.outstr,...
-                    opts.info.outunit);
+            ls = sprintf('%s(:,1) [%s]\n', opts.info.outstr, opts.info.outunit);
         end
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_ylim();
         adjust_exponent();
-        xlabel(sprintf('%s [%s]',...
-                        opts.info.timestr,...
-                        opts.info.timeunit));
+        xlabel(sprintf('%s [%s]', opts.info.timestr, opts.info.timeunit));
         if ischar(opts.td.start)
             datetick('x');
         end
@@ -116,16 +107,14 @@ elseif strcmp(pt,'error')
         plot(t,S.Out);
         grid on;box on;    
         if iscell(opts.info.outstr)        
-            ls = sprintf('%s [%s]\n',...
-                        opts.info.outstr{1},...
-                        opts.info.outunit);
+            ls = sprintf('%s [%s]\n', opts.info.outstr{1}, opts.info.outunit);
         else
             ls = sprintf('%s(:,1) [%s]\n',...
                         opts.info.outstr,...
                         opts.info.outunit);    
         end
         title(['Raw Output (top) Predicted Raw Output (bottom)',ts],...
-                'FontWeight','Normal');
+               'FontWeight','Normal');
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_ylim();
         set(gca,'XTickLabel',[]);
@@ -151,9 +140,7 @@ elseif strcmp(pt,'error')
                  
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_ylim();
-        xlabel(sprintf('%s [%s]',...
-                    opts.info.timestr,...
-                    opts.info.timeunit));
+        xlabel(sprintf('%s [%s]', opts.info.timestr, opts.info.timeunit));
         if ischar(opts.td.start)
             datetick('x');
         end

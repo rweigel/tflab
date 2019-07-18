@@ -1,10 +1,6 @@
 function [Z,W,stats] = ols_analytic(ftB,ftE,varargin)
-
-    if nargin == 0
-        return;
-    end
     
-    assert(size(ftB,2) <= 2,'ols_analytic() only supports two inputs');
+    assert(size(ftB,2) <= 2,'ols_analytic() only one or two inputs');
 
     if size(ftB,2) == 1
         % Ex = ZxxBx

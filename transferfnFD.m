@@ -186,7 +186,8 @@ assert(size(B,1) == size(E,1),...
         'Required: size(B,1) == size(E,1)');
 
 assert(size(B,1) >= size(B,2),...
-    'Not enough time samples: size(B,1) must be greater than or equal to size(B,2)');
+    ['Not enough time samples: size(B,1) must be greater than '...
+     'or equal to size(B,2)']);
 
 if nargin < 3 || isempty(t)
     t = (opts.td.start:opts.td.dt:size(B,1))';
@@ -211,7 +212,9 @@ if size(E,2) > 1
 end
 
 if opts.transferfnFD.loglevel > 0
-    fprintf('transferfnFD.m: Computing transfer function for input/output sizes [%d,%d]/[%d,1]\n',size(B),size(E,1));
+    fprintf(['transferfnFD.m: Computing transfer function for input/output '...
+             'sizes [%d,%d]/[%d,1]\n'],...
+             size(B),size(E,1));
     if opts.transferfnFD.loglevel > 1
         fprintf('trasnferfnFD.m: Options:\n');
         printstruct(opts);
@@ -255,8 +258,8 @@ else
         Iseg = a(s):b(s);
         if opts.transferfnFD.loglevel > 0
             fprintf(...
-                ['transferfnFD.m: Starting computation for segment %d of %d\n',...
-                s,length(a)]);
+                'transferfnFD.m: Starting computation for segment %d of %d\n',...
+                s,length(a));
         end
         % Ss = Segment struct.
         Ss = transferfnFD(B(Iseg,:),E(Iseg,:),t(Iseg),optsx);
@@ -408,11 +411,11 @@ ftE = ftE(1:Np,:);
 
 if opts.transferfnFD.loglevel > 0
     if isempty(opts.fd.stack.average.function)
-        fprintf(['transferfnFD.m: Starting freqency window calculations '...
+        fprintf(['transferfnFD.m: Starting freq band calcs '...
                  'for %d frequencies.\n'],length(Ic)-1);
     else
-        fprintf(['transferfnFD.m: Starting freqency window and regression '...
-                 'calculations for %d frequencies.\n'],length(Ic)-1);
+        fprintf(['transferfnFD.m: Starting freq and regression '...
+                 'calcs for %d frequencies.\n'],length(Ic)-1);
     end
 end
 
@@ -437,9 +440,9 @@ end
 for j = 2:length(Ic) % Skip fe = 0.
 
     if opts.fd.regression.loglevel && ~isempty(opts.fd.stack.average.function)
-        fprintf(['transferfnFD.m: Starting freqency window and regression '...
-                 'calculation on frequency %d of %d\n'],...
-                 fe(j),length(fe)-1);
+        fprintf(['transferfnFD.m: Starting freq and regression '...
+                 'calcs on frequency %d of %d\n'],...
+                 j,length(fe)-1);
     end
     
     W = winfn(2*Ne(j)+1);
@@ -544,8 +547,10 @@ if ~isempty(opts.fd.stack.average.function)
     if opts.transferfnFD.loglevel > 0
         fprintf(['transferfnFD.m: Finished segment metrics for segment '...
                  'transfer function.\n']);
-        fprintf('transferfnFD.m: Metrics:\n');
-        S.Metrics
+        fprintf('transferfnFD.m: PE/CC/MSE = %.2f/%.2f/%.3f\n',...
+                 S.Metrics.PE,...
+                 S.Metrics.CC,...
+                 S.Metrics.MSE);
     end
     if opts.transferfnFD.plot.timeseries(1)
         timeseries_plot(S,'error');
