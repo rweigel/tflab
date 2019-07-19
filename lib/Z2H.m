@@ -22,7 +22,7 @@ function [h,t,zg,fg] = Z2H(Z,fe,N,verbose)
 if nargin < 4
     verbose = 0;
 else
-    addpath([fileparts(mfilename('fullpath')),'/logging']);
+    addpath([fileparts(mfilename('fullpath')),'/../misc']);
 end
 
 verbose = 1;

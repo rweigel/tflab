@@ -25,7 +25,7 @@ function Zi = Zinterp(fe,Z,fg,varargin)
 
 % TODO: Allow interpolation in log space.
 
-addpath([fileparts(mfilename('fullpath')),'/logging']);
+addpath([fileparts(mfilename('fullpath')),'/../misc/']);
 verbose = 1;
 
 if nargin < 4
