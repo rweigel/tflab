@@ -1,21 +1,22 @@
-function S = transferfnFD_demo_signals(tn, dim)
+function S = transferfnFD_demo_signals(tn, opts)
 
 assert(nargin == 2,'Two inputs (test number and dimension) are required');
 
-if tn == 0 % Delta function impulse responses
+if tn == 0 % Prescribed impulse response
     description = '';
 
-    H = zeros(100,1);
-    H(1) = 1;
-    B = rand(2*length(H)+1,1);
+    H = opts.H;
+    B = randn(100+length(H),1);
     E = filter(H,1,B);
-    % Remove non-steady-state (technically, could just do 2:end b/c only H(1)
-    % is non-zero)
-    B = B(length(H):end); 
-    E = E(length(H):end);
+    
+    % Remove non-steady-state
+    B = B(length(H)+1:end); 
+    E = E(length(H)+1:end);
 end
 
 if tn == 1 % Low pass filter impulse responses
+
+    dim = opts;
     
     description = '';
     
@@ -109,12 +110,12 @@ end
 [Z,f] = H2Z(H);
 Z(Z==0) = eps; % So points show up on loglog plot.
 
-tH = (0:size(H,1)-1)'; % Exact IRF time lags
-
 S.In  = B;
 S.Out = E;
 S.Z  = Z;
 S.fe = f;
-S.H  = [H ; NaN*H(2:end)];         % Convert H to standard form
-S.tH = [tH ; -fliplr(tH(2:end));]; % Create negative time values
+S.H = H;
+S.tH = (0:size(H,1)-1)';
+%S.H  = [H ; 0*H(2:end)];         % Convert H to standard form
+%S.tH = [tH ; -fliplr(tH(2:end));]; % Create negative time values
 S.Options.description = description;

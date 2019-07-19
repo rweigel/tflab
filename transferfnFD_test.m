@@ -72,6 +72,22 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Basic calculation test 1.
+% B = randn(), E = B. With evalfreqs = DFT frequencies, should produce
+% perfect predictions b/c # of free parameters in fitted Z equals number of
+% data points.
+fprintf(['Basic calculation test 3. - '...
+         'H = [1,0]. 1 DFT point per freq. band.\n']);
+
+S0 = transferfnFD_demo_signals(0,1);
+
+opts = transferfnFD_options(0);
+S1 = transferfnFD(S0.In, S0.Out, opts);
+
+fprintf('\n');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Regression test 1. OLS_REGRESS() using real and complex arguments
 % Expect results to be identical to within machine precision.
 fprintf(['Basic calculation test 2. - '...

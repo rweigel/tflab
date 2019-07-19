@@ -18,4 +18,4 @@ S0.Options.info = S1.Options.info; % Use same variable labels from S1 for S0
 
 timeseries_plot(S1,'raw'); % Plot raw input/output data
 transferfnZ_plot(S0,S1);   % Compare exact with computed
-transferfnH_plot(S0,S1);   % Compare exact with computed
+transferfnH_plot(S0,S1,[-1,10]);   % Compare exact with computed

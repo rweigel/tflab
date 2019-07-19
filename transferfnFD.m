@@ -48,7 +48,7 @@ function S = transferfnFD(B,E,t,opts)
 %
 %  See also TRANSFERFNFD_OPTIONS, TRANSFERFNFD_TEST, TRANSFERFNFD_DEMO.
 
-addpath([fileparts(mfilename('fullpath')),'/logging']);
+addpath([fileparts(mfilename('fullpath')),'/misc']);
 addpath([fileparts(mfilename('fullpath')),'/lib']);
 addpath([fileparts(mfilename('fullpath')),'/fft']);
 addpath([fileparts(mfilename('fullpath')),'/spectra']);
