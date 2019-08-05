@@ -3,6 +3,8 @@ clear;
 % NB: Tests are intentially not deterministic. TODO: Make deterministic by
 % setting random number seed.
 
+addpath([fileparts(mfilename('fullpath')),'/misc']);
+
 close all;
 set(0,'defaultFigureWindowStyle','docked');
 
@@ -11,8 +13,8 @@ set(0,'defaultFigureWindowStyle','docked');
 % B = randn(), E = B. With evalfreqs = DFT frequencies, should produce
 % perfect predictions b/c # of free parameters in fitted Z equals number of
 % data points.
-fprintf(['Basic calculation test 1. - '...
-         'B = randn(), E = B. 1 DFT point per freq. band.\n']);
+logmsg(dbstack,['Basic calculation; Test 1.1 - '...
+                'B = randn(), E = B. 1 DFT point per freq. band.\n']);
 
 N = [99,100];
 for n = N
@@ -33,8 +35,8 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Basic calculation test 2.
 % B = cos(w*t), E = A(w)*cos(w*t + phi(w)). No leakage
-fprintf(['Basic calculation test 2. - '...
-         'B = cos(w*t), E ~ A(w)*cos(w*t + phi(w)). No leakage.\n']);
+logmsg(dbstack,['Basic calculation; Test 1.2. - '...
+                'B = cos(w*t), E ~ A(w)*cos(w*t + phi(w)). No leakage.\n']);
 
 clear E B
 N = 101;
@@ -72,26 +74,41 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Basic calculation test 1.
-% B = randn(), E = B. With evalfreqs = DFT frequencies, should produce
-% perfect predictions b/c # of free parameters in fitted Z equals number of
-% data points.
-fprintf(['Basic calculation test 3. - '...
-         'H = [1,0]. 1 DFT point per freq. band.\n']);
+%% Basic calculation test 3.
+% B = randn(), H = [1]. evalfreqs = DFT frequencies.
 
-S0 = transferfnFD_demo_signals(0,1);
+logmsg(dbstack,['Basic calculation; Test 1.3. - '...
+                'H = [1,0,...] with varying # of zeros. '...
+                '1 DFT point per freq. band.\n']);
 
-opts = transferfnFD_options(0);
-S1 = transferfnFD(S0.In, S0.Out, opts);
+for i = 1:3     
+    H = zeros(i+1,1);
+    H(1) = 1;
+    S0 = transferfnFD_demo_signals(0, struct('H',H));
 
+    opts = transferfnFD_options(0);
+    S1 = transferfnFD(S0.In, S0.Out, opts);
+    
+    % Computed H should match used H and be zero for lags longer than
+    % used H.
+    L = length(S0.H);
+    assert(max(abs(S0.H - S1.H(1:L))) <= eps);
+    assert(max(abs(S1.H(L+1:end))) <= eps);
+    
+    % Analytically, real part of Z is 1, imaginary part is 0.    
+    re = real(S1.Z)-1; 
+    assert(max(abs(re)) <= 1000*eps);
+    assert(max(abs(imag(S1.Z))) <= 1000*eps);
+    fprintf('---\n');
+end
 fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Regression test 1. OLS_REGRESS() using real and complex arguments
 % Expect results to be identical to within machine precision.
-fprintf(['Basic calculation test 2. - '...
-         'ols_regress() using real and complex arguments.\n']);
+logmsg(dbstack,['Basic calculation; Test 2.1. - '...
+                'ols_regress() using real and complex arguments.\n']);
 
 B = randn(n,1);
 E = B;
@@ -114,8 +131,8 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Regression test 2. - Compare OLS_REGRESS() with ROBUSTFIT() when no noise.
 
-fprintf(['Regression test 2. - Compare ols_regress() w/ '...
-         'robustfit() and no noise.\n']);
+logmsg(dbstack,['Regression comparison; Test 2.2 - Compare ols_regress() w/ '...
+                'robustfit() and no noise.\n']);
      
 N = [99,100];
 for n = N
@@ -157,8 +174,8 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% API Test 1. - Multiple Ouputs
-fprintf('API Test 1. - Two Outputs\n');
+%% API Test - Multiple Inputs and Ouputs
+logmsg(dbstack,'API I/O Test; Test 3.1. - One or Two Outputs, One Input.\n');
 
 N = 1000;
 B = randn(N,2);
@@ -170,7 +187,7 @@ opts.td.window.shift = N;
 
 % 1 input, one or two outputs
 S1 = transferfnFD(B(:,1),E(:,1),opts);
-fprintf('---');
+fprintf('---\n');
 S2 = transferfnFD(B(:,1),[E(:,1),E(:,1)],opts);
 
 assert(all(S1.Predicted == S2.Predicted(:,1)));
@@ -179,13 +196,13 @@ assert(all(S1.Predicted == S2.Predicted(:,2)));
 %%%
 fprintf('\n');
 %%%
-fprintf('API Test 1. - Two Outputs, Two Inputs\n');
+logmsg(dbstack,'API I/O Test; Test 3.2. - Two Outputs, Two Inputs\n');
 
 % 2 inputs, one or two outputs
 S1 = transferfnFD(B,E(:,1),opts);
-fprintf('---');
+fprintf('---\n');
 S2 = transferfnFD(B,E(:,2),opts);
-fprintf('---');
+fprintf('---\n');
 S3 = transferfnFD(B,E,opts);
 
 assert(all(S1.Predicted == S3.Predicted(:,1)));
@@ -194,10 +211,10 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% API Test 2. - Segmenting
+%% API Test - Segmenting
 % E and B are split into segments and transfer functions are computed for
 % each segment.
-fprintf('API Test 2. - Segmenting test 1.\n');
+logmsg(dbstack,'API Segmenting; Test 3.3.\n');
 
 N = 1000;
 B = randn(N,1);
@@ -208,7 +225,7 @@ opts.td.window.width = N;
 opts.td.window.shift = N;
 
 S1 = transferfnFD(B,E,opts);
-fprintf('---');
+fprintf('---\n');
 S2 = transferfnFD([B;B],[E;E],opts);
 
 % Results for two segments in S2 should be same a single segment in S1.
@@ -221,7 +238,7 @@ assert(all(S1.Z(:) == S2.Z(:)));
 %%%
 fprintf('\n');
 %%%
-fprintf('API Test 2. - Segmenting test 2.\n');
+logmsg(dbstack,'API Segmenting; Test 3.4.\n');
 
 N = 1000;
 B = randn(N,2);
@@ -232,7 +249,7 @@ opts.td.window.width = N;
 opts.td.window.shift = N;
 
 S1 = transferfnFD(B(:,1),E(:,1),opts);
-fprintf('---');
+fprintf('---\n');
 S2 = transferfnFD([B(:,1);B(:,1)],[E;E],opts);
 
 assert(all(S1.Predicted == S2.Segment.Predicted(:,1,1)));
@@ -240,7 +257,7 @@ assert(all(S1.Predicted == S2.Segment.Predicted(:,1,2)));
 
 fprintf('\n');
 %%%
-fprintf('API Test 2. - Segmenting test 3.\n');
+logmsg(dbstack,'API Segmenting; Test 3.5.\n');
 
 S3 = transferfnFD(B,E,opts);
 S4 = transferfnFD([B;B],[E;E],opts);
@@ -253,12 +270,12 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% API Test 3. - Intervals
+%% API Intervals
 % When there are gaps in time in the input/data, one can pass a cell array
 % of intervals and then the transfer function is computed on each interval.
 % The intervals may be segemented by specifying a window width and window
 % shift that is less than the interval length.
-fprintf('API Test 3 - Intervals test 1.\n');
+logmsg(dbstack,'API Intervals; Test 3.6.\n');
 
 N = 1000;
 B = randn(N,1);
@@ -269,7 +286,7 @@ opts.td.window.width = N;
 opts.td.window.shift = N;
 
 S1 = transferfnFD([B;B],[E;E],opts);
-fprintf('---');
+fprintf('---\n');
 S2 = transferfnFD({B;B},{E;E},opts);
 assert(all(S1.Z(:) == S2.Z(:)));
 assert(all(S1.Segment.Predicted(:) == S2.Segment.Predicted(:)))
@@ -277,12 +294,12 @@ assert(all(S1.Segment.Predicted(:) == S2.Segment.Predicted(:)))
 %%%
 fprintf('\n');
 %%%
-fprintf('API Test 3. - Intervals test 2.\n');
+logmsg(dbstack,'API Intervals; Test 3.7.\n');
 
 S1 = transferfnFD(B,E,opts);
-fprintf('---');
+fprintf('---\n');
 S2 = transferfnFD({B,[B;B]},{E,[E;E]},opts);
-fprintf('---');
+fprintf('---\n');
 S3 = transferfnFD({B,[B;B]},{0.5*E,[1.0*E;1.5*E]},opts);
 
 assert(all(S1.Predicted == S2.Segment.Predicted(:,:,1)))
@@ -299,7 +316,7 @@ fprintf('\n');
 %% API Test - Stack Regression
 % When intervals and/or segments are used, the default is to compute a
 % transfer function that is the average of each segment. 
-fprintf('API Test 4. - Stack regression 1.\n');
+logmsg(dbstack,'API Stack Regression; Test 3.8.\n');
 
 N = 1000;
 B = randn(N,2);
@@ -308,34 +325,38 @@ E = B;
 % 1 input/1 output. When using 1 segment, non-stack average should be same
 % as stack average result
 opts = transferfnFD_options(1);
-opts.td.window.width = N; % Not needed as this is default when width = NaN.
-opts.td.window.shift = N; % Not needed as this is default when window = NaN.
+% The following two lines are not needed as this is default for behavior when
+% transferfnFD_options(1)
+opts.td.window.width = N; 
+opts.td.window.shift = N; 
 
 S1 = transferfnFD(B(:,1),E(:,1),opts);
-fprintf('--\n');
+fprintf('---\n');
 opts.fd.stack.average.function = ''; % Don't compute stack average.
 S2 = transferfnFD(B(:,1),E(:,1),opts);
 assert(all(S1.Z(:) == S2.Z(:)))
 
 fprintf('\n');
 %%%
-fprintf('API Test 4. - Stack regression 2.\n');
+logmsg(dbstack,'API Stack Regression; Test 3.9.\n');
 
 % 2 inputs/2 outputs. When using 1 segment, stack regression should be
 % same as stack average result
 opts = transferfnFD_options(1);
-opts.td.window.width = N; % Not needed as this is default.
-opts.td.window.shift = N; % Not needed as this is default.
+% The following two lines are not needed as this is default for behavior when
+% transferfnFD_options(1)
+opts.td.window.width = N;
+opts.td.window.shift = N;
 
 S1 = transferfnFD(B,E,opts);
 opts.fd.stack.average.function = ''; % Don't compute stack average.
-fprintf('--\n');
+fprintf('---\n');
 S2 = transferfnFD(B,E,opts);
 assert(all(S1.Z(:) == S2.Z(:)))
 
 fprintf('\n');
 %%%
-fprintf('API Test 4. - Stack regression 3.\n');
+logmsg(dbstack,'API Stack Regression; Test 3.10.\n');
 
 % Compare stack average Z to stack regression Z. Results not expected to be
 % identical. For the stack average method, Z for each segment in a given
@@ -353,24 +374,26 @@ opts.td.window.width = N; % Will result in two intervals.
 opts.td.window.shift = N; % Will result in two intervals.
 
 S3 = transferfnFD([B;B],[E;E],opts);
-fprintf('--\n');
+fprintf('---\n');
 opts.fd.stack.average.function = '';
 S4 = transferfnFD([B;B],[E;E],opts); % window.width and window.shift ignored.
 assert(all(abs(S3.Z(:) - S4.Z(:)) < 10*eps))
 
 fprintf('\n');
 %%%
-fprintf('API Test 4. - Stack regression 4.\n');
+logmsg(dbstack,'API Stack Regression; Test 3.11.\n');
 
-% Expect identical result because intervals are identical to segments and
-% both compute non-stack Z.
+% Verify that get same answer when continuous and discontinuous segments
+% are used. Expecet identical results.
 opts = transferfnFD_options(1);
 opts.td.window.width = N;
 opts.td.window.shift = N;
-
 opts.fd.stack.average.function = '';
+
 S3 = transferfnFD([B;B],[E;E],opts);
-fprintf('--\n');
+fprintf('---\n');
+
+% Each element of cell array is treated as having gap in time stamps.
 S4 = transferfnFD({B,B},{E,E},opts);
 assert(all(S3.Z(:) == S4.Z(:)))
 
@@ -378,4 +401,4 @@ assert(all(S3.Z(:) == S4.Z(:)))
 fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-fprintf('transferfnFD_test.m: All tests passed.\n');
+logmsg(dbstack,'transferfnFD_test.m: All tests passed.\n');
