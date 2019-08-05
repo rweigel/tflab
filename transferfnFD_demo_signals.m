@@ -1,5 +1,7 @@
 function S = transferfnFD_demo_signals(tn, opts)
 
+addpath([fileparts(mfilename('fullpath')),'/lib']);
+
 assert(nargin == 2,'Two inputs (test number and dimension) are required');
 
 if tn == 0 % Prescribed impulse response
