@@ -88,6 +88,7 @@ if nargin < 3 || isempty(opts)
 end
 
 if iscell(B)
+    
     % Each cell element is an interval and an arbitrary gap in time is
     % assumed between the end of one element and the start of the next
     % element.
@@ -122,9 +123,21 @@ if iscell(B)
     end
     S = struct();
     S.Segment = struct();
-    for c = 1:length(B)
+    
+    for c = 1:length(B) % Number of segments
+        if opts.transferfnFD.loglevel > 0
+            logmsg(dbstack,...
+                'Starting computation for disconnected segment c = %d of %d\n',...
+                c,length(B));
+        end
         % Compute Z for each segment in each interval
+        if opts.transferfnFD.loglevel > 0
+            logmsg(dbstack,'Calling transferfnFD(B{%d},E{%d},...)\n',c,c);
+        end
+        
+        opts.transferfnFD.no_stack_regression = 1;
         Sc = transferfnFD(B{c},E{c},t{c},opts);
+        
         if ~isfield(Sc,'Segment')
             % If an interval had only one segment
             Sc.Segment = Sc;
@@ -139,8 +152,8 @@ if iscell(B)
     
     if isempty(opts.fd.stack.average.function)
         
-        % Remove fields from top level of S as they are calculations for
-        % the last interval.
+        % Remove fields from top level of S b/c they are calculations for
+        % the last c segment.
         fns = fieldnames(S);
         for i = 1:length(fns)
             if ~strcmp('Segment',fns{i})
@@ -149,33 +162,63 @@ if iscell(B)
         end
 
         if opts.transferfnFD.loglevel > 0
-            logmsg(dbstack,'Starting stack regression.\n');
+            logmsg(dbstack, 'Starting stack regression.\n');
         end
         
         % Compute Z at each fe by regressing on all segment DFTs near fe.
-        S.Segment = stackRegression(S.Segment,opts);
-
+        S.Segment = stackRegression(S.Segment, opts);
+                
         if opts.transferfnFD.loglevel > 0
-            logmsg(dbstack,'Finished stack regression.\n');
+            logmsg(dbstack, 'Finished stack regression.\n');
         end
         
-        S.Z = S.Segment.Z;
         S.fe = S.Segment.fe;
-        S.Segment = rmfield(S.Segment,'Z');
+        S.Z = S.Segment.Z;
+        S.Phi = S.Segment.Phi;
+        S.H = S.Segment.H;
+        S.tH = S.Segment.tH;
         S.Regression = S.Segment.Regression;
-        S.Segment = rmfield(S.Segment,'Regression');
+        
+        S.Segment = rmfield(S.Segment, 'Z');
+        S.Segment = rmfield(S.Segment, 'Phi');
+        S.Segment = rmfield(S.Segment, 'H');
+        S.Segment = rmfield(S.Segment, 'tH');
+        S.Segment = rmfield(S.Segment, 'Regression');
         
         % Calculate predicted/metrics/psd for each cell element
+
+        
         Sc = S;
         for c = 1:length(B)
             Sc.In = B{c};
             Sc.Out = E{c};
             Sc.Time = t{c};
+
+            if opts.transferfnFD.loglevel > 0
+                logmsg(dbstack,...
+                    ['Computing metrics for B{%d} and E{%d} using stack '...
+                     'regression transfer function.\n'],c,c);
+            end
             Sc = transferfnMetrics(Sc,opts);
+            if opts.transferfnFD.loglevel > 0
+                logmsg(dbstack,...
+                    ['Finished computing metrics for B{%d} and E{%d} using '...
+                     'stack regression transfer function.\n'],c,c);
+            end
+            for j = 1:size(Sc.Metrics.PE, 2)
+                logmsg(dbstack, ...
+                        'Output col %d, PE/CC/MSE = %.2f/%.2f/%.3f\n',...
+                         j,...
+                         Sc.Metrics.PE(1,j),...
+                         Sc.Metrics.CC(1,j),...
+                         Sc.Metrics.MSE(1,j));
+            end
+            
             S.Predicted{c} = Sc.Predicted;
             S.Metrics{c} = Sc.Metrics;
             S.PSD{c} = Sc.PSD;
         end
+        
         S.In = B;
         S.Out = E;
         S.Time = t;
@@ -208,12 +251,12 @@ if size(E,2) > 1
     % Ex = ZxxBx + ZxyBy + ...
     % Ey = ZyxBx + ZyyBy + ...
     % ...
-    for c = 1:size(E,2)
+    for j = 1:size(E,2)
         if opts.transferfnFD.loglevel > 0
-            logmsg(dbstack,'Calling transferfnFD(B,E(:,%d),...)\n',c);
+            logmsg(dbstack,'Calling transferfnFD(B,E(:,%d),...)\n',j);
         end
-        Sc = transferfnFD(B,E(:,c),t,opts);    
-        if c == 1
+        Sc = transferfnFD(B,E(:,j),t,opts);    
+        if j == 1
             S = Sc;
         else
             S = combineStructs(S,Sc,2);
@@ -274,7 +317,8 @@ else
         end
         % Ss = Segment struct.
         Ss = transferfnFD(B(Iseg,:),E(Iseg,:),t(Iseg),optsx);
-        if opts.transferfnFD.loglevel > 0 && ~isempty(opts.fd.stack.average.function)
+        if opts.transferfnFD.loglevel > 0 ...
+                        && ~isempty(opts.fd.stack.average.function)
             % Summarize results for each column of E
             for j = 1:size(E,2)
                 logmsg(dbstack,...
@@ -296,27 +340,43 @@ else
             S = combineStructs(S,Ss,3);
         end
     end
+    
     if isempty(opts.fd.stack.average.function)
-        if opts.transferfnFD.loglevel > 0
-            logmsg(dbstack, 'Starting stack regression.\n');
-        end
 
-        S = stackRegression(S,opts);
-
-        if opts.transferfnFD.loglevel > 0
-            logmsg(dbstack, 'Finished stack regression.\n');
-        end
+        if isfield(opts.transferfnFD, 'no_stack_regression')
+            if opts.transferfnFD.loglevel > 0
+                logmsg(dbstack,...
+                    ['opts.transferfnFD.no_stack_regression set. '...
+                     'Not doing stack regression.\n']);
+            end
+            S.Segment = S;
+            S = rmfield(S,'DFT');
+            S = rmfield(S,'PSD');
+            S = rmfield(S,'Regression');
+            return
+        else
         
-        S.Segment = S;
-        S.Segment = rmfield(S.Segment,'Z');
-        S = rmfield(S,'DFT');
-        S = rmfield(S,'Regression');
-        S = rmfield(S,'Predicted');
-        S = rmfield(S,'Metrics');
-        S.In = B;
-        S.Out = E;
-        S.Time = t;
-        S = transferfnMetrics(S,opts);
+            if opts.transferfnFD.loglevel > 0
+                logmsg(dbstack, 'Starting stack regression.\n');
+            end
+
+            S = stackRegression(S, opts);
+
+            if opts.transferfnFD.loglevel > 0
+                logmsg(dbstack, 'Finished stack regression.\n');
+            end
+
+            S.Segment = S;
+            S.Segment = rmfield(S.Segment,'Z');
+            S = rmfield(S,'DFT');
+            S = rmfield(S,'Regression');
+            S = rmfield(S,'Predicted');
+            S = rmfield(S,'Metrics');
+            S.In = B;
+            S.Out = E;
+            S.Time = t;
+            S = transferfnMetrics(S,opts);
+        end
     else
         if size(S.In,3) > 1
             S.Segment = S;
@@ -326,7 +386,7 @@ else
             S = rmfield(S,'DFT');
             S = rmfield(S,'Regression');
             S = rmfield(S,'Z');
-            S = stackAverage(S,opts); 
+            S = stackAverage(S,opts);
         end
     end    
     S.Options = opts;
@@ -334,12 +394,6 @@ else
 end
 
 [~,f] = fftfreq(size(B,1)); % Unique DFT frequencies
-
-if opts.transferfnFD.loglevel > 0
-    fprintf('transferfnFD.m: Making columns have zero mean.\n');
-end
-E = bsxfun(@minus, E, mean(E, 1));
-B = bsxfun(@minus, B, mean(B, 1));
 
 [fe,Ic,Ne] = opts.fd.evalfreq.function(...
                 size(B,1),opts.fd.evalfreq.functionargs{:});
@@ -439,9 +493,9 @@ if opts.transferfnFD.loglevel > 0
                      length(Ic)-1);
         logmsg(dbstack,...
             ['opts.fd.stack.average.function = ''''. \n' ...
-            ' No regression performed for each freq. band of segement\n']);
+            'No regression performed for each freq. band of segement\n']);
     else
-        logmsg(dbstack,['Starting freq and regression '...
+        logmsg(dbstack,['Starting freq band and regression '...
                         'calcs for %d frequencies.\n'],length(Ic)-1);
                     
         logmsg(dbstack,...
@@ -480,7 +534,7 @@ for j = 1:length(Ic)
 
     if opts.fd.regression.loglevel && ~isempty(opts.fd.stack.average.function)
         logmsg(dbstack,...
-                ['Starting freq and regression '...
+                ['Starting freq band and regression '...
                  'calcs on frequency %d of %d\n'],...
                  j, length(fe)-1);
     end
@@ -565,13 +619,13 @@ end
 if opts.transferfnFD.loglevel > 0
     if isempty(opts.fd.stack.average.function)
         logmsg(dbstack,...
-                ['Finished freqency band calculations '...
-                 'for %d frequencies.\n'],...
+                ['Finished freq band calculations '...
+                 'for %d eval freqs.\n'],...
                  length(Ic)-1);
     else
         logmsg(dbstack,...
-                ['Finished freqency band and regression '...
-                 'calculations for %d frequencies.\n'],...
+                ['Finished freq band and regression '...
+                 'calculations for %d eval. freqs.\n'],...
                  length(Ic)-1);
     end
 end
@@ -583,14 +637,21 @@ if ~isempty(opts.fd.stack.average.function)
     % Compute metrics for predicting segment output based on Z computed
     % using segment's input and output.
     S.Z = Z;
+    if opts.transferfnFD.loglevel > 0
+        logmsg(dbstack, 'Computing Phi and H\n');
+    end
     S.Phi = atan2(imag(Z),real(Z));
     [S.H,S.tH] = Z2H(S.Z,S.fe,size(S.In,1));
+
     if opts.transferfnFD.loglevel > 0
+        logmsg(dbstack, 'Finished computing Phi and H\n');
         logmsg(dbstack,...
                 ['Computing segment metrics for segement '...
                  'transfer function.\n']);
     end
+    
     S = transferfnMetrics(S,opts);
+    
     if opts.transferfnFD.loglevel > 0
         logmsg(dbstack, ...
                 ['Finished segment metrics for segment '...
@@ -675,12 +736,24 @@ end
 
 function S = stackRegression(S,opts)
 
-    for i = 1:size(S.DFT.In,1) % Eval frequencies
-        for c = 1:size(S.DFT.Out,2) % E columns
+    % At each evaluation frequency index i and output column c and for each
+    % segment s, S.DFT.Out(i,c,s) is a single-column matrix with rows of
+    % DFTs of segment s in the frequency band associated with i.
+    % S.DFT.In(i,1,s) is a matrix with same number of columns of S.In. Each
+    % column of S.DFT.In(i,1,s) contains the DFTs for the respective column
+    % in S.In for freq. band i and segment s.
+    
+    % https://www.mathworks.com/matlabcentral/answers/364719-detect-warning-and-take-action#answer_289064    
+
+    for i = 1:size(S.DFT.In, 1) % Eval frequencies
+        for c = 1:size(S.DFT.Out, 2) % Columns of E
+
+            if opts.transferfnFD.loglevel > 1
+                logmsg(dbstack, 'Doing stack regression for eval freq. %d and on column %d of input.\n', i, c);
+            end
+            warning('');
+            % S.DFT.Out(i,x,s)
             
-            % size(S.DFT.In,1) will always be 1. Each segment
-            % element S.DFT.In(i,1,s) is a matrix with Nb columns
-            % and rows of frequencies near fe.
             tmp = squeeze(S.DFT.In(i,1,:));
             ftB = cat(1,tmp{:});
 
@@ -692,18 +765,56 @@ function S = stackRegression(S,opts)
             Wr  = repmat(W,1,size(ftB,2));
             args = opts.fd.regression.functionargs;
             [z,stats] = opts.fd.regression.function(Wr.*ftB,W.*ftE,args{:});
+            [warnMsg, warnId] = lastwarn;
+            if ~isempty(warnMsg)
+                logmsg(dbstack, 'Warning occured on output column %d, eval freq. = %g\n', c, S.fe(i,1));
+                ftE
+                ftB
+                %size(ftB)
+                %keyboard
+            end
             S.Regression.Stats{i,c} = stats;
             if c == 1
                 Zc = z.';
             else
                 Zc = [Zc,z.'];
             end
+            if opts.transferfnFD.loglevel > 1
+                logmsg(dbstack, 'Finished stack regression for eval freq. %d and on column %d of input.\n', i, c);
+            end            
         end
         Z(i,:) = Zc;
     end
 
-    S.Z = Z;
+    S.Z = Z;    
+    logmsg(dbstack, 'Computing Phi and H\n');
+    S.Phi = atan2(imag(Z),real(Z));
+    [S.H,S.tH] = Z2H(S.Z,S.fe,size(S.In,1));
+    logmsg(dbstack, 'Finished computing Phi and H\n');
+
+    if opts.transferfnFD.loglevel > 0
+        logmsg(dbstack,...
+                ['Computing metrics on each segment using stack regression '...
+                 'transfer function.\n']);
+    end
     S = transferfnMetrics(S,opts);
+
+    if opts.transferfnFD.loglevel > 0
+        for c = 1:size(S.Metrics.PE, 2)
+            for s = 1:size(S.Metrics.PE, 3)
+                logmsg(dbstack, ...
+                        'Output col %d, segment %d: PE/CC/MSE = %.2f/%.2f/%.3f\n',...
+                         c,...
+                         s,...
+                         S.Metrics.PE(1,c,s),...
+                         S.Metrics.CC(1,c,s),...
+                         S.Metrics.MSE(1,c,s));
+            end
+        end
+        logmsg(dbstack,...
+                ['Finished computing metrics on each segment using stack regression '...
+                 'transfer function.\n']);
+    end
 
 end
 
