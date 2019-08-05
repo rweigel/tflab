@@ -565,8 +565,17 @@ for j = 1:length(Ic)
         % If not computing Z based on stack averages, don't need to do
         % regression as it is done later.
         args = opts.fd.regression.functionargs;    
+            
+        warning('');
         [Z(j,:),stats] = opts.fd.regression.function(...
                                 Wr.*ftB(r,:),W.*ftE(r,1),args{:});
+        [warnMsg, warnId] = lastwarn;                            
+        if ~isempty(warnMsg)
+            logmsg(dbstack, 'Warning occured on eval freq. = %d\n', j);
+            %ftE
+            %ftB
+            %keyboard
+        end                            
         S.Regression.Stats{j,1} = stats;
     end
     
@@ -751,7 +760,6 @@ function S = stackRegression(S,opts)
             if opts.transferfnFD.loglevel > 1
                 logmsg(dbstack, 'Doing stack regression for eval freq. %d and on column %d of input.\n', i, c);
             end
-            warning('');
             % S.DFT.Out(i,x,s)
             
             tmp = squeeze(S.DFT.In(i,1,:));
@@ -764,13 +772,14 @@ function S = stackRegression(S,opts)
             W   = cat(1,tmp{:});
             Wr  = repmat(W,1,size(ftB,2));
             args = opts.fd.regression.functionargs;
+
+            warning('');
             [z,stats] = opts.fd.regression.function(Wr.*ftB,W.*ftE,args{:});
             [warnMsg, warnId] = lastwarn;
             if ~isempty(warnMsg)
                 logmsg(dbstack, 'Warning occured on output column %d, eval freq. = %g\n', c, S.fe(i,1));
-                ftE
-                ftB
-                %size(ftB)
+                %ftE
+                %ftB
                 %keyboard
             end
             S.Regression.Stats{i,c} = stats;
