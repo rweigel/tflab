@@ -1,27 +1,23 @@
-function Zi = Zinterp(fe,Z,fg,varargin)
+function [Zi,fi] = zinterp(f,Z,fi,varargin)
 % ZINTERP - Interpolate transfer function onto frequency grid
 %
-%  Zg = Zinterp(fe,Z,fg) returns Zg containing interpolated values of Z at
-%  frequencies fg, where fe >= 0 and fg >= 0 are evaluation and grid
-%  frequencies, respectively. Rows of Z that have NaNs are ignored. fg
-%  values that are outside of range of fe values have an interpolated Zg
-%  value of zero (instead of NaN as would be the case for interp1).
+%  [Zi,fi] = zinterp(f,Z,N) returns Zi on N-point DFT grid fi = fftfreq(N)
+%  using INTERP1. f >= 0 is required and f(end) = +0.5 is allowed.
 %
-%  Elements of fe are frequencies of corresponding elements of Z if Z is a
-%  vector. If Z is a matrix, each column of Z is interpolated.
+%  If f(1) = 0, it is not used for interpolation and Zi(1) is set to Z(1)
+%  (or Zi(1,:) = Z(1,:) if Z is a matrix).
 %
-%  If fe(1) = 0, it is not used for interpolation. If fg(1) = 0 and fe(1) =
-%  0, the first row of Zg is set equal to first row of Z; otherwise, the
-%  first row of Zg is zeros.
+%  Zi = zinterp(f,Z,fi) returns interpolated values of Zi at frequencies fi
+%  using the given Z at frequencies f using INTERP1. fi >= 0 and f >= 0 are
+%  required.
 %
-%  If fe(end) = 0.5, the interpolation for the imaginary part of Z is
+%  If f(1) = 0 and fi(1) = 0, Zi(1) is set to Z(1) (or Zi(1,:) = Z(1,:) if
+%  Z is a matrix). the first row of Zg is zeros.
+%
+%  If f(end) = +0.5, the interpolation for the imaginary part of Z is
 %  performed using only Z(1:end-1,:) and imag(Zg(end,:)) is set to zeros.
 %
-%  Zg = Zinterp(fe,Z,fg,opts)
-%
-%  Zg = Zinterp(fe,Z,fg,)
-%
-%  See also ZINTERP_DEMO.
+%  See also ZINTERP_DEMO, ZINTERP_TEST.
 
 % TODO: Allow interpolation in log space.
 
@@ -40,58 +36,73 @@ assert(ndims(Z) == 2,'Z can have at most two dimensions.');
 
 transposeZ = 0;
 if size(Z,1) == 1
-    assert(size(Z,2) == length(fe),'If Z is a vector, it must have same length as fe.');
+    assert(size(Z,2) == length(f),'If Z is a vector, it must have same length as f.');
     transposeZ = 1;
     Z = transpose(Z);
 else
-    assert(size(Z,1) == length(fe),'If Z is a matrix, number of rows must equal length(fe).');
+    assert(size(Z,1) == length(f),'If Z is a matrix, number of rows must equal length(f).');
 end
 
-if any(fe < 0) || any(fg < 0)
-    error('Elements of fe and fg must be greater than or equal to zero.');
+N = NaN;
+if isscalar(fi)
+    assert(fi > 1,'N > 1 is required when using zinterp(f,Z,N)');
+    % Zinterp(f,Z,N) usage
+    N = fi;
+    [fa,fi] = fftfreq(N);
+    % fi contains unique DFT frequencies with f = -0.5 mapped to f = +0.5
+    % when N is even so that fg(end) = +0.5.
 end
 
-if nargin == 3 && (length(fe) == length(fg))
-    if all(fe(:) == fg(:))
+if any(f < 0) || any(fi < 0)
+    error('Elements of f and fi must be greater than or equal to zero.');
+end
+
+if nargin == 3 && (length(f) == length(fi))
+    if all(f(:) == fi(:))
         if verbose
             logmsg(dbstack,...
-                ['all(fe == fg) returned true. '...
+                ['all(f == fi) returned true. '...
                  'No interpolation will be performed.\n']);
         end
-        Zi = Z;
+        if ~isnan(N)
+            % Zinterp(f,Z,N) usage.
+            [Zi,fi] = Zfull(Z,N);
+        else
+            Zi = Z;
+        end
         return;
     end
 end
 
 if verbose
-    logmsg(dbstack, 'First grid frequency       : %.4f\n',fg(1));
-    logmsg(dbstack, 'First evaluation frequency : %.4f\n',fe(1));
-    logmsg(dbstack, 'Last grid frequency        : %.4f\n',fg(end));
-    logmsg(dbstack, 'Last evaluation frequency  : %.4f\n',fe(end));
+    logmsg(dbstack, 'First interp frequency: %.4f\n',fi(1));
+    logmsg(dbstack, 'First given frequency : %.4f\n',f(1));
+    logmsg(dbstack, 'Last interp frequency : %.4f\n',fi(end));
+    logmsg(dbstack, 'Last given frequency  : %.4f\n',f(end));
 end
 
-% Remove fe = 0
-fe0 = 0; % Will be 1 if f=0 fe value is zero.
-if fe(1) == 0
+% Remove Z value for fe = 0 if found.
+fe0 = 0;
+if f(1) == 0
     fe0 = 1;
-    fe = fe(2:end);
+    f = f(2:end);
     Zo = Z(1,:);
     Z = Z(2:end,:);
-    assert(all(imag(Zo)) == 0,'If fe(1) == 0 expect all(imag(Z(1,:))==0)');
+    assert(all(imag(Zo)) == 0,'If f(1) == 0 expect all(imag(Z(1,:))==0)');
 end
 
-% Remove fg = 0
-fg0 = 0; % Will be 1 if f = 0 fg value is zero.
-if fg(1) == 0
+% If fg(1) == 0, remove it before interpolation.
+fg0 = 0; 
+if fi(1) == 0
     fg0 = 1;
-    fg = fg(2:end);
+    fi = fi(2:end);
 end
 
-if fe(end) == 0.5
-    assert(all(imag(Z(end,:)) == 0),'If fe(end) == 0.5 expect all(imag(Z(end,:))==0)');
+if f(end) == 0.5
+    assert(all(imag(Z(end,:)) == 0),'If f(end) == 0.5 expect all(imag(Z(end,:))==0)');
 end
 
-Zi = zeros(length(fg),size(Z,2));
+Zi = zeros(length(fi),size(Z,2));
 
 for k = 1:size(Z,2)
     
@@ -102,22 +113,22 @@ for k = 1:size(Z,2)
             size(Z,1)-length(Ig),k);
     end
     
-    fek = fe(Ig);
+    fek = f(Ig);
     Zk = Z(Ig,k);
 
-    if fe(end) ~= 0.5
-        Zi(:,k) = interp1(fek,Zk,fg,varargin{:});
+    if f(end) ~= 0.5
+        Zi(:,k) = interp1(fek,Zk,fi,varargin{:});
     else
         % Z at f = 0.5 should have no imaginary component.
         % This performs imaginary interpolation only for 0 < f < 0.5.
-        Zir = interp1(fek,real(Zk),fg,varargin{:});
-        Zii = interp1(fek(1:end-1),imag(Zk(1:end-1)),fg,varargin{:});
+        Zir = interp1(fek,real(Zk),fi,varargin{:});
+        Zii = interp1(fek(1:end-1),imag(Zk(1:end-1)),fi,varargin{:});
         Zi(:,k) = Zir + sqrt(-1)*Zii;
     end
 
 end
 
-if fg(end) == 0.5
+if fi(end) == 0.5
     Zi(end,:) = real(Zi(end,:));
 end
 
@@ -131,6 +142,25 @@ if fg0 % If lowest grid frequency is zero (and so was removed)
     end
 end
 
+if ~isnan(N)
+    % Zinterp(f,Z,N) usage.
+    [Zi,fi] = Zfull(Zi,N);
+end
+
 if transposeZ
     Zi = transpose(Zi);
+end
+
+function [Zi,fi] = Zfull(Zi,N)
+    if mod(N,2) == 0
+        % Last Zi row corresponds to fg = +0.5. This put Z in conventional
+        % frequency order for even N where
+        % f = [0, 1/N, ..., N/2-1 , -0.5, ..., -1/N]
+        Zi = [Zi(1:end,:) ; flipud(conj(Zi(2:end-1,:)))];
+    else
+        Zi = [Zi(1:end,:) ; flipud(conj(Zi(2:end,:)))];
+    end
+    fi = fftfreq(N)';
+end
+
 end

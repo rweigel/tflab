@@ -9,13 +9,112 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% fe does not have a f = 0.5 value
-% fg has a f = 0.5 value
+[~,fe] = fftfreq(7);
+Z = (1+1j)*[1:length(fe)]';
+Z(1) = 3; % Make f = 0 value real (as it must be).
+[Zg,fg] = Zinterp(fe,Z,20,args{:});
+
+figure();
+    subplot(2,1,1)    
+    plot(fe,real(Z),'k.','MarkerSize',30);
+    hold on;grid on;box on;
+    plot(fg,real(Zg),'g.','MarkerSize',20);
+    xlabel('f');
+    ylabel('Re(Zg)');
+    legend('f','fi','Location','Best');
+    title(['Zinterp(f,Z,N) usage with N even and f w/o 0.5 value',ts]);
+    
+    subplot(2,1,2)    
+    plot(fe,imag(Z),'k.','MarkerSize',30);
+    hold on;grid on;box on;
+    plot(fg,imag(Zg),'g.','MarkerSize',20);
+    xlabel('f');
+    ylabel('Im(Zg)');
+    legend('f','fi','Location','Best');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[~,fe] = fftfreq(7);
+Z = (1+1j)*[1:length(fe)]';
+Z(1) = 3; % Make f = 0 value real (as it must be).
+[Zg,fg] = Zinterp(fe,Z,19,args{:});
+
+figure();
+    subplot(2,1,1)    
+    plot(fe,real(Z),'k.','MarkerSize',30);
+    hold on;grid on;box on;
+    plot(fg,real(Zg),'g.','MarkerSize',20);
+    xlabel('f');
+    ylabel('Re(Zg)');
+    legend('f','fi','Location','Best');
+    title(['Zinterp(f,Z,N) usage with N odd and f w/o 0.5 value',ts]);
+    
+    subplot(2,1,2)    
+    plot(fe,imag(Z),'k.','MarkerSize',30);
+    hold on;grid on;box on;
+    plot(fg,imag(Zg),'g.','MarkerSize',20);
+    xlabel('f');
+    ylabel('Im(Zg)');
+    legend('f','fi','Location','Best');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[~,fe] = fftfreq(8);
+Z = (1+1j)*[1:length(fe)]';
+Z(1) = 3;   % Make f = 0 value real (as it must be).
+Z(end) = 2; % Make fe(end) value real (as it must be when fe(end)= 0.5).
+[Zg,fg] = Zinterp(fe,Z,20,args{:});
+
+figure();
+    subplot(2,1,1)    
+    plot(fe,real(Z),'k.','MarkerSize',30);
+    hold on;grid on;box on;
+    plot(fg,real(Zg),'g.','MarkerSize',20);
+    xlabel('f');
+    ylabel('Re(Zg)');
+    legend('f','fi','Location','Best');
+    title(['Zinterp(f,Z,N) usage with N even and f w/ 0.5 value',ts]);
+    
+    subplot(2,1,2)    
+    plot(fe,imag(Z),'k.','MarkerSize',30);
+    hold on;grid on;box on;
+    plot(fg,imag(Zg),'g.','MarkerSize',20);
+    xlabel('f');
+    ylabel('Im(Zg)');
+    legend('f','fi','Location','Best');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[~,fe] = fftfreq(8);
+Z = (1+1j)*[1:length(fe)]';
+Z(1) = 3; % Make f = 0 value real (as it must be).
+Z(end) = 2; % Make fe(end) value real (as it must be when fe(end)= 0.5).
+[Zg,fg] = Zinterp(fe,Z,19,args{:});
+
+figure();
+    subplot(2,1,1)    
+    plot(fe,real(Z),'k.','MarkerSize',30);
+    hold on;grid on;box on;
+    plot(fg,real(Zg),'g.','MarkerSize',20);
+    xlabel('f');
+    ylabel('Re(Zg)');
+    legend('f','fi','Location','Best');
+    title(['Zinterp(f,Z,N) usage with N odd and f w/ 0.5 value',ts]);
+    
+    subplot(2,1,2)    
+    plot(fe,imag(Z),'k.','MarkerSize',30);
+    hold on;grid on;box on;
+    plot(fg,imag(Zg),'g.','MarkerSize',20);
+    xlabel('f');
+    ylabel('Im(Zg)');
+    legend('f','fi','Location','Best');
+    
+break
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% f does not have a 0.5 value
+% fi has a f = 0.5 value
 [~,fe] = fftfreq(7);
 [~,fg] = fftfreq(20);
 
 Z = (1+1j)*[1:length(fe)]';
-Z(1) = 3; % Make fe = 0 value real.
+Z(1) = 3; % Make f = 0 value real (as it must be).
 
 Zg = Zinterp(fe,Z,fg,args{:});
 
@@ -26,8 +125,8 @@ figure();
     plot(fg,real(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Re(Zg)');
-    legend('Given','Interpolated','Location','Best');
-    title(['fe does not have 0.5, fg does',ts]);
+    legend('f','fi','Location','Best');
+    title(['f does not have 0.5, fi does',ts]);
     
     subplot(2,1,2)    
     plot(fe,imag(Z),'k.','MarkerSize',30);
@@ -35,7 +134,7 @@ figure();
     plot(fg,imag(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Im(Zg)');
-    legend('Given at fe','Interpolated to fg','Location','Best');
+    legend('f','fi','Location','Best');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % fe and fg have a f = 0.5 value
@@ -55,8 +154,8 @@ figure();
     plot(fg,real(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Re(Zg)');
-    legend('Given','Interpolated','Location','Best');
-    title(['fe and fe have 0.5 values',ts]);
+    legend('f','fi','Location','Best');
+    title(['f and fi have 0.5 values',ts]);
 
     subplot(2,1,2)    
     plot(fe,imag(Z),'k.','MarkerSize',30);
@@ -64,7 +163,7 @@ figure();
     plot(fg,imag(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Im(Zg)');
-    legend('Given at fe','Interpolated to fg','Location','Best');
+    legend('f','fi','Location','Best');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % fe has f = 0 value, fg does not
@@ -84,8 +183,8 @@ figure();
     plot(fg,real(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Re(Zg)');
-    legend('Given','Interpolated','Location','Best');
-    title(['fe has 0 value, fg does not',ts]);
+    legend('f','fi','Location','Best');
+    title(['f has 0 value, fi does not',ts]);
 
     subplot(2,1,2)    
     plot(fe,imag(Z),'k.','MarkerSize',30);
@@ -93,10 +192,10 @@ figure();
     plot(fg,imag(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Im(Zg)');
-    legend('Given at fe','Interpolated to fg','Location','Best');
+    legend('f','fi','Location','Best');
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% fe and fg have no f = 0 value
+% f and fi have no 0 value
 [~,fe] = fftfreq(7);
 [~,fg] = fftfreq(21);
 fe = fe(2:end); % Remove fe = 0
@@ -113,8 +212,8 @@ figure();
     plot(fg,real(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Re(Zg)');
-    legend('Given','Interpolated','Location','Best');
-    title(['fe and fg have no 0 value',ts]); 
+    legend('f','fi','Location','Best');
+    title(['f and fi have no 0 value',ts]); 
     
     subplot(2,1,2)    
     plot(fe,imag(Z),'k.','MarkerSize',30);
@@ -122,11 +221,10 @@ figure();
     plot(fg,imag(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Im(Zg)');
-    legend('Given at fe','Interpolated to fg','Location','Best');
+    legend('f','fi','Location','Best');
     
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% fg has no f = 0 value, fe does
+% f has no 0 value, fi does
 [~,fe] = fftfreq(7);
 [~,fg] = fftfreq(21);
 fe = fe(2:end); % Remove fe = 0 value.
@@ -142,8 +240,8 @@ figure();
     plot(fg,real(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Re(Zg)');
-    legend('Given','Interpolated','Location','Best');
-    title(['fe has no 0 value, fg does',ts]); 
+    legend('f','fi','Location','Best');
+    title(['f has no 0 value, fi does',ts]); 
     
     subplot(2,1,2)    
     plot(fe,imag(Z),'k.','MarkerSize',30);
@@ -151,4 +249,4 @@ figure();
     plot(fg,imag(Zg),'g.','MarkerSize',20);
     xlabel('f');
     ylabel('Im(Zg)');
-    legend('Given at fe','Interpolated to fg','Location','Best');
+    legend('f','fi','Location','Best');

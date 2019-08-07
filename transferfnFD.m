@@ -347,7 +347,7 @@ else
             if opts.transferfnFD.loglevel > 0
                 logmsg(dbstack,...
                     ['opts.transferfnFD.no_stack_regression set. '...
-                     'Not doing stack regression.\n']);
+                     'Not doing stack regression (yet).\n']);
             end
             S.Segment = S;
             S = rmfield(S,'DFT');
@@ -646,14 +646,20 @@ if ~isempty(opts.fd.stack.average.function)
     % Compute metrics for predicting segment output based on Z computed
     % using segment's input and output.
     S.Z = Z;
-    if opts.transferfnFD.loglevel > 0
-        logmsg(dbstack, 'Computing Phi and H\n');
-    end
+
+    logmsg(dbstack, 'Computing Phi\n');    
     S.Phi = atan2(imag(Z),real(Z));
-    [S.H,S.tH] = Z2H(S.Z,S.fe,size(S.In,1));
+    logmsg(dbstack, 'Finished computing Phi\n');
+
+    logmsg(dbstack, 'Interpolating Z\n');    
+    Zi = Zinterp(S.fe,S.Z,size(S.In,1));
+    logmsg(dbstack, 'Finished interpolating Z\n');
+    
+    logmsg(dbstack, 'Computing H\n');
+    [S.H,S.tH] = Z2H(Zi);
+    logmsg(dbstack, 'Finished computing H\n');
 
     if opts.transferfnFD.loglevel > 0
-        logmsg(dbstack, 'Finished computing Phi and H\n');
         logmsg(dbstack,...
                 ['Computing segment metrics for segement '...
                  'transfer function.\n']);
@@ -724,8 +730,9 @@ function S = transferfnMetrics(S,opts)
     S.Metrics = struct();
     S.PSD = struct();
 
+    Zi = Zinterp(S.fe,S.Z,size(S.In,1));
     for k = 1:size(S.Out,3)
-        S.Predicted(:,:,k) = Zpredict(S.Z,S.In(:,:,k),S.fe,opts);
+        S.Predicted(:,:,k) = Zpredict(Zi,S.In(:,:,k),opts);
 
         S.PSD.In(:,:,k)    = smoothSpectra(S.In(:,:,k),opts,N);
         S.PSD.Out(:,:,k)   = smoothSpectra(S.Out(:,:,k),opts,N);
@@ -796,10 +803,18 @@ function S = stackRegression(S,opts)
     end
 
     S.Z = Z;    
-    logmsg(dbstack, 'Computing Phi and H\n');
+
+    logmsg(dbstack, 'Computing Phi\n');    
     S.Phi = atan2(imag(Z),real(Z));
-    [S.H,S.tH] = Z2H(S.Z,S.fe,size(S.In,1));
-    logmsg(dbstack, 'Finished computing Phi and H\n');
+    logmsg(dbstack, 'Finished computing Phi\n');
+
+    logmsg(dbstack, 'Interpolating Z\n');    
+    Zi = Zinterp(S.fe,S.Z,size(S.In,1));
+    logmsg(dbstack, 'Finished interpolating Z\n');
+    
+    logmsg(dbstack, 'Computing H\n');
+    [S.H,S.tH] = Z2H(Zi);
+    logmsg(dbstack, 'Finished computing H\n');
 
     if opts.transferfnFD.loglevel > 0
         logmsg(dbstack,...

@@ -1,51 +1,21 @@
-function [Ep,Z] = Zpredict(Z,B,fe,opts)
+function [Ep,Z] = Zpredict(Z,B,opts)
 %ZPREDICT Predict output given input and freq. domain transfer function
 %
-%  [Ep,Z] = Zpredict(Z,B) uses the frequency domain transfer function Z
-%  and the time series B and returns the output timeseries Ep.
+%  [E,Z] = Zpredict(Z,B) uses the frequency domain transfer function Z
+%  and the time series B and returns the output time series E.
 %  
-%  If the number of columns of Z is larger than that of B, Ep will have
-%  size(Z,2)/size(B,2) columns. The first set of size(B,2) columns in Z
-%  are convolved with B to form the first column of Ep. The second set of
-%  size(B,2) columns in Z are convolved with B to form the second column of
-%  Ep, etc.
-%
-%  [Ep,Z] = Zpredict(Z,B,fe) interpolates Z using 
-%  Zinterp(fe,Z,fftfreqp(size(B,1)) prior to computing Ep.
-%
-%  [Ep,Z] = Zpredict(Z,B,fe,opts)
+%  If the number of columns of Z is larger than that of B, E will have
+%  size(Z,2)/size(B,2) columns. The first set of size(B,2) columns in Z are
+%  used with B to form the first column of E. The second set of size(B,2)
+%  columns in Z are convolved with B to form the second column of E, etc.
 %
 %  See also ZPREDICT_DEMO.
 
 verbose = 0;
 
-N  = size(B,1);
-[~,fg] = fftfreq(N); % Will include f=0.5 if N is even.
+assert(size(B,1) == size(Z,1),'Requires: size(B,1) == size(Z,1)');
 
-if nargin > 2
-
-    if verbose
-      fprintf('Zpredict.m: Interpolating Z onto same frequency grid as input.\n');
-    end
-    
-    if nargin < 4
-        Z = Zinterp(fe,Z,fg);
-    else
-        Z = Zinterp(fe,Z,fg,opts);
-    end
-
-    if mod(N,2) == 0
-      % Last element of Z from Zinterp corresponds to fg = 0.5 if N is even.
-      Z = [ Z(1:end,:) ; flipud(conj(Z(2:end-1,:))) ];
-    else
-      Z = [ Z(1:end,:) ; flipud(conj(Z(2:end,:))) ];
-    end
-
-end
-
-assert(size(B,1) == size(Z,1),'Number of rows in B must equal number of rows in Z');
-
-Nout = size(Z,2)/size(B,2); % Number of output columns
+Nout = size(Z,2)/size(B,2); % Number of output columns in E
 Nin  = size(B,2);
 
 assert(mod(size(Z,2),Nin) == 0,'size(Z,2)/size(B,2) must be an integer');
