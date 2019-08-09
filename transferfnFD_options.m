@@ -110,10 +110,11 @@ opts.fd.stack = struct();
         opts.fd.stack.average.functionargs = {};
 
 opts.fd.interpolation = struct();
-    opts.fd.interpolation.function = @interp1;
-    opts.fd.interpolation.functionstr = 'interp1()';
-    opts.fd.interpolation.functionargs = {'linear', 0};
-    %opts.fd.interpolation.functionargs = {'linear','extrap'};
+    opts.fd.interpolation.function = @zinterp;
+    opts.fd.interpolation.functionstr = 'zinterp()';
+    opts.fd.interpolation.functionargs = {...
+                    struct('loglevel',0,...
+                           'interp1args',{{'linear',0}})};
     
 opts.fd.regression = struct();
     opts.fd.regression.function = @ols_regress;

@@ -109,7 +109,7 @@ if tn == 1 % Low pass filter impulse responses
 end
 
 % Compute exact transfer function
-[Z,f] = H2Z(H);
+[Z,f] = h2z(H);
 Z(Z==0) = eps; % So points show up on loglog plot.
 
 S.In  = B;

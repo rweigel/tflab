@@ -1,7 +1,7 @@
-function [Ep,Z] = Zpredict(Z,B,opts)
+function [Ep,Z] = zpredict(Z,B)
 %ZPREDICT Predict output given input and freq. domain transfer function
 %
-%  [E,Z] = Zpredict(Z,B) uses the frequency domain transfer function Z
+%  [E,Z] = ZPREDICT(Z,B) uses the frequency domain transfer function Z
 %  and the time series B and returns the output time series E.
 %  
 %  If the number of columns of Z is larger than that of B, E will have
@@ -10,8 +10,6 @@ function [Ep,Z] = Zpredict(Z,B,opts)
 %  columns in Z are convolved with B to form the second column of E, etc.
 %
 %  See also ZPREDICT_DEMO.
-
-verbose = 0;
 
 assert(size(B,1) == size(Z,1),'Requires: size(B,1) == size(Z,1)');
 
@@ -31,7 +29,6 @@ for j = 1:Nout
     end
 end
 
-% TODO: Verify that complex part is small. (May be non-zero due to
-% roundoff?)
-
-Ep = real(Ep);
+assert(isreal(Ep),...
+            ['Computed impulse response has imaginary component.'...
+            'Check calculation of Z']);

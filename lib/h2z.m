@@ -1,4 +1,4 @@
-function [Z,f] = H2Z(H)
+function [Z,f] = h2z(H)
 %H2Z - Compute frequency domain transfer function from impulse response
 %
 %  [Z,f] = H2Z(H) returns Z for frequencies in range fu, where

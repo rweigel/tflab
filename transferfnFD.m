@@ -498,17 +498,24 @@ if opts.transferfnFD.loglevel > 0
         logmsg(dbstack,['Starting freq band and regression '...
                         'calcs for %d frequencies.\n'],length(Ic)-1);
                     
-        logmsg(dbstack,...
-            'Using %s() with additional arguments\n',...
-            func2str(opts.fd.regression.function));
 
         fargs = opts.fd.regression.functionargs;
         if iscell(fargs) && ~isempty(fargs)
-            disp(fargs{1});
+            p = fargs{1};
         else
-            disp(fargs);
+            p = fargs;
         end
-        fprintf('\b');
+        if length(p) > 0
+            logmsg(dbstack,...
+                'Using %s() with additional arguments\n',...
+                func2str(opts.fd.regression.function));
+            disp(p)
+            fprintf('\b');
+        else
+            logmsg(dbstack,...
+                'Using %s() with additional arguments\n',...
+                func2str(opts.fd.regression.function));
+        end
     end
 end
 
@@ -598,7 +605,7 @@ for j = 1:length(Ic)
                 set(get(gca,'title'),'String',ts);            
 
             Ea = bandpass(E,[fe(j-2)-eps,fe(j)+eps]);
-            Ep = Zpredict(Z(j-2:j,:),B,fe(j-2:j));
+            Ep = zpredict(Z(j-2:j,:),B,fe(j-2:j));
 
             qqplot(Ea-Ep);grid on;box on;
                 set(get(gca,'ylabel'),'String','Bandpassed E(t)-E_p(t)');
@@ -652,11 +659,11 @@ if ~isempty(opts.fd.stack.average.function)
     logmsg(dbstack, 'Finished computing Phi\n');
 
     logmsg(dbstack, 'Interpolating Z\n');    
-    Zi = Zinterp(S.fe,S.Z,size(S.In,1));
+    Zi = zinterp(S.fe,S.Z,size(S.In,1));
     logmsg(dbstack, 'Finished interpolating Z\n');
     
     logmsg(dbstack, 'Computing H\n');
-    [S.H,S.tH] = Z2H(Zi);
+    [S.H,S.tH] = z2h(Zi);
     logmsg(dbstack, 'Finished computing H\n');
 
     if opts.transferfnFD.loglevel > 0
@@ -730,9 +737,9 @@ function S = transferfnMetrics(S,opts)
     S.Metrics = struct();
     S.PSD = struct();
 
-    Zi = Zinterp(S.fe,S.Z,size(S.In,1));
+    Zi = zinterp(S.fe,S.Z,size(S.In,1));
     for k = 1:size(S.Out,3)
-        S.Predicted(:,:,k) = Zpredict(Zi,S.In(:,:,k),opts);
+        S.Predicted(:,:,k) = zpredict(Zi,S.In(:,:,k));
 
         S.PSD.In(:,:,k)    = smoothSpectra(S.In(:,:,k),opts,N);
         S.PSD.Out(:,:,k)   = smoothSpectra(S.Out(:,:,k),opts,N);
@@ -809,11 +816,11 @@ function S = stackRegression(S,opts)
     logmsg(dbstack, 'Finished computing Phi\n');
 
     logmsg(dbstack, 'Interpolating Z\n');    
-    Zi = Zinterp(S.fe,S.Z,size(S.In,1));
+    Zi = zinterp(S.fe,S.Z,size(S.In,1));
     logmsg(dbstack, 'Finished interpolating Z\n');
     
     logmsg(dbstack, 'Computing H\n');
-    [S.H,S.tH] = Z2H(Zi);
+    [S.H,S.tH] = z2h(Zi);
     logmsg(dbstack, 'Finished computing H\n');
 
     if opts.transferfnFD.loglevel > 0
