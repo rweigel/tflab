@@ -13,7 +13,7 @@ set(0,'defaultFigureWindowStyle','docked');
 % B = randn(), E = B. With evalfreqs = DFT frequencies, should produce
 % perfect predictions b/c # of free parameters in fitted Z equals number of
 % data points.
-logmsg(dbstack,['Basic calculation; Test 1.1 - '...
+logmsg(['Basic calculation; Test 1.1 - '...
                 'B = randn(), E = B. 1 DFT point per freq. band.\n']);
 
 N = [99,100];
@@ -35,7 +35,7 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Basic calculation test 2.
 % B = cos(w*t), E = A(w)*cos(w*t + phi(w)). No leakage
-logmsg(dbstack,['Basic calculation; Test 1.2. - '...
+logmsg(['Basic calculation; Test 1.2. - '...
                 'B = cos(w*t), E ~ A(w)*cos(w*t + phi(w)). No leakage.\n']);
 
 clear E B
@@ -77,7 +77,7 @@ fprintf('\n');
 %% Basic calculation test 3.
 % B = randn(), H = [1]. evalfreqs = DFT frequencies.
 
-logmsg(dbstack,['Basic calculation; Test 1.3. - '...
+logmsg(['Basic calculation; Test 1.3. - '...
                 'H = [1,0,...] with varying # of zeros. '...
                 '1 DFT point per freq. band.\n']);
 
@@ -107,7 +107,7 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Regression test 1. OLS_REGRESS() using real and complex arguments
 % Expect results to be identical to within machine precision.
-logmsg(dbstack,['Basic calculation; Test 2.1. - '...
+logmsg(['Basic calculation; Test 2.1. - '...
                 'ols_regress() using real and complex arguments.\n']);
 
 B = randn(n,1);
@@ -131,7 +131,7 @@ fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Regression test 2. - Compare OLS_REGRESS() with ROBUSTFIT() when no noise.
 
-logmsg(dbstack,['Regression comparison; Test 2.2 - Compare ols_regress() w/ '...
+logmsg(['Regression comparison; Test 2.2 - Compare ols_regress() w/ '...
                 'robustfit() and no noise.\n']);
      
 N = [99,100];
@@ -175,7 +175,7 @@ fprintf('\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% API Test - Multiple Inputs and Ouputs
-logmsg(dbstack,'API I/O Test; Test 3.1. - One or Two Outputs, One Input.\n');
+logmsg('API I/O Test; Test 3.1. - One or Two Outputs, One Input.\n');
 
 N = 1000;
 B = randn(N,2);
@@ -196,7 +196,7 @@ assert(all(S1.Predicted == S2.Predicted(:,2)));
 %%%
 fprintf('\n');
 %%%
-logmsg(dbstack,'API I/O Test; Test 3.2. - Two Outputs, Two Inputs\n');
+logmsg('API I/O Test; Test 3.2. - Two Outputs, Two Inputs\n');
 
 % 2 inputs, one or two outputs
 S1 = transferfnFD(B,E(:,1),opts);
@@ -214,7 +214,7 @@ fprintf('\n');
 %% API Test - Segmenting
 % E and B are split into segments and transfer functions are computed for
 % each segment.
-logmsg(dbstack,'API Segmenting; Test 3.3.\n');
+logmsg('API Segmenting; Test 3.3.\n');
 
 N = 1000;
 B = randn(N,1);
@@ -238,7 +238,7 @@ assert(all(S1.Z(:) == S2.Z(:)));
 %%%
 fprintf('\n');
 %%%
-logmsg(dbstack,'API Segmenting; Test 3.4.\n');
+logmsg('API Segmenting; Test 3.4.\n');
 
 N = 1000;
 B = randn(N,2);
@@ -257,7 +257,7 @@ assert(all(S1.Predicted == S2.Segment.Predicted(:,1,2)));
 
 fprintf('\n');
 %%%
-logmsg(dbstack,'API Segmenting; Test 3.5.\n');
+logmsg('API Segmenting; Test 3.5.\n');
 
 S3 = transferfnFD(B,E,opts);
 S4 = transferfnFD([B;B],[E;E],opts);
@@ -275,7 +275,7 @@ fprintf('\n');
 % of intervals and then the transfer function is computed on each interval.
 % The intervals may be segemented by specifying a window width and window
 % shift that is less than the interval length.
-logmsg(dbstack,'API Intervals; Test 3.6.\n');
+logmsg('API Intervals; Test 3.6.\n');
 
 N = 1000;
 B = randn(N,1);
@@ -294,7 +294,7 @@ assert(all(S1.Segment.Predicted(:) == S2.Segment.Predicted(:)))
 %%%
 fprintf('\n');
 %%%
-logmsg(dbstack,'API Intervals; Test 3.7.\n');
+logmsg('API Intervals; Test 3.7.\n');
 
 S1 = transferfnFD(B,E,opts);
 fprintf('---\n');
@@ -316,7 +316,7 @@ fprintf('\n');
 %% API Test - Stack Regression
 % When intervals and/or segments are used, the default is to compute a
 % transfer function that is the average of each segment. 
-logmsg(dbstack,'API Stack Regression; Test 3.8.\n');
+logmsg('API Stack Regression; Test 3.8.\n');
 
 N = 1000;
 B = randn(N,2);
@@ -338,7 +338,7 @@ assert(all(S1.Z(:) == S2.Z(:)))
 
 fprintf('\n');
 %%%
-logmsg(dbstack,'API Stack Regression; Test 3.9.\n');
+logmsg('API Stack Regression; Test 3.9.\n');
 
 % 2 inputs/2 outputs. When using 1 segment, stack regression should be
 % same as stack average result
@@ -356,7 +356,7 @@ assert(all(S1.Z(:) == S2.Z(:)))
 
 fprintf('\n');
 %%%
-logmsg(dbstack,'API Stack Regression; Test 3.10.\n');
+logmsg('API Stack Regression; Test 3.10.\n');
 
 % Compare stack average Z to stack regression Z. Results not expected to be
 % identical. For the stack average method, Z for each segment in a given
@@ -381,7 +381,7 @@ assert(all(abs(S3.Z(:) - S4.Z(:)) < 10*eps))
 
 fprintf('\n');
 %%%
-logmsg(dbstack,'API Stack Regression; Test 3.11.\n');
+logmsg('API Stack Regression; Test 3.11.\n');
 
 % Verify that get same answer when continuous and discontinuous segments
 % are used. Expecet identical results.
@@ -401,4 +401,4 @@ assert(all(S3.Z(:) == S4.Z(:)))
 fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-logmsg(dbstack,'transferfnFD_test.m: All tests passed.\n');
+logmsg('transferfnFD_test.m: All tests passed.\n');

@@ -1,4 +1,5 @@
 function logmsg_test()
 
-%logmsg(dbstack, '%s\n', 'a');
-logmsg(dbstack, '%s\n%s\n', 'a', 'b');
+logmsg('%s = %d\n', 'a',1);
+logmsg('%s = %d\n', 'a',1);
+logmsg('%s = %d\n%s = %d\n', 'a', 1, 'b', 1);

@@ -55,7 +55,7 @@ end
 
 if length(f) == length(fi) && all(f(:) == fi(:))
     if opts.loglevel > 0
-        logmsg(dbstack,...
+        logmsg(...
             ['all(f == fi) returned true. '...
              'No interpolation will be performed.\n']);
     end
@@ -70,10 +70,10 @@ if length(f) == length(fi) && all(f(:) == fi(:))
 end
 
 if opts.loglevel > 0
-    logmsg(dbstack, 'First interp frequency: %.4f\n',fi(1));
-    logmsg(dbstack, 'First given frequency : %.4f\n',f(1));
-    logmsg(dbstack, 'Last interp frequency : %.4f\n',fi(end));
-    logmsg(dbstack, 'Last given frequency  : %.4f\n',f(end));
+    logmsg( 'First interp frequency: %.4f\n',fi(1));
+    logmsg( 'First given frequency : %.4f\n',f(1));
+    logmsg( 'Last interp frequency : %.4f\n',fi(end));
+    logmsg( 'Last given frequency  : %.4f\n',f(end));
 end
 
 % Remove Z value for f = 0 if found.
