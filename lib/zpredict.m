@@ -29,6 +29,9 @@ for j = 1:Nout
     end
 end
 
-assert(isreal(Ep),...
+if max(abs(imag(Ep))) > eps
+    assert(isreal(Ep),...
             ['Computed impulse response has imaginary component.'...
             'Check calculation of Z']);
+end
+Ep = real(Ep);

@@ -19,9 +19,6 @@ else
     t = round(N*fftfreq(N))';
 end
 
-if ~isreal(h)
-    keyboard
-end
 assert(isreal(h),...
             ['Computed impulse response has imaginary component.'...
             'Check calculation of Z']);

@@ -7,11 +7,11 @@ function S = transferfnFD(B,E,t,opts)
 %    Ex(f) = Zxx(f)Bx(f) + Zxy(f)By(f) + ...
 %  
 %  given time series for Ex(t), Bx(t), By(t), ... and using the convention
-%  that U(f) is the fourier transform of U(t).
+%  that for an arbitrary variable U, U(f) is the fourier transform of U(t).
 %
 %  Estimates are made for the complex-valued transfer function Z at a set
 %  of evaluation frequencies, fe, using regression with a set of
-%  frequencies in a window around each fe on the model equation above.
+%  frequencies in a band around each fe on the model equation above.
 %  
 %  The set of evaluation frequencies and windows are determined using the
 %  function evalfreq(). By default, the evaluation frequencies are
@@ -395,6 +395,11 @@ end
 
 [~,f] = fftfreq(size(B,1)); % Unique DFT frequencies
 
+if opts.transferfnFD.loglevel > 0
+    logmsg(['Calling %s() using additional arguments given in \n'...
+            'opts.fd.evalfreq.functionargs\n'],...
+            func2str(opts.fd.evalfreq.function));
+end
 [fe,Ic,Ne] = opts.fd.evalfreq.function(...
                 size(B,1),opts.fd.evalfreq.functionargs{:});
 
@@ -419,7 +424,7 @@ end
 
 if ~isempty(opts.td.window.function)
     if opts.transferfnFD.loglevel > 0
-        logmsg( 'Computing windowed data.\n');
+        logmsg('Computing windowed data.\n');
     end
     [B,W] = opts.td.window.function(B,opts.td.window.functionargs{:});
     [E,W] = opts.td.window.function(E,opts.td.window.functionargs{:});
@@ -497,25 +502,9 @@ if opts.transferfnFD.loglevel > 0
     else
         logmsg(['Starting freq band and regression '...
                         'calcs for %d frequencies.\n'],length(Ic)-1);
-                    
-
-        fargs = opts.fd.regression.functionargs;
-        if iscell(fargs) && ~isempty(fargs)
-            p = fargs{1};
-        else
-            p = fargs;
-        end
-        if length(p) > 0
-            logmsg(...
-                'Using %s() with additional arguments\n',...
-                func2str(opts.fd.regression.function));
-            disp(p)
-            fprintf('\b');
-        else
-            logmsg(...
-                'Using %s() with additional arguments\n',...
-                func2str(opts.fd.regression.function));
-        end
+        logmsg(...
+            'Using %s() with additional arguments given in\nopts.fd.regression.functionargs\n',...
+            func2str(opts.fd.regression.function));
     end
 end
 
@@ -654,17 +643,29 @@ if ~isempty(opts.fd.stack.average.function)
     % using segment's input and output.
     S.Z = Z;
 
-    logmsg( 'Computing Phi\n');    
+    if opts.transferfnFD.loglevel > 0
+        logmsg( 'Computing Phi\n');
+    end
     S.Phi = atan2(imag(Z),real(Z));
-    logmsg( 'Finished computing Phi\n');
+    if opts.transferfnFD.loglevel > 0
+        logmsg( 'Finished computing Phi\n');
+    end
 
-    logmsg( 'Interpolating Z\n');    
+    if opts.transferfnFD.loglevel > 0
+        logmsg( 'Interpolating Z\n');
+    end
     Zi = zinterp(S.fe,S.Z,size(S.In,1));
-    logmsg( 'Finished interpolating Z\n');
-    
-    logmsg( 'Computing H\n');
+    if opts.transferfnFD.loglevel > 0
+        logmsg( 'Finished interpolating Z\n');
+    end
+
+    if opts.transferfnFD.loglevel > 0    
+        logmsg( 'Computing H\n');
+    end
     [S.H,S.tH] = z2h(Zi);
-    logmsg( 'Finished computing H\n');
+    if opts.transferfnFD.loglevel > 0    
+        logmsg( 'Finished computing H\n');
+    end
 
     if opts.transferfnFD.loglevel > 0
         logmsg(...
@@ -811,17 +812,29 @@ function S = stackRegression(S,opts)
 
     S.Z = Z;    
 
-    logmsg( 'Computing Phi\n');    
+    if opts.transferfnFD.loglevel > 0
+        logmsg( 'Computing Phi\n');
+    end
     S.Phi = atan2(imag(Z),real(Z));
-    logmsg( 'Finished computing Phi\n');
+    if opts.transferfnFD.loglevel > 0
+        logmsg( 'Finished computing Phi\n');
+    end
 
-    logmsg( 'Interpolating Z\n');    
+    if opts.transferfnFD.loglevel > 0
+        logmsg( 'Interpolating Z\n');    
+    end
     Zi = zinterp(S.fe,S.Z,size(S.In,1));
-    logmsg( 'Finished interpolating Z\n');
-    
-    logmsg( 'Computing H\n');
+    if opts.transferfnFD.loglevel > 0    
+        logmsg( 'Finished interpolating Z\n');
+    end
+
+    if opts.transferfnFD.loglevel > 0    
+        logmsg( 'Computing H\n');
+    end
     [S.H,S.tH] = z2h(Zi);
-    logmsg( 'Finished computing H\n');
+    if opts.transferfnFD.loglevel > 0    
+        logmsg( 'Finished computing H\n');
+    end
 
     if opts.transferfnFD.loglevel > 0
         logmsg(...

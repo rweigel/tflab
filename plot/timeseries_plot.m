@@ -1,4 +1,4 @@
-function fh = timeseries_plot(S, pt)
+function timeseries_plot(S, pt)
 %TIMESERIES_PLOT - Plot timeseries in output of TRANSFERFNFD.
 %
 %  TIMESERIES(S, pt), where S is the output of TRANSFERFNFD and pt is the
@@ -12,7 +12,6 @@ t = S.Time;
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
-fh = figure();
 figprep();
 
 if size(S.In,2) > 1,
@@ -42,7 +41,7 @@ if strcmp(pt,'raw')
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_ylim();
         set(gca,'XTickLabel',[]);
-        title(ts,'FontWeight','Normal')
+        %title(ts,'FontWeight','Normal')
     subplot('Position',PositionBottom);
         plot(t,S.Out);
         grid on;box on;    
@@ -115,8 +114,8 @@ elseif strcmp(pt,'error')
                         opts.info.outstr,...
                         opts.info.outunit);    
         end
-        title(['Raw Output (top) Predicted Raw Output (bottom)',ts],...
-               'FontWeight','Normal');
+        %title(['Raw Output (top) Predicted Raw Output (bottom)',ts],...
+        %       'FontWeight','Normal');
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_ylim();
         set(gca,'XTickLabel',[]);
@@ -129,19 +128,19 @@ elseif strcmp(pt,'error')
                         opts.info.outstr{1},...
                         opts.info.outunit);
         else
-            ls = sprintf('%s(:,1) meas. - %s(:,1) pred. [%s]',...
+            ls = sprintf('%s(:,1)- %s(:,1) predicted [%s]',...
                         opts.info.outstr,...
                         opts.info.outstr,...
                         opts.info.outunit);    
         end
-        ls = sprintf('%s PE/CC/MSE = %.3f/%.3f/%.3f',...
-                        ls,...
+        ts = sprintf('PE/CC/MSE = %.3f/%.3f/%.3f',...
                         S.Metrics.PE,...
                         S.Metrics.CC,...
                         S.Metrics.MSE);
                  
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_ylim();
+        adjust_exponent('y');
         xlabel(sprintf('%s [%s]', opts.info.timestr, opts.info.timeunit));
         if ischar(opts.td.start)
             datetick('x');

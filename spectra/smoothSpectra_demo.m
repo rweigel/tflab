@@ -1,33 +1,54 @@
-N = 1023;
+clear;
+
+N = 1024;
+n = 1024/4;
+
+% Raw
+F = fftfreqp(N)';
+f = fftfreqp(n)';
+t = (0:n-1)';
+for i = 1:length(F)
+    p(i)  = 2*pi*2*(rand(1)-0.5);
+    %p(i)  = 0;
+    Fu(i) = F(i);
+    a(i)  = F(i);
+    y(:,i) = a(i)*cos(2*pi*F(i)*t + p(i));
+end
+
+yr = sum(y,2);
+%yr = yr/sum(yr);
+
+% Parzen
+wp = parzenwin(n);
+wp = wp-mean(wp);
+yp = yr.*wp;
+%yp = yp/sum(yp);
+
+% DPSS
+NW = 2; % 2, 5/2, 3, 7/2, and 4 are typical vaues
+wd = dpss(n,NW);
+wd = wd(:,1)-mean(wd(:,1));
+yd = yr.*wd;
+%yd = yd/sum(yd);
+
+Y = [yr,yp,yd];
+P = (2/size(Y,1))*sqrt(fft(Y).*conj(fft(Y)));
+P = P(1:length(f),:);
+
+figure(1);clf;
+    plot(t,yr);
+
+figure(2);clf;axis square
+    plot(Fu,a,'.','MarkerSize',20);
+    hold on;grid on;
+    plot(f(2:end),P(2:end,1),'r','Marker','.');
+    plot(f(2:end),P(2:end,2),'g','Marker','.')
+    plot(f(2:end),P(2:end,3),'b','Marker','.')
+    legend('Exact','Raw','Parzen','DPSS');
+break
+
 window = ones(floor(N/4),1);
 noverlap = 0;
-
-wd = dpss(N,1,64);
-wd = wd(:,1)/mean(wd(:,1));
-
-wp = parzenwin(N);
-wp = wp/mean(wp);
-
-y = 2*sin(128*pi*[0:N-1]'/N);
-y = y + 2*sin(64*pi*[0:N-1]'/N);
-yp = y.*wp;
-yd = y.*wd;
-[Pp,fp] = periodogram([y,yp,yd]);
-
-clf;
-semilogy(fp(2:end)/(2*pi),P(2:end,1),'r')
-hold on;
-semilogy(f(2:end)/(2*pi),P(2:end,2),'g')
-semilogy(f(2:end)/(2*pi),P(2:end,3),'b')
-
-legend('Raw','Parzen','DPSS');
-semilogy(fp(2:end)/(2*pi),Pp(2:end,1),'r.')
-semilogy(f(2:end)/(2*pi),P(2:end,2),'g.')
-semilogy(f(2:end)/(2*pi),P(2:end,3),'b.')
-
-plot([128/(2*N),128/(2*N)],[eps,1],'k');
-
-break
 
 sf = N*N/2;
 

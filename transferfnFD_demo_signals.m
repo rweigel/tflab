@@ -2,13 +2,76 @@ function S = transferfnFD_demo_signals(tn, opts)
 
 addpath([fileparts(mfilename('fullpath')),'/lib']);
 
-assert(nargin == 2,'Two inputs (test number and dimension) are required');
+assert(nargin == 2,'Two inputs are required');
+
+if tn == -2
+    N = opts.N;
+    addpath([fileparts(mfilename('fullpath')),'/fft']);
+    addpath([fileparts(mfilename('fullpath')),'/lib']);
+
+    [~,F] = fftfreq(opts.N);
+    F = F';
+    t = (0:opts.n-1)';
+    for i = 2:length(F)
+        A(i,1)   = F(i);
+        Phi(i,1) = -2*pi*F(i);
+        B(:,i) = cos(2*pi*F(i)*t);
+        E(:,i) = A(i)*cos(2*pi*F(i)*t + Phi(i));
+        %E(:,i) = A(i)*cos(2*pi*F(i)*t);
+    end
+
+    B = sum(B,2);
+    E = sum(E,2);
+
+    %B = B/max(B);
+    %E = E/max(E);
+
+    [~,f] = fftfreq(opts.n);
+    f = f';
+    for i = 2:length(f)
+        A(i,1)   = f(i);
+        Phi(i,1) = -2*pi*f(i);
+        Z(i,1) = A(i)*(cos(Phi(i)) + sqrt(-1)*sin(Phi(i)));
+    end
+    
+    S.In  = B;
+    S.Out = E;
+    S.Z  = Z;
+    S.fe = f;
+    S.H = z2h(zinterp(f,Z,opts.n));
+    S.tH = (0:opts.n-1)';
+    return
+end
+
+if tn == -1
+    N = opts.N;
+    addpath([fileparts(mfilename('fullpath')),'/fft']);
+    addpath([fileparts(mfilename('fullpath')),'/lib']);
+    [~,f] = fftfreq(N);
+    H = opts.H;
+    f = f';
+    [z,w] = freqz(opts.H,1,f,1);
+    [Z,fi] = zinterp(f,z,opts.N);    
+
+    B = randn(opts.N,1);
+    E = zpredict(Z,B);
+
+    S.In  = B;
+    S.Out = E;
+    S.Z  = z;
+    S.fe = f;
+    S.H = opts.H;
+    S.tH = (0:size(opts.H,1)-1)';
+    return
+end
 
 if tn == 0 % Prescribed impulse response
     description = '';
 
     H = opts.H;
-    B = randn(100+length(H),1);
+    N = opts.N;
+    
+    B = randn(opts.N+length(H),1);
     E = filter(H,1,B);
     
     % Remove non-steady-state
@@ -115,7 +178,7 @@ Z(Z==0) = eps; % So points show up on loglog plot.
 S.In  = B;
 S.Out = E;
 S.Z  = Z;
-S.fe = f;
+S.fe = f';
 S.H = H;
 S.tH = (0:size(H,1)-1)';
 %S.H  = [H ; 0*H(2:end)];         % Convert H to standard form

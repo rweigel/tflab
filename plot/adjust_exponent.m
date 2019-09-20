@@ -39,7 +39,11 @@ if strcmp(get(gca, [direction,'Scale']), 'log')
     if isempty(labels)
         return;
     end
+    found = 0;
     for i = 1:length(labels)
+        if strcmp(labels{i}(1),'$')
+            found = 1;
+        end
         if strcmp(labels{i},'10^{-1}')
             labels{i} = '0.1';
         end
@@ -65,7 +69,12 @@ if strcmp(get(gca, [direction,'Scale']), 'log')
             labels{i} = '$100$';
         end
     end
-    set(gca,[direction,'TickLabel'], labels);
+    if found
+        % Only change if found = 1. If range of y is < 10, no exponents are
+        % used to label each tick. If there was an offset x10^{N} shown,
+        % doing the following would drop it.
+        set(gca,[direction,'TickLabel'], labels);
+    end
 end
 
 % Remove the offsetted x10^{N} notation that appears on last axis label
@@ -74,6 +83,9 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
     labels = get(gca, [direction,'TickLabel']);
     ticks = get(gca, [direction,'Tick']);
     if isempty(labels)
+        return;
+    end
+    if ticks(end) == 0
         return;
     end
     if force || ticks(end) > 1000 || ticks(end) < 0.001 % Check 1
@@ -111,3 +123,5 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
         end
     end
 end
+
+%drawnow

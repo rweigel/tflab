@@ -7,7 +7,8 @@ t = S.Time;
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
-fh = figure();
+%fh = figure();
+figprep();
 
 if strcmp(pt,'raw')
     if size(S.In,2) > 1,s1='s';else,s1='';end  
@@ -27,9 +28,10 @@ if strcmp(pt,'raw')
                             instr,1:size(S.In,2),opts.info.inunit);
             end
         end
-        legend(ls,'Location','Best','Orientation','Horizontal');
+        legend(ls,'Location','NorthWest','Orientation','Horizontal');
         set(gca,'XTickLabel',[]);
-        title(ts,'FontWeight','Normal')
+        %title(ts,'FontWeight','Normal')
+        adjust_exponent('y');
     subplot('Position',PositionBottom);
         loglog(S.fe,S.PSD.Out);
         grid on;box on;
@@ -40,8 +42,9 @@ if strcmp(pt,'raw')
             ls = sprintf('%s(:,1) [%s]\n',...
                     opts.info.outstr,opts.info.outunit);
         end
-        legend(ls,'Location','Best','Orientation','Horizontal');
+        legend(ls,'Location','NorthWest','Orientation','Horizontal');
         xlabel(sprintf('Frequency [1/%s]',opts.info.timeunit));
+        adjust_exponent('y');
 elseif strcmp(pt,'windowed')
     if size(S.In,2) > 1,s1='s';else,s1='';end  
     ts = sprintf('Smoothed PSD of %s-windowed Input%s (top) and Output (bottom)',...
