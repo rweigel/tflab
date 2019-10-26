@@ -492,10 +492,10 @@ ftB = ftB(1:Np,:);
 ftE = ftE(1:Np,:);
 
 if opts.transferfnFD.loglevel > 0
-    if isempty(opts.fd.stack.average.function)
+    if isempty(opts.fd.stack.average.function) || ~strcmp(opts.fd.program.name,'transferfnFD')
         logmsg(...
-                    'Starting freq band calcs for %d frequencies.\n',...
-                     length(Ic)-1);
+            'Starting freq band calcs for %d frequencies.\n',...
+            length(Ic)-1);
         logmsg(...
             ['opts.fd.stack.average.function = ''''. \n' ...
             'No regression performed for each freq. band of segement\n']);
@@ -503,20 +503,21 @@ if opts.transferfnFD.loglevel > 0
         logmsg(['Starting freq band and regression '...
                         'calcs for %d frequencies.\n'],length(Ic)-1);
         logmsg(...
-            'Using %s() with additional arguments given in\nopts.fd.regression.functionargs\n',...
+            ['Using %s() with additional arguments given in\n'...
+             'opts.fd.regression.functionargs\n'],...
             func2str(opts.fd.regression.function));
     end
 end
 
 winfn = opts.fd.window.function;
-if opts.fd.window.loglevel
+if opts.fd.window.loglevel && strcmp(opts.fd.program.name,'transferfnFD')
     logmsg( 'Using FD window function %s\n',func2str(winfn));
 end
 
-if opts.fd.evalfreq.loglevel
+if opts.fd.evalfreq.loglevel && strcmp(opts.fd.program.name,'transferfnFD')
     evalfreq_log(size(B,1),opts.fd.evalfreq.functionargs{:});
 end
-if opts.fd.evalfreq.plot(1)
+if opts.fd.evalfreq.plot(1) && strcmp(opts.fd.program.name,'transferfnFD')
 	evalfreq_plot(size(B,1),opts.fd.evalfreq.functionargs{:});
     if opts.fd.evalfreq.plot(2)
         % Print png
@@ -528,7 +529,9 @@ end
 
 for j = 1:length(Ic)
 
-    if opts.fd.regression.loglevel && ~isempty(opts.fd.stack.average.function)
+    if opts.fd.regression.loglevel ...
+            && ~isempty(opts.fd.stack.average.function) ...
+            && strcmp(opts.fd.program.name,'transferfnFD')
         logmsg(...
                 ['Starting freq band and regression '...
                  'calcs on frequency %d of %d\n'],...
@@ -557,7 +560,8 @@ for j = 1:length(Ic)
                  f(Ic(j)+Ne(j)));
     end
 
-    if ~isempty(opts.fd.stack.average.function)
+    if ~isempty(opts.fd.stack.average.function) ...
+       && strcmp(opts.fd.program.name,'transferfnFD')
         % If not computing Z based on stack averages, don't need to do
         % regression as it is done later.
         args = opts.fd.regression.functionargs;    
@@ -638,7 +642,12 @@ end
 % TODO: Allow TD window and prewhiten to not be same for input and output
 % and then compute corrected Z?
 
-if ~isempty(opts.fd.stack.average.function)
+if strcmp(opts.fd.program.name,'lemimt')
+    tmp = transferfnFD_lemimt(S.In,S.Out,opts.fd.program.options);
+    S.Z = tmp.Z;
+    S.fe = tmp.fe;
+end
+if ~isempty(opts.fd.stack.average.function) && strcmp(opts.fd.program.name,'transferfnFD')
     % Compute metrics for predicting segment output based on Z computed
     % using segment's input and output.
     S.Z = Z;

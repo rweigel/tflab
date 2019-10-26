@@ -35,6 +35,10 @@ opts.transferfnFD = struct();
         opts.transferfnFD.plot.Z = [0,0,0];
         opts.transferfnFD.plot.H = [0,0,0];
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Time domain options
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
 % # of points at start and end to trim before computing metrics
 % (pe/cc/mse/sn/coherence)
 opts.td.Ntrim = NaN;
@@ -86,6 +90,16 @@ opts.td.prewhiten = struct();
         opts.td.prewhiten.functionargs = {'diff'};
     end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Frequency domain options
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+opts.fd.progam = struct();
+    opts.fd.program.name = 'transferfnFD';
+    % Use lemimt program. All fd options below are ignored.
+    %opts.fd.progam.name = 'lemimt';
+    opts.fd.program.options = '';
+
 opts.fd.evalfreq = struct();
     opts.fd.evalfreq.plot = [0,0,0];
     opts.fd.evalfreq.loglevel = 0;
@@ -103,6 +117,14 @@ opts.fd.window = struct();
     opts.fd.window.loglevel = 0; 
     opts.fd.window.plot = 0; 
 
+% When stack.average.function = @transferfnAverage is used, ffts in each
+% time window are computed and the ffts in a frequency band are used for a
+% regression to find Z for that time window and frequency band. Then, the
+% Zs for each time window are averaged.
+% When opts.fd.stack.average.function == '', ffts in each time window are
+% computed and the ffts in a frequency band for all windows are combined
+% and used to perform one regression to compute one Z in that frequency
+% band.
 opts.fd.stack = struct();
     opts.fd.stack.average = struct();
         opts.fd.stack.average.function = @transferfnAverage;
@@ -149,7 +171,7 @@ if os == 0
     opts.fd.evalfreq.functionargs = {[1,0], 'linear'};
     opts.fd.evalfreq.functionstr  = '1 DFT point per freq. band';
 elseif os == 1 || nargs == 0
-    opts.description = 'OLS and 7 pts/decade';
+    opts.description = 'OLS and ~7 pts/decade';
 elseif os == 2
     opts.description = 'yulewalker(10) prewhiten';
     opts.td.prewhiten.method = 'yulewalker';

@@ -4,8 +4,24 @@ clear;
 
 addpath([fileparts(mfilename('fullpath')),'/plot']);
 
-N = 1001;
-n = 101;
+%% Test of lemimt code
+N = 10001; % Number of frequencies
+n = 1001;  % Number of data points
+
+S0 = transferfnFD_demo_signals(-2,struct('N',N,'n',n));
+
+opts = transferfnFD_options(0);
+addpath('~/git/lemimt');
+opts.fd.program.name = 'lemimt'
+opts.transferfnFD.loglevel = 0;
+
+S1 = transferfnFD(S0.In,S0.Out,opts);
+
+break
+
+%% Test effect of adding frequencies in signal between fft grid frequencies
+N = 10001; % Number of frequencies
+n = 1001;  % Number of data points
 
 S0 = transferfnFD_demo_signals(-2,struct('N',N,'n',n));
 
@@ -31,7 +47,8 @@ figure(5);clf;
     transferfnH_plot(S1,[-5,5]);   % Compare exact with computed
 
 break
-    
+
+%% Test of E(t+1) = B(t)
 N = 11;
 H = [0,1]';
 

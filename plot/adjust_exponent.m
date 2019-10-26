@@ -124,4 +124,4 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
     end
 end
 
-%drawnow
+drawnow

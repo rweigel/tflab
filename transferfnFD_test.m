@@ -14,7 +14,7 @@ set(0,'defaultFigureWindowStyle','docked');
 % perfect predictions b/c # of free parameters in fitted Z equals number of
 % data points.
 logmsg(['Basic calculation; Test 1.1 - '...
-                'B = randn(), E = B. 1 DFT point per freq. band.\n']);
+        'B = randn(), E = B. 1 DFT point per freq. band.\n']);
 
 N = [99,100];
 for n = N
@@ -36,7 +36,7 @@ fprintf('\n');
 %% Basic calculation test 2.
 % B = cos(w*t), E = A(w)*cos(w*t + phi(w)). No leakage
 logmsg(['Basic calculation; Test 1.2. - '...
-                'B = cos(w*t), E ~ A(w)*cos(w*t + phi(w)). No leakage.\n']);
+        'B = cos(w*t), E ~ A(w)*cos(w*t + phi(w)). No leakage.\n']);
 
 clear E B
 N = 101;

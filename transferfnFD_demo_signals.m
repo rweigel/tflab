@@ -12,12 +12,22 @@ if tn == -2
     [~,F] = fftfreq(opts.N);
     F = F';
     t = (0:opts.n-1)';
+    [~,f] = fftfreq(opts.n);
+    % Create signal using N frequencies
     for i = 2:length(F)
-        A(i,1)   = F(i);
-        Phi(i,1) = -2*pi*F(i);
-        B(:,i) = cos(2*pi*F(i)*t);
+        if F(i) < f(2)
+            continue;
+        end
+
+        A(i,1) = 1;
+        if F(i) == F(round(end/4.2))
+            %A(i,1) = 10;
+        end
+        A(i,1) = F(i);        
+        %Phi(i,1) = -2*pi*F(i);
+        Phi(i,1) = 2*pi*rand(1);
+        B(:,i) = cos(2*pi*F(i)*t + Phi(i));
         E(:,i) = A(i)*cos(2*pi*F(i)*t + Phi(i));
-        %E(:,i) = A(i)*cos(2*pi*F(i)*t);
     end
 
     B = sum(B,2);
@@ -28,9 +38,12 @@ if tn == -2
 
     [~,f] = fftfreq(opts.n);
     f = f';
+    % Compute exact Z at n frequencies
     for i = 2:length(f)
-        A(i,1)   = f(i);
-        Phi(i,1) = -2*pi*f(i);
+        A(i,1) = f(i);
+        %A(i,1)   = 1;
+        %Phi(i,1) = -2*pi*f(i);
+        Phi(i,1) = 0;
         Z(i,1) = A(i)*(cos(Phi(i)) + sqrt(-1)*sin(Phi(i)));
     end
     
