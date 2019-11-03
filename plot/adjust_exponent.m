@@ -116,7 +116,7 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
         labels_new{i+1} = sprintf('%s$\\cdot 10^{%d}$', labels{i+1}, ed);
         set(gca, [direction,'TickLabel'], labels_new);
         if direction == 'x'
-            set(get(gca,'XLabel'),'HorizontalAlignment','top')
+            set(get(gca,'XLabel'),'HorizontalAlignment','center')
         end
         if direction == 'y'
             set(get(gca,'YLabel'),'VerticalAlignment','top')

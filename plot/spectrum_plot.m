@@ -25,7 +25,7 @@ if strcmp(pt,'raw')
             else
                 instr = opts.info.instr;
                 ls{j} = sprintf('%s(:,%d) [%s]\n',...
-                            instr,1:size(S.In,2),opts.info.inunit);
+                            instr,j,opts.info.inunit);
             end
         end
         legend(ls,'Location','NorthWest','Orientation','Horizontal');

@@ -9,7 +9,7 @@ Zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
 
 if nargin == 1
     subplot('Position', PositionTop);
-        loglog(S1.fe,abs(S1.Z),'k','marker','.','markersize',3);
+        loglog(S1.fe,abs(S1.Z),'-','marker','.','markersize',3);
         grid on;box on;hold on;
         unitstr = sprintf('[%s/(%s)]',...
                             S1.Options.info.inunit,...
@@ -18,7 +18,10 @@ if nargin == 1
         if size(S1.Z,2) == 1
             legend(sprintf('$|Z|$ %s', unitstr),'Location','NorthEast');
         else
-            % TODO.
+            for j = 1:size(S1.Z,2)
+                ls{j} = sprintf('$|Z(:,%d)|$ %s',j,unitstr);
+            end
+            legend(ls,'Location','NorthEast');
         end
         set(gca,'XTickLabel',[]);
         %adjust_exponent('y');
