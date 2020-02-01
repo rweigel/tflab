@@ -43,9 +43,11 @@ opts.transferfnFD = struct();
 % (pe/cc/mse/sn/coherence)
 opts.td.Ntrim = NaN;
 
-opts.td.detrend.function = @removemean;
-opts.td.detrend.functionstr = '';  % Optional descriptive name
-opts.td.detrend.functionargs = {}; % Arguments after first argument to fn.
+opts.td.detrend.function = struct();
+    %opts.td.detrend.function = @removemean;
+    opts.td.detrend.function = '';
+    opts.td.detrend.functionstr = '';  % Optional descriptive name
+    opts.td.detrend.functionargs = {}; % Arguments after first argument to fn.
 
 % Dimensionless time; ignored if time array passed to transferfnFD.
 opts.td.dt    = 1;  
@@ -171,7 +173,7 @@ if os == 0
     opts.fd.evalfreq.functionargs = {[1,0], 'linear'};
     opts.fd.evalfreq.functionstr  = '1 DFT point per freq. band';
 elseif os == 1 || nargs == 0
-    opts.description = 'OLS and ~7 pts/decade';
+    opts.description = 'OLS and $\sim$7 pts/decade';
 elseif os == 2
     opts.description = 'yulewalker(10) prewhiten';
     opts.td.prewhiten.method = 'yulewalker';

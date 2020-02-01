@@ -13,38 +13,64 @@ if tn == -2
     F = F';
     t = (0:opts.n-1)';
     [~,f] = fftfreq(opts.n);
+
     % Create signal using N frequencies
-    for i = 2:length(F)
-        if F(i) < f(2)
-            continue;
-        end
+    F = F(F >= f(2));
 
-        A(i,1) = 1;
-        if F(i) == F(round(end/4.2))
-            %A(i,1) = 10;
-        end
-        A(i,1) = F(i);        
-        %Phi(i,1) = -2*pi*F(i);
-        Phi(i,1) = 2*pi*rand(1);
-        B(:,i) = cos(2*pi*F(i)*t + Phi(i));
-        E(:,i) = A(i)*cos(2*pi*F(i)*t + Phi(i));
+    Ff = repmat(F',length(t),1);
+    tf = repmat(t, 1, length(F));
+    E = zeros(length(t),length(F));
+
+    for k = 1:length(opts.A.B) % Loop over vector component
+        Phi = 2*pi*rand(1, length(F));    
+        %Phi = zeros(1, length(F));            
+        PhiB = repmat(Phi, length(t), 1);
+        
+        Phi = zeros(1, length(F));                    
+        PhidB = repmat(Phi, length(t), 1);        
+
+        % PhiB depends on column, not row.
+        % Each column in B is a time series with column-dependent freq.
+        % Third dimension is component of B.
+        B(:,:,k) = opts.A.B(k)*(Ff.^opts.alpha.B(k)).*cos(2*pi*Ff.*tf + PhiB);
+        %dB(:,:,k) = opts.A.dB(k)*(Ff.^opts.alpha.dB(k)).*cos(2*pi*Ff.*tf + PhidB);
+        % Add noise to B
+        %B(:,:,k) = B(:,:,k) + dB(:,:,k);
+        E = E + opts.A.Z(k)*(Ff.^opts.alpha.Z(k)).*B(:,:,k);
     end
+    % Add noise to E
+    Phi = 2*pi*rand(1, length(F));
+    PhidE = repmat(Phi, length(t), 1);
+    %Enoise = opts.A.dE*(Ff.^opts.alpha.dE).*randn(length(t), length(F)); %cos(2*pi*Ff.*tf + PhidE);
+    
+    Estd = std(E,1);
+    Estd = repmat(Estd,size(E,1),1);
+    Enoise = opts.A.dE.*(Ff.^opts.alpha.dE).*randn(length(t), length(F)); %cos(2*pi*Ff.*tf + PhidE);
 
-    B = sum(B,2);
-    E = sum(E,2);
+    if 0
+    clf;
+    subplot(2,1,1)
+    plot(E(:,40));hold on;
+    plot(Enoise(:,40));
+    subplot(2,1,2)
+    plot(E(:,4));hold on;
+    plot(Enoise(:,4));
+    keyboard
+    end
+    
+    Eo = E;
+    Ec = Eo + Enoise;
+    E = sum(Ec,2);          % Sum across frequencies
+    Eo = sum(Eo,2);
+    Enoise = sum(Enoise,2);
 
-    %B = B/max(B);
-    %E = E/max(E);
-
+    B = squeeze(sum(B,2)); % Sum across frequencies
+    
     [~,f] = fftfreq(opts.n);
     f = f';
     % Compute exact Z at n frequencies
-    for i = 2:length(f)
-        A(i,1) = f(i);
-        %A(i,1)   = 1;
-        %Phi(i,1) = -2*pi*f(i);
-        Phi(i,1) = 0;
-        Z(i,1) = A(i)*(cos(Phi(i)) + sqrt(-1)*sin(Phi(i)));
+    for k = 1:length(opts.A.B)
+        Z(:,k) = opts.A.Z(k)*(f.^opts.alpha.Z(k));%*(cos(Phi(i)) + sqrt(-1)*sin(Phi(i)));
     end
     
     S.In  = B;
@@ -94,7 +120,7 @@ end
 
 if tn == 1 % Low pass filter impulse responses
 
-    dim = opts;
+    ndim = opts;
     
     description = '';
     
@@ -130,13 +156,13 @@ if tn == 1 % Low pass filter impulse responses
     NdB = [ndb*randn(N,1),ndb*randn(N,1)];
 
     % Create signals
-    if dim == 1
+    if ndim == 1
         H(:,1) = h;
         B(:,1) = randn(N,1);
         E(:,1) = NE(:,1) + filter(H(:,1),1,B(:,1) + NB(:,1));
     end
-    if dim == 2
-        H = zeros(length(h),dim);
+    if ndim == 2
+        H = zeros(length(h),ndim);
         if tn == 1 % Doing all equal will lead to rank deficient warnings.
             H(:,1) = 0.1*h;
             H(:,2) = 0.2*h;
@@ -151,8 +177,8 @@ if tn == 1 % Low pass filter impulse responses
                     + filter(H(:,1),1,B(:,1) + NB(:,1)) ...
                     + filter(H(:,2),1,B(:,2) + NB(:,2));
     end
-    if dim == 4
-        H = zeros(length(h),dim);
+    if ndim == 4
+        H = zeros(length(h),ndim);
         if tn == 1 
             % Doing all equal will lead to rank deficient warnings.
             H(:,1) = 0.1*h;

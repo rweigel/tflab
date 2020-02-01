@@ -54,6 +54,7 @@ addpath([fileparts(mfilename('fullpath')),'/fft']);
 addpath([fileparts(mfilename('fullpath')),'/spectra']);
 addpath([fileparts(mfilename('fullpath')),'/regression']);
 addpath([fileparts(mfilename('fullpath')),'/stats']);
+addpath([fileparts(mfilename('fullpath')),'/window']);
 addpath([fileparts(mfilename('fullpath')),'/deps/printstruct']);
 
 if nargin == 2
@@ -255,7 +256,7 @@ if size(E,2) > 1
         if opts.transferfnFD.loglevel > 0
             logmsg('Calling transferfnFD(B,E(:,%d),...)\n',j);
         end
-        Sc = transferfnFD(B,E(:,j),t,opts);    
+        Sc = transferfnFD(B,E(:,j),t,opts);
         if j == 1
             S = Sc;
         else
@@ -412,14 +413,19 @@ S = struct();
     S.Regression = struct();
     S.PSD = struct(); 
         % Note: This will be over-written by computeMetrics().
-        S.PSD.In = smoothSpectra(B,opts);
-        S.PSD.Out = smoothSpectra(E,opts);
+        %S.PSD.In = smoothSpectra(B,opts);
+        %S.PSD.Out = smoothSpectra(E,opts);
 
 if opts.transferfnFD.plot.timeseries(1)
     timeseries_plot(S,'raw');
 end
 if opts.transferfnFD.plot.spectrum(1)    
     spectrum_plot(S,'raw');
+end
+
+if ~isempty(opts.td.detrend.function)
+    B = opts.td.detrend.function(B,opts.td.detrend.functionargs{:});
+    E = opts.td.detrend.function(E,opts.td.detrend.functionargs{:});
 end
 
 if ~isempty(opts.td.window.function)
@@ -642,20 +648,17 @@ end
 % TODO: Allow TD window and prewhiten to not be same for input and output
 % and then compute corrected Z?
 
-if strcmp(opts.fd.program.name,'lemimt')
-    tmp = transferfnFD_lemimt(S.In,S.Out,opts.fd.program.options);
-    S.Z = tmp.Z;
-    S.fe = tmp.fe;
-end
-if ~isempty(opts.fd.stack.average.function) && strcmp(opts.fd.program.name,'transferfnFD')
+if ~isempty(opts.fd.stack.average.function)
+    
     % Compute metrics for predicting segment output based on Z computed
     % using segment's input and output.
+
     S.Z = Z;
 
     if opts.transferfnFD.loglevel > 0
         logmsg( 'Computing Phi\n');
     end
-    S.Phi = atan2(imag(Z),real(Z));
+    S.Phi = atan2(imag(S.Z),real(S.Z));
     if opts.transferfnFD.loglevel > 0
         logmsg( 'Finished computing Phi\n');
     end
@@ -738,6 +741,7 @@ end
 function S = transferfnMetrics(S,opts)
 
     if isfield(S,'Segment')
+        % So the PSD has frequencies at fe
         N = size(S.Segment.In,1);
     else
         N = size(S.In,1);
@@ -748,11 +752,14 @@ function S = transferfnMetrics(S,opts)
     S.PSD = struct();
 
     Zi = zinterp(S.fe,S.Z,size(S.In,1));
+
     for k = 1:size(S.Out,3)
+
         S.Predicted(:,:,k) = zpredict(Zi,S.In(:,:,k));
 
         S.PSD.In(:,:,k)    = smoothSpectra(S.In(:,:,k),opts,N);
         S.PSD.Out(:,:,k)   = smoothSpectra(S.Out(:,:,k),opts,N);
+
         S.PSD.Error(:,:,k) = smoothSpectra( ...
                                    S.Out(:,:,k) - S.Predicted(:,:,k),opts,N);
         S.PSD.Predicted(:,:,k) = smoothSpectra(S.Predicted(:,:,k),opts,N);
@@ -873,11 +880,13 @@ end
 
 function S = combineStructs(S1,S2,dim)
 %combineStructs Combine transferfnFD structures
-    
+
     S = struct();    
     fns = fieldnames(S1);
     for i = 1:length(fns)
         if strcmp(fns{i},'Options')
+            % Does not contain anything that can be concatenated and
+            % if field exists, is same for S1 and S2.
             continue;
         end
         if isstruct(S1.(fns{i}))
@@ -889,6 +898,11 @@ function S = combineStructs(S1,S2,dim)
                 S.(fns{i}) = cat(dim,S1.(fns{i}),S2.(fns{i}));
             end
         end
+    end
+    % Use first structure's Options field. It will be same for S1 and S2.
+    % If Options field does not exist, not at top-level.
+    if isfield(S1,'Options')
+        S.Options = S1.Options;
     end
 
 end

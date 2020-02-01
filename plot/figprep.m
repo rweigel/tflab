@@ -7,7 +7,7 @@ set(gcf,'DefaultTextFontSize',14);
 set(gcf,'DefaultAxesFontSize',14);
 
 if nargin == 0
-    return;
+  writefile = 0;
 end
 
 if writefile

@@ -11,8 +11,8 @@ function [Z,W,stats] = ols_analytic(ftB,ftE,varargin)
 %
 %   See also OLS_REGRESS.
 
-assert(size(ftE,1) == 1,'Number of input columns must be 1.');
-assert(size(ftB,2) <= 2,'Number of output columns must be 1 or 2');
+assert(size(ftE,2) == 1,'Number of output columns must be 1.');
+assert(size(ftB,2) <= 2,'Number of input columns must be 1 or 2');
 assert(size(ftE,1) == size(ftB,1)','E and B must have the same number of rows');
 
 if size(ftB,2) == 1
@@ -34,5 +34,8 @@ else
     Zxy = (ExBx*BxBy - ExBy*BxBx)/DET;
     Z = [Zxx,Zxy];
 end
+I = isnan(Z(1,:));
+Z(1,I) = 0;
+
 W = [];
 stats = struct();    
