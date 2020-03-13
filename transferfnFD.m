@@ -428,9 +428,11 @@ if ~isempty(opts.td.detrend.function)
     E = opts.td.detrend.function(E,opts.td.detrend.functionargs{:});
 end
 
+% TODO: Allow TD window and prewhiten to not be same for input and output
+% and then compute corrected Z?
 if ~isempty(opts.td.window.function)
     if opts.transferfnFD.loglevel > 0
-        logmsg('Computing windowed data.\n');
+        logmsg('Windowing input and output using %s\n',opts.td.window.functionstr);
     end
     [B,W] = opts.td.window.function(B,opts.td.window.functionargs{:});
     [E,W] = opts.td.window.function(E,opts.td.window.functionargs{:});
@@ -456,15 +458,17 @@ else
 end
 
 if ~isempty(opts.td.prewhiten.function)
-    [B,E,Bf,Ef] = opts.td.prewhiten.function(B,E,opts);
     S.Prewhiten = struct();
+    S.Prewhiten.Comment = 'S.Prewhiten.In = prewhitening applied to S.Window.In (or S.In if now time domain window given).';
+    
+    [B,a,b] = opts.td.prewhiten.function(B,opts.td.prewhiten.functionargs{:});
+    S.Prewhiten.InFilter = [a,b];
     S.Prewhiten.In = B;
-    S.Prewhiten.InFilter = Bf;
+    
+    [E,a,b] = opts.td.prewhiten.function(E,opts.td.prewhiten.functionargs{:});
+    S.Prewhiten.OutFilter = [a,b];
     S.Prewhiten.Out = E;
-    S.Prewhiten.OutFilter = Ef;
-    S.Window.Comment = ...
-        ['S.Prewhiten.In (S.Prewhiten.Out) are S.Window.In (S.Window.Out) '...
-         'after application of S.Prewhiten.InFilter (S.Prewhiten.OutFilter)'];
+
     if opts.td.prewhiten.plot
         prewhiten_plot(S,opts);
     end
@@ -504,7 +508,7 @@ if opts.transferfnFD.loglevel > 0
             length(Ic)-1);
         logmsg(...
             ['opts.fd.stack.average.function = ''''. \n' ...
-            'No regression performed for each freq. band of segement\n']);
+            'No regression performed for each freq. band of segment\n']);
     else
         logmsg(['Starting freq band and regression '...
                         'calcs for %d frequencies.\n'],length(Ic)-1);
@@ -571,13 +575,15 @@ for j = 1:length(Ic)
         % If not computing Z based on stack averages, don't need to do
         % regression as it is done later.
         args = opts.fd.regression.functionargs;    
-            
+
         warning('');
+
         [Z(j,:),stats] = opts.fd.regression.function(...
                                 Wr.*ftB(r,:),W.*ftE(r,1),args{:});
+                            
         [warnMsg, warnId] = lastwarn;                            
-        if ~isempty(warnMsg)
-            logmsg( 'Warning occured on eval freq. = %d\n', j);
+        if ~isempty(warnMsg) && j > 1 % Ignore rank deficient error for f = 0.
+            logmsg( 'Warning above occured on eval freq. = %d\n', j);
             %ftE
             %ftB
             %keyboard
@@ -645,9 +651,6 @@ if opts.transferfnFD.loglevel > 0
     end
 end
 
-% TODO: Allow TD window and prewhiten to not be same for input and output
-% and then compute corrected Z?
-
 if ~isempty(opts.fd.stack.average.function)
     
     % Compute metrics for predicting segment output based on Z computed
@@ -681,16 +684,14 @@ if ~isempty(opts.fd.stack.average.function)
 
     if opts.transferfnFD.loglevel > 0
         logmsg(...
-                ['Computing segment metrics for segement '...
-                 'transfer function.\n']);
+                ['Computing metrics.\n']);
     end
     
     S = transferfnMetrics(S,opts);
     
     if opts.transferfnFD.loglevel > 0
         logmsg( ...
-                ['Finished segment metrics for segment '...
-                 'transfer function.\n']);
+                ['Finished computing metrics\n']);
         logmsg( ...
                 'PE/CC/MSE = %.2f/%.2f/%.3f\n',...
                  S.Metrics.PE,...
@@ -808,7 +809,7 @@ function S = stackRegression(S,opts)
             [z,stats] = opts.fd.regression.function(Wr.*ftB,W.*ftE,args{:});
             [warnMsg, warnId] = lastwarn;
             if ~isempty(warnMsg)
-                logmsg( 'Warning occured on output column %d, eval freq. = %g\n', c, S.fe(i,1));
+                logmsg( 'Warning above occured on output column %d, eval freq. = %g\n', c, S.fe(i,1));
                 %ftE
                 %ftB
                 %keyboard

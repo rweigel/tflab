@@ -1,4 +1,4 @@
-function opts = transferfnFD_options(os)
+function opts = transferfnFD_options(os,iopts)
 %TRANSFERFNFD_OPTIONS - Return options for transferfnFD().
 %
 %  opts = TRANSFERFNFD_OPTIONS() returns default options.
@@ -12,18 +12,26 @@ opts = struct();
 opts.filestr = sprintf('transferfnFD_options-%d',os);
 
 opts.info = struct();
-    opts.info.instr = 'B'; % Cell array or string. 
+    opts.info.instr = 'In'; % Cell array or string. 
     % Or {'$B_x$', ...} (1 cell element per column in In)
     
-    opts.info.outstr = 'E'; % Cell array or string. 
+    opts.info.outstr = 'Out'; % Cell array or string. 
     % Or {'$E_x$', ...} (1 cell element per column in Out)
     
-    % Used if time array not passed to transferfnFD.
-    opts.info.timestr = 'Time since 2000-01-01'; 
+    opts.info.timestart = ''; 
 
-    opts.info.inunit= 'nT';
-    opts.info.outunit= 'mV/m';
-    opts.info.timeunit = 's';
+    % Timestart is a time string of the form
+    % 'yyyy-mm-ddTHH:MM:SS.FFF'.
+    % Example: 
+    %   opts.td.timestart = '2001-01-01T00:00:00.000';
+    
+    %opts.info.inunit= 'nT';
+    %opts.info.outunit= 'mV/m';
+    %opts.info.timeunit = 's';
+
+    opts.info.inunit= '';
+    opts.info.outunit= '';
+    opts.info.timeunit = '';
     
 opts.transferfnFD = struct();
     opts.transferfnFD.loglevel = 1;
@@ -54,12 +62,6 @@ opts.td.dt    = 1;
 % Dimensionless start; ignored if time array passed to transferfnFD.
 opts.td.start = 1; 
 
-% opts.td.start can also be a time string of the form
-% 'yyyy-mm-ddTHH:MM:SS.FFF'. In this case, opts.td.dt units are milliseconds.
-% Example: 
-%   opts.td.start = '2001-01-01T00:00:00.000'; % info.timestr ignored.
-%   opts.td.dt    = 1000;                      % 1-second cadence.
-
 opts.td.window = struct();
     % Note: Same window applied to input and output
     opts.td.window.function = ''; 
@@ -74,9 +76,12 @@ opts.td.window = struct();
     if 0
         % See 'help rectwin' for list of available MATLAB functions that
         % can be passed to tdwindow() (which is part of this package).
+        % Default is equivalent to
         opts.td.window.function = @tdwindow; 
         opts.td.window.functionstr = 'Rectangular';
         opts.td.window.functionargs = {@rectwin};
+        %opts.td.window.functionstr = 'Parzen';        
+        %opts.td.window.functionargs = {@parzenwin};        
     end
 
 opts.td.prewhiten = struct();
@@ -87,7 +92,7 @@ opts.td.prewhiten = struct();
     
     % Example of prewhitening.
     if 0
-        opts.td.prewhiten.function = @tdprewhiten;
+        opts.td.prewhiten.function = @prewhiten;
         opts.td.prewhiten.functionstr = 'First difference';
         opts.td.prewhiten.functionargs = {'diff'};
     end
@@ -166,6 +171,17 @@ opts.fd.regression = struct();
         %ropts.verbose = 0;    
         %opts.fd.regression.functionargs = {ropts};
 
+% Overwrite default options if options given
+% TODO: Need to recurse
+if nargin > 1
+    fns = fieldnames(iopts);
+    for i = 1:length(fns)
+        if isfield(opts,fns{i})
+           opts.(fns{i}) = iopts.(fns{i});
+        end
+    end
+end
+        
 if os == 0
     % When no noise, should get exact TF used to generate the output data
     % (within limits of numerical precision).
