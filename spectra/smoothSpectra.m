@@ -13,7 +13,7 @@ else
 end
 
 [fe,Ic,Ne] = evalfreq(n,opts.fd.evalfreq.functionargs{:});
-
+ 
 N = size(x,1);
 if mod(N,2) == 0
     Np = N/2 + 1;

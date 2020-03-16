@@ -60,6 +60,7 @@ else
 end
 
 if strcmp(opts.type,'raw') || strcmp(opts.type,'windowed')
+    
     if isempty(opts.title)
         ts = sprintf('Raw Input%s (top) and Raw Output (bottom)', s1);
         if strcmp(opts.type,'windowed')
@@ -73,11 +74,16 @@ if strcmp(opts.type,'raw') || strcmp(opts.type,'windowed')
 
     if strcmp(opts.type,'raw')
         In = S.In;
-        Out = S.In;
+        Out = S.Out;
     end
+    
     if strcmp(opts.type,'windowed')
+        if ~isfield(S,'Window')
+            logmsg('Data were not windowed. Not plotting windowed timeseries.\n');
+            return
+        end
         In = S.Window.In;
-        Out = S.Window.In;
+        Out = S.Window.Out;
     end
     
     subplot('Position',PositionTop);
@@ -92,8 +98,8 @@ if strcmp(opts.type,'raw') || strcmp(opts.type,'windowed')
         end
         title(ts,'FontWeight','Normal');
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        adjust_exponent('y');
         adjust_ylim();
-        set(gca,'XTickLabel',[]);        
         setx(0,info,[t(1),t(end)]);        
     subplot('Position',PositionBottom);
         plot(t,Out);
@@ -106,6 +112,7 @@ if strcmp(opts.type,'raw') || strcmp(opts.type,'windowed')
             end
         end
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        adjust_exponent('y');
         adjust_ylim();
         setx(1,info,[t(1),t(end)]);
         
@@ -129,11 +136,12 @@ elseif strcmp(opts.type,'error')
         end
         legend(ls,'Location','NorthEast','Orientation','Vertical');
         adjust_ylim();
+        adjust_exponent('y');
         set(gca,'XTickLabel',[]);
         setx(0,info,[t(1),t(end)]);
         title(ts);
     subplot('Position',PositionBottom);
-        plot(t,S.Out-S.Predicted);
+        plot(t,S.Out-S.Metrics.Predicted);
         grid on;box on;
         for j = 1:size(S.Out,2)        
             metrics = sprintf('PE/CC/MSE = %.3f/%.3f/%.3f',...
@@ -156,11 +164,10 @@ elseif strcmp(opts.type,'error')
         end
         legend(ls,'Location','NorthEast','Orientation','Vertical');
         adjust_ylim();
-        xlims = get(gca,'XLim');
-        ylims = get(gca,'YLim');
         adjust_exponent('y');
         setx(1,info,[t(1),t(end)]);
 end
+drawnow;
 end % function
 
 function setx(last,info,tl)
@@ -175,7 +182,6 @@ function setx(last,info,tl)
     if ~last
         set(gca,'XTickLabel',[]);
     end
-    
         
 end
 

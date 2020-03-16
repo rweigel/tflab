@@ -33,12 +33,12 @@ if strcmp(opts.type,'raw')
     end
     subplot('Position',PositionTop);
         if opts.period
-            loglog(1./S.fe,S.PSD.In);
+            loglog(1./S.Metrics.fe,S.Metrics.PSD.In);
         else
-            loglog(S.fe,S.PSD.In);
+            loglog(S.Metrics.fe,S.Metrics.PSD.In);
         end
         grid on;box on;
-        for j = 1:size(S.PSD.In,2)
+        for j = 1:size(S.Metrics.PSD.In,2)
             if iscell(info.instr)
                 ls{j} = sprintf('%s [%s]\n',...
                         info.instr{j},info.inunit);
@@ -47,18 +47,21 @@ if strcmp(opts.type,'raw')
                             info.instr,j,info.inunit);
             end
         end
+        if ~isempty(opts.period_range)
+            set(gca,'XLim',opts.period_range);
+        end
         legend(ls,'Location','NorthWest','Orientation','Horizontal');
         set(gca,'XTickLabel',[]);
         title(ts,'FontWeight','Normal')
         adjust_exponent('y');
     subplot('Position',PositionBottom);
         if opts.period
-            loglog(1./S.fe,S.PSD.Out);
+            loglog(1./S.Metrics.fe,S.Metrics.PSD.Out);
         else
-            loglog(S.fe,S.PSD.Out);
+            loglog(S.Metrics.fe,S.Metrics.PSD.Out);
         end
         grid on;box on;
-        for j = 1:size(S.PSD.In,2)        
+        for j = 1:size(S.Metrics.PSD.In,2)
             if iscell(info.outstr)
                 ls{j} = sprintf('%s [%s]\n',...
                             info.outstr{j},info.outunit);
@@ -66,6 +69,9 @@ if strcmp(opts.type,'raw')
                 ls{j} = sprintf('%s(:,1) [%s]\n',...
                            info.outstr,info.outunit);
             end
+        end
+        if ~isempty(opts.period_range)
+            set(gca,'XLim',opts.period_range);
         end
         legend(ls,'Location','NorthWest','Orientation','Horizontal');
         if opts.period
@@ -75,6 +81,10 @@ if strcmp(opts.type,'raw')
         end
         adjust_exponent('y');
 elseif strcmp(opts.type,'windowed')
+    if ~isfield(S,'Window')
+        logmsg('Data were not windowed. Not plotting windowed timeseries.\n');
+        return;
+    end
     if size(S.In,2) > 1,s1='s';else,s1='';end  
     if size(S.In,2) > 1,s1='s';else,s1='';end  
     if isempty(opts.title)
@@ -101,6 +111,9 @@ elseif strcmp(opts.type,'windowed')
                             instr,j,info.inunit);
             end
         end
+        if ~isempty(opts.period_range)
+            set(gca,'XLim',opts.period_range);
+        end
         legend(ls,'Location','NorthWest','Orientation','Horizontal');
         adjust_exponent('y');
         set(gca,'XTickLabel',[]);
@@ -121,6 +134,9 @@ elseif strcmp(opts.type,'windowed')
                             info.outstr,j,info.outunit);
             end
         end
+        if ~isempty(opts.period_range)
+            set(gca,'XLim',opts.period_range);
+        end
         legend(ls,'Location','NorthWest','Orientation','Horizontal');
         if opts.period
             xlabel(sprintf('Period [%s]',info.timeunit));
@@ -130,8 +146,8 @@ elseif strcmp(opts.type,'windowed')
 elseif strcmp(opts.type,'error')
     ts = sprintf('PSD(error) (top) and PSD(output)./PSD(error) (bottom)');
     subplot('Position',PositionTop);
-        loglog(S.fe,S.PSD.Error);
-        grid on;box on;    
+        loglog(S.Metrics.fe,S.Metrics.PSD.Error);
+        grid on;box on;
         if iscell(info.outstr)
             ls = sprintf('PSD(%s meas.) - PSD(%s pred.)',...
                         info.outstr{1},info.outstr{1});
@@ -139,11 +155,14 @@ elseif strcmp(opts.type,'error')
             ls = sprintf('PSD(%s meas.) - PSD(%s pred.)',...
                         info.outstr,info.outstr);
         end
+        if ~isempty(opts.period_range)
+            set(gca,'XLim',opts.period_range);
+        end
         legend(ls,'Location','Best','Orientation','Horizontal');
         set(gca,'XTickLabel',[]);
         title(ts,'FontWeight','Normal')        
     subplot('Position',PositionBottom);
-        loglog(S.fe,S.PSD.Out./S.PSD.Error);
+        loglog(S.fe,S.Metrics.PSD.Out./S.Metrics.PSD.Error);
         grid on;box on;
         if iscell(info.outstr)
             ls = sprintf('PSD(%s output)./PSD(%s predicted)',...
@@ -151,6 +170,9 @@ elseif strcmp(opts.type,'error')
         else
             ls = sprintf('PSD(%s output)./PSD(%s predicted)',...
                         info.outstr,info.outstr);
+        end
+        if ~isempty(opts.period_range)
+            set(gca,'XLim',opts.period_range);
         end
         legend(ls,'Location','Best','Orientation','Horizontal');
         xlabel(sprintf('Frequency [1/%s]',info.timeunit));
