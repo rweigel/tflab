@@ -111,31 +111,31 @@ period_range = [min(1./S1.fe),max(1./S1.fe(2:end))];
 close all;
 figure();clf;
     timeseries_plot(S1,struct('title',ptitle));
-    figsave(pdf,'Middelpos-timeseries_1.pdf');
+    figsave(pdf,'/figures/Middelpos/Middelpos-timeseries_1.pdf');
     
 figure();clf;
     timeseries_plot(S1,struct('type','error','title',[ptitle,'; ',desc1]));
-    figsave(pdf,'Middelpos-timeseries-error_1.pdf');
+    figsave(pdf,'/figures/Middelpos/Middelpos-timeseries-error_1.pdf');
 
 figure();clf;
     timeseries_plot(S2,struct('type','error','title',[ptitle,'; ',desc2]));
-    figsave(pdf,'Middelpos-timeseries-error_2.pdf');  
+    figsave(pdf,'/figures/Middelpos/Middelpos-timeseries-error_2.pdf');  
     
 %figure();clf;
     %timeseries_plot(S1,struct('title',[ptitle,'Parzen tapering'],'type','windowed'));
-    %figsave(pdf,'Middelpos-timeseries_windowed_1.pdf');
+    %figsave(pdf,'/figures/Middelpos/Middelpos-timeseries_windowed_1.pdf');
     
 figure();clf;
     spectrum_plot(S1,struct('type','raw','title',[ptitle,'; ',desc1],'period_range',period_range));
-    figsave(pdf,'Middelpos-spectrum_1.pdf');        
+    figsave(pdf,'/figures/Middelpos/Middelpos-spectrum_1.pdf');        
 
 %figure();clf;
     %spectrum_plot(S1,struct('type','windowed','title',[ptitle,'; ',desc1]));
-    %figsave(pdf,'Middelpos-spectrum_windowed_1.pdf');
+    %figsave(pdf,'/figures/Middelpos/Middelpos-spectrum_windowed_1.pdf');
 
 figure();clf;
     spectrum_plot(S2,struct('type','raw','title',[ptitle,'; ',desc2],'period_range',period_range));
-    figsave(pdf,'Middelpos-spectrum_2.pdf');
+    figsave(pdf,'/figures/Middelpos/Middelpos-spectrum_2.pdf');
 
 figure();clf;
     filename = [scriptpath,'/figures/Middelpos/Middelpos-SN.pdf'];
