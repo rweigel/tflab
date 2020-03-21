@@ -5,23 +5,22 @@ opts = struct();
     opts.type = 'raw';
     opts.title = '';
     opts.period = 1;
+    opts.period_range = 1;    
     
 % Use default options if options not given
 if nargin > 1
     fns = fieldnames(popts);
     for i = 1:length(fns)
-        if isfield(opts,fns{i})
-           opts.(fns{i}) = popts.(fns{i});
-        end
+        opts.(fns{i}) = popts.(fns{i});
     end
 end
 
 info = S.Options.info;
-t = S.Time;
 
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
+figure();
 figprep();
 
 if strcmp(opts.type,'raw')
@@ -33,9 +32,11 @@ if strcmp(opts.type,'raw')
     end
     subplot('Position',PositionTop);
         if opts.period
-            loglog(1./S.Metrics.fe,S.Metrics.PSD.In);
+            loglog(info.timedelta./S.Metrics.fe,S.Metrics.PSD.In,...
+                   'marker','.','markersize',10,'linewidth',2);
         else
-            loglog(S.Metrics.fe,S.Metrics.PSD.In);
+            loglog(S.Metrics.fe/info.timedelta,S.Metrics.PSD.In,...
+                   'marker','.','markersize',10,'linewidth',2);                
         end
         grid on;box on;
         for j = 1:size(S.Metrics.PSD.In,2)
@@ -56,9 +57,11 @@ if strcmp(opts.type,'raw')
         adjust_exponent('y');
     subplot('Position',PositionBottom);
         if opts.period
-            loglog(1./S.Metrics.fe,S.Metrics.PSD.Out);
+            loglog(info.timedelta./S.Metrics.fe,S.Metrics.PSD.Out,...
+                   'marker','.','markersize',10,'linewidth',2);                
         else
-            loglog(S.Metrics.fe,S.Metrics.PSD.Out);
+            loglog(S.Metrics.fe/info.timedelta,S.Metrics.PSD.Out,...
+                   'marker','.','markersize',10,'linewidth',2);                
         end
         grid on;box on;
         for j = 1:size(S.Metrics.PSD.In,2)
@@ -95,9 +98,11 @@ elseif strcmp(opts.type,'windowed')
     end
     subplot('Position',PositionTop);
         if opts.period
-            loglog(1./S.fe,S.Window.PSD.In);
+            loglog(1./S.fe,S.Window.PSD.In,...
+                   'marker','.','markersize',10,'linewidth',2);                
         else
-            loglog(S.fe,S.Window.PSD.In);
+            loglog(S.fe,S.Window.PSD.In,...
+                   'marker','.','markersize',10,'linewidth',2);                
         end
         grid on;box on;
         for j = 1:size(S.In,2)
@@ -120,9 +125,11 @@ elseif strcmp(opts.type,'windowed')
         title(ts,'FontWeight','Normal')
     subplot('Position',PositionBottom);
         if opts.period
-            loglog(1./S.fe,S.Window.PSD.Out);
+            loglog(1./S.fe,S.Window.PSD.Out,...
+                   'marker','.','markersize',10,'linewidth',2);                
         else
-            loglog(S.fe,S.Window.PSD.Out);
+            loglog(S.fe,S.Window.PSD.Out,...
+                   'marker','.','markersize',10,'linewidth',2);                
         end
         grid on;box on;    
         for j = 1:size(S.Out,2)
@@ -177,3 +184,5 @@ elseif strcmp(opts.type,'error')
         legend(ls,'Location','Best','Orientation','Horizontal');
         xlabel(sprintf('Frequency [1/%s]',info.timeunit));
 end
+
+figsave(opts,['spectrum-',opts.type]);

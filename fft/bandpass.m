@@ -9,8 +9,14 @@ function [x,aib] = bandpass(x,fb)
 %  See also BANDPASS_TEST.
 
 aib = fft(x);
-N   = length(x);
+N   = size(x,1);
 f   = fftfreq(N);
+
+for i = 1:size(x,2)
+    if any(isnan(x(:,i)))
+        warning(sprintf('Column %d of x has one or more NaNs. Output for such columns be all NaNs',i));
+    end
+end
 
 if (length(fb) == 1)
     Ib = find(fb == abs(f));
@@ -28,8 +34,8 @@ else
   Ib = find( abs(f) < fb(2) & abs(f) > fb(1) );
 end
 
-Io = ones(size(f)); % Io has index of omitted frequencies
-Io(Ib) = 0;         % Mask band frequencies
+Io = ones(size(f));  % Io has index of omitted frequencies
+Io(Ib) = 0;          % Mask band frequencies
 aib(Io == 1,:) = 0;  % Set DFT coeficients to zero outside band
 
 x = ifft(aib);

@@ -102,7 +102,7 @@ if iscell(B)
         assert(isvector(t),'Required: t must be vector cell array');
     else
         for c = 1:length(B)
-            t{c} = (opts.td.start:opts.td.dt:size(B{c},1))';
+            t{c} = (opts.td.start:size(B{c},1))';
         end
     end
     sE = size(E{1},2);
@@ -235,7 +235,7 @@ assert(size(B,1) >= size(B,2),...
      'or equal to size(B,2)']);
 
 if nargin < 3 || isempty(t)
-    t = (opts.td.start:opts.td.dt:size(B,1))';
+    t = (opts.td.start:size(B,1))';
 end
 
 % If E has more than one column, do TF calculation for each column.

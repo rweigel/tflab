@@ -19,6 +19,7 @@ opts.info = struct();
     % Or {'$E_x$', ...} (1 cell element per column in Out)
     
     opts.info.timestart = ''; 
+    opts.info.timedelta = 1; % Measurement cadence
 
     % Timestart is a time string of the form
     % 'yyyy-mm-ddTHH:MM:SS.FFF'.
@@ -57,8 +58,6 @@ opts.td.detrend.function = struct();
     opts.td.detrend.functionstr = '';  % Optional descriptive name
     opts.td.detrend.functionargs = {}; % Arguments after first argument to fn.
 
-% Dimensionless time; ignored if time array passed to transferfnFD.
-opts.td.dt    = 1;  
 % Dimensionless start; ignored if time array passed to transferfnFD.
 opts.td.start = 1; 
 
@@ -171,17 +170,6 @@ opts.fd.regression = struct();
         %ropts.verbose = 0;    
         %opts.fd.regression.functionargs = {ropts};
 
-% Overwrite default options if options given
-% TODO: Need to recurse
-if nargin > 1
-    fns = fieldnames(iopts);
-    for i = 1:length(fns)
-        if isfield(opts,fns{i})
-           opts.(fns{i}) = iopts.(fns{i});
-        end
-    end
-end
-        
 if os == 0
     % When no noise, should get exact TF used to generate the output data
     % (within limits of numerical precision).
@@ -213,4 +201,26 @@ elseif os == 6
     opts.td.window.shift = 3600*24;
 else
     error('Invalid option set number');
+end
+
+if nargin > 1
+    opts = options(opts,iopts);
+end
+
+function opts = options(opts,iopts)
+    % Overwrite default options if options given
+    fns = fieldnames(iopts);
+    for i = 1:length(fns)
+        if isfield(opts,fns{i})
+            if isstruct(iopts.(fns{i}))
+                opts.(fns{i}) = options(opts.(fns{i}),iopts.(fns{i}));
+            else
+                opts.(fns{i}) = iopts.(fns{i});
+            end
+        else
+            warning(sprintf('Option %s is not a valid option',fns{i}));
+        end
+    end
+end
+
 end

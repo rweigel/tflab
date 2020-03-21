@@ -13,12 +13,11 @@ opts = struct();
 if nargin > 1
     fns = fieldnames(popts);
     for i = 1:length(fns)
-        if isfield(opts,fns{i})
-           opts.(fns{i}) = popts.(fns{i});
-        end
+        opts.(fns{i}) = popts.(fns{i});
     end
 end
 
+figure();
 figprep();
 
 PositionTop = [0.1300 0.5400 0.7750 0.4];
@@ -29,27 +28,27 @@ t = S.Time;
 
 if ~isempty(info.timestart)
     try
-        to = datenum(info.timestart,'yyyy-mm-ddTHH:MM:SS.FFF');
+        fmt = 'yyyy-mm-ddTHH:MM:SS.FFF';
+        to = datenum(info.timestart,fmt);
     catch
-        warning('Could not parse Options.info.timestart');
+        warning(['Could not parse Options.info.timestart. Format must be ',fmt]);
         info.timestart = '';
     end
 end
+
 if ~isempty(info.timestart)
+    dt = info.timedelta;
+    t = [0:length(t)-1]';
     if strcmp(info.timeunit,'ms')
-        ppd = 86400000;
+        ppd = 86400000/info.timedelta;
     elseif strcmp(info.timeunit,'s')
-        ppd = 86400;
+        ppd = 86400/info.timedelta;
     elseif strcmp(info.timeunit,'m')
-        ppd = 1440;
+        ppd = 1440/info.timedelta;
     else
         warning('Options.td.timeunit = %s not recognized. Must be ms, s, or m\n',info.timeunit);
         info.timestart = '';
     end
-end
-if ~isempty(info.timestart)
-    dt = S.Options.td.dt;
-    t = [0:dt:dt*length(t)-1]';
     t = to + t/ppd;
 end
 
@@ -167,22 +166,25 @@ elseif strcmp(opts.type,'error')
         adjust_exponent('y');
         setx(1,info,[t(1),t(end)]);
 end
+
 drawnow;
-end % function
+
+figsave(opts,['timeseries-',opts.type]);
 
 function setx(last,info,tl)
 
     if ~isempty(info.timestart)
         set(gca,'XLim',tl);
         datetick('x','keeplimits');
+    end
+    if ~last
+        set(gca,'XTickLabel',[]);
     else
         xlabel(sprintf('%s since start', info.timeunit));
         adjust_exponent();
     end
-    if ~last
-        set(gca,'XTickLabel',[]);
-    end
         
 end
 
+end % function
 

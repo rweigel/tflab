@@ -1,10 +1,13 @@
 function [fe,Ic,Ne] = evalfreq(N,Npd,scale)
-%EVALFREQ Logarithmically spaced center frequencies and windows
+%EVALFREQ Liniear or logarithmicaly spaced center frequencies and bands
 %
 %  [fe,Ic,Ne] = evalfreq(N) returns approximately 7 evaluation frequencies
 %  per decade in frequency range [2/N,1/4]. Ic are the center indices and
 %  Ne is the number of points to left and right of center frequency to use
-%  as a inclusion window. For fe = 0, Ne = 0. 
+%  as a inclusion band. For fe = 0, Ne = 0. 
+%
+%  Use evalfreq_plot(N) to visualize the evaluation frequencies and their
+%  associated frequency bands.
 %
 %  The left boundary of a frequency window i (for i > 2) starts at fe(i-1)
 %  and the number of DFT points between fe(i) and fe(i-1) is used to

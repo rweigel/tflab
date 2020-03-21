@@ -23,10 +23,10 @@ if tn == -2
 
     for k = 1:length(opts.A.B) % Loop over vector component
         Phi = 2*pi*rand(1, length(F));    
-        %Phi = zeros(1, length(F));            
+        %Phi = zeros(1, length(F)); 
         PhiB = repmat(Phi, length(t), 1);
         
-        Phi = zeros(1, length(F));                    
+        Phi = zeros(1, length(F));
         PhidB = repmat(Phi, length(t), 1);        
 
         % PhiB depends on column, not row.

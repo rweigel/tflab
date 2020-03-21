@@ -12,13 +12,9 @@ opts = struct();
 if nargin > 1
     fns = fieldnames(popts);
     for i = 1:length(fns)
-        if isfield(opts,fns{i})
-           opts.(fns{i}) = popts.(fns{i});
-        end
+        opts.(fns{i}) = popts.(fns{i});
     end
 end
-    
-figprep();
 
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
@@ -36,11 +32,13 @@ else
 end
 
 if isstruct(S)
+    figure();
+    figprep();
     subplot('Position', PositionTop);
         if opts.period
-            x = 1./S.fe;
+            x = S.Options.info.timedelta./S.fe;
         else
-            x = S.fe;
+            x = S.fe/S.Options.info.timedelta;
         end
         if opts.magnitude
             y = abs(S.Z);
@@ -107,11 +105,7 @@ if isstruct(S)
         end
         legend(ls,'Location','Best','Orientation','Horizontal');
         adjust_exponent();
-        if isfield(popts,'filename') && ~isempty(popts.filename)
-            [fpath,fname,fext] = fileparts(popts.filename);
-            figsave(1,sprintf('%s/%s%s',fpath,fname,fext));
-        end
-        % If S.Segment, create 4-panel plot of Z with all segment Z's.
+        figsave(opts,'Z');
 else
     %TODO:
     % assert(all(size(S1.Z) == size(S2.Z)), 'Required: size(S1.Z) == size(S2.Z)');
@@ -122,18 +116,18 @@ else
         subplot('Position', PositionTop);
             for s = 1:length(S)
                 if opts.period
-                    x = 1./S{s}.fe;
+                    x = S{s}.Options.info.timedelta./S{s}.fe;
                 else
-                    x = S{s}.fe;
+                    x = S{s}.fe/S{s}.Options.info.timedelta;
                 end
                 if opts.magnitude
                     y = abs(S{s}.Z(:,j));
                     ls{s} = sprintf('$%s$ %s',Zstrs{j},S{s}.Options.description);
-                    loglog(x, y);
+                    loglog(x, y, 'linewidth',2,'marker','.','markersize',10);
                 else
                     y = real(S{s}.Z(:,j));
                     ls{s} = sprintf('$\\Re(%s)$ %s',Zstrs{j},S{s}.Options.description);
-                    semilogx(x, y);
+                    semilogx(x, y, 'linewidth',2,'marker','.','markersize',10);
                 end
                 if s == 1
                     grid on;box on;hold on;
@@ -142,7 +136,7 @@ else
             if ~isempty(opts.period_range)
                 set(gca,'XLim',opts.period_range);
             end
-            adjust_exponent('y');
+            adjust_exponent();
             % Assumes all units are the same
             ylabel(sprintf('[%s/(%s)]',...
                         S{1}.Options.info.inunit,...
@@ -153,37 +147,35 @@ else
         subplot('Position', PositionBottom);
             for s = 1:length(S)
                 if opts.period
-                    x = 1./S{s}.fe;
+                    x = S{s}.Options.info.timedelta./S{s}.fe;
                 else
-                    x = S{s}.fe;
+                    x = S{s}.fe/S{s}.Options.info.timedelta;
                 end
                 if opts.magnitude
                     y = (180/pi)*unwrap(atan2(imag(S{s}.Z(:,j)),real(S{s}.Z(:,j))));
                     yl = '[degrees]';
                     ls{s} = sprintf('$%s$ $\\,$ %s',Phistrs{j},S{s}.Options.description);
-                    semilogx(x, y);
+                    semilogx(x, y, 'linewidth',2,'marker','.','markersize',10);
                 else
                     y = imag(S{s}.Z(:,j));
                     yl = sprintf('[%s/(%s)]',...
                                  S{1}.Options.info.inunit,...
                                  S{1}.Options.info.outunit);
                     ls{s} = sprintf('$\\Im(%s)$ %s',Zstrs{j},S{s}.Options.description);
-                    semilogx(x, y);
+                    semilogx(x, y, 'linewidth',2,'marker','.','markersize',10);
                 end
                 if s == 1
                     grid on;box on;hold on;
                 end
             end
             ylabel(yl);
+            adjust_exponent();
             if opts.magnitude && ~opts.unwrap
                 set(gca,'YLim',[-185,185])
                 set(gca,'YTick',[-180:60:180]);
             end
             if ~isempty(opts.period_range)
                 set(gca,'XLim',opts.period_range);
-            end
-            if ~opts.magnitude
-                adjust_exponent('y');
             end
             if opts.period
                 xlabel(sprintf('$T$ [%s]', S{1}.Options.info.timeunit));
@@ -194,9 +186,7 @@ else
                 xlabel(sprintf('$f$ [1/%s]', S{1}.Options.info.timeunit));
             end
             legend(ls,'Location','NorthEast');
-        if isfield(popts,'filename') && ~isempty(popts.filename)
-            [fpath,fname,fext] = fileparts(popts.filename);
-            figsave(1,sprintf('%s/%s-%s%s',fpath,fname,Zstrs{j},fext));
+        figsave(opts,['Z',regexprep(Zstrs{j},'\{|\}','')]);            
         end
     end
 end
