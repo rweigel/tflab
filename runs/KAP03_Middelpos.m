@@ -1,4 +1,5 @@
 close all;
+set(0,'defaultFigureWindowStyle','docked');
 
 lemi  = 0; 
 savefmt = struct('pdf',0,'png',1);
@@ -13,28 +14,25 @@ if 1
     [B,E] = Middelpos_data();
 end
 
-if 0
+if 1
     cid   = 'KAP03';
     id    = 'KAP103';
-    start = '2003-11-08T16:30:00.000'; % Must be in this format
-    stop  = '2003-12-05T08:54:30.000'; % Must be in this format
-    timedelta = 5;
+    %id    = 'KAP106';
+    %id    = 'KAP109';
     
     % Read input/output data
-    [B,E] = KAP03_data(id);
+    [B,E,H] = KAP03_data(id);
+    start = [strrep(H.STARTTIME,' ','T'),'.000'];
+    stop  =  [strrep(H.ENDTIME,' ','T'),'.000'];
+    timedelta = str2num(H.DELTA_T);
 end
 
-if 0
-    cid   = 'KAP03';    
-    id    = 'KAP106';
-    start = '2003-11-08T11:00:00.000';
-    stop  = '2003-12-04T11:44:55.000';
-    timedelta = 5;
-
-    % Read input/output data
-    [B,E] = KAP03_data(id);
-end
-
+addpath([fileparts(mfilename('fullpath')),'/../window']); 
+addpath([fileparts(mfilename('fullpath')),'/../fft']); 
+addpath([fileparts(mfilename('fullpath')),'/../lib']); 
+addpath([fileparts(mfilename('fullpath')),'/../']);
+addpath([fileparts(mfilename('fullpath')),'/../plot']);
+    
 % Dir of this script
 scriptpath = fileparts(mfilename('fullpath')); 
 
@@ -42,8 +40,7 @@ scriptpath = fileparts(mfilename('fullpath'));
 figprfx = [scriptpath,sprintf('/figures/%s/%s-',cid,id)];
 
 % Ouput file
-matfile = [scriptpath,sprintf('/data/%s/%s-',cid,id)];
-
+matfile = [scriptpath,sprintf('/data/%s/%s',cid,id)];
 
 % Plot title information
 ptitle = sprintf('%s %s - %s',id,start,stop);
@@ -200,5 +197,9 @@ else
                'filename',filename,'savefmt',savefmt));
 end
 
-S = {S1,S2,S3};
-save(matfile,S);
+if lemi
+    S = {S1,S2,S3};
+else
+    S = {S1,S2};
+end
+save(matfile,'-v7.3','S');
