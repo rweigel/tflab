@@ -231,49 +231,49 @@ if ~iscell(S) && strcmp(opts.type,'error')
     end
 end
 
+c = {'k','r','g','b'}; % TODO: Define more colors
+
 % Compare
 if iscell(S)
     figure();
     figprep();
     subplot('Position',PositionTop);
-        plot(t,S{1}.Out(:,1),'k');
+        plot(t,S{1}.Out(:,1),c{1});
         grid on;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     S{1}.Options.info.outstr{1},S{1}.Options.info.outunit));
-        ls0 = sprintf('Observed\n');
+        ls0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
 
         for j = 1:length(S)
-            plot(t,S{j}.Metrics.Predicted(:,1));
-            ls{j} = sprintf('Predicted %s %s\n',...
-                        S{j}.Options.info.outstr{1},...
+            plot(t,S{j}.Metrics.Predicted(:,1),c{j+1});
+            ls{j} = sprintf('Predicted %s\n',...
                         S{j}.Options.description);
         end
         if ~isempty(opts.title)
             title(opts.title,'FontWeight','Normal');
         end
-        legend({ls0,ls{:}},'Location','NorthEast','Orientation','Vertical');
+        [lh, lo] = legend({ls0,ls{:}},'Location','NorthEast','Orientation','Vertical');
+        adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
         setx(0,info,[t(1),t(end)]);
         %title(ts);
     subplot('Position',PositionBottom);
-        plot(t,S{1}.Out(:,2),'k');
-        grid on;box on;hold on;
+        plot(t,S{1}.Out(:,2),c{1});
         grid on;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     S{1}.Options.info.outstr{2},S{1}.Options.info.outunit));
-        ls0 = sprintf('Observed\n');
+        ls0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
 
         for j = 1:length(S)
-            plot(t,S{j}.Metrics.Predicted(:,2));
             for j = 1:length(S)
-                plot(t,S{j}.Metrics.Predicted(:,2));
-                ls{j} = sprintf('Predicted %s %s\n',...
-                            S{j}.Options.info.outstr{2},...
+                plot(t,S{j}.Metrics.Predicted(:,2),c{j+1});
+                ls{j} = sprintf('Predicted %s\n',...
                             S{j}.Options.description);
             end
         end
-        legend({ls0,ls{:}},'Location','NorthEast','Orientation','Vertical');
+        [lh, lo] = legend({ls0,ls{:}},'Location','NorthEast','Orientation','Vertical');
+        adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
         setx(1,info,[t(1),t(end)]);
