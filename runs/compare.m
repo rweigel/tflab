@@ -1,25 +1,16 @@
-matfile1 = [scriptpath,sprintf('/data/Middelpos/Middelpos')];
-matfile2 = [scriptpath,sprintf('/data/KAP03/KAP103')];
+clear;
+scriptpath = fileparts(mfilename('fullpath'));
 
-F1 = load(matfile1);
-F2 = load(matfile2);
+Middelpos = load([scriptpath,sprintf('/data/Middelpos/Middelpos.mat')]);
+KAP103 = load([scriptpath,sprintf('/data/KAP03/KAP103.mat')]);
 
-[B1,E1] = Middelpos_data();
-[B2,E2] = KAP03_data('KAP103');
+popts = struct();
+    popts.savefmt = struct();
+    popts.savefmt.pdf = 0;
+    popts.savedir = 'figures/KAP103_Middelpos';
 
-mean(B1)
+timeseries_plot({KAP103.S{4},KAP103.S{1}},popts);
 
-ti = [1:size(B2,1)]';
-for i = 1:size(B2,2)
-    tg = find(~isnan(B2(:,i)));
-    B2(:,i) = interp1(tg,B2(tg,i),ti);
-end
-mean(B2)
-
-F1.S{1}.Options.description = 'Middelpos';
-F2.S{1}.Options.description = 'KAP103';
-
-transferfnZ_plot({F1.S{1},F2.S{1}},...
-    struct('period_range',period_range,'title',ptitle,...
-           'filename',filename,'savefmt',savefmt));
-
+opts.plottype = 1;
+%opts.period_range = [4,1e4];
+transferfnZ_plot({KAP103.S{4},KAP103.S{1},Middelpos.S{1}},popts);

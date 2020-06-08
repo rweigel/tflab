@@ -29,9 +29,9 @@ for j = 1:Nout
     end
 end
 
+c = max(max(abs(imag(Ep))));
 if max(abs(imag(Ep))) > eps
-    assert(isreal(Ep),...
-            ['Computed impulse response has imaginary component.'...
-            'Check calculation of Z']);
+    warning(sprintf(...
+        'Computed impulse response H has imaginary component with max(abs(imag(H)))/eps = %.1f. Check calculation of Z.\n',c/eps));
 end
 Ep = real(Ep);

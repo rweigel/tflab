@@ -46,7 +46,9 @@ Metrics = struct();
 Metrics.PSD = struct();
 Metrics.Predicted = [];
 
-[Zi,fi] = zinterp(S.fe,S.Z,size(In,1));
+% Keep any row of Z without a NaN
+Ik = any(~isnan(S.Z),2);
+[Zi,fi] = zinterp(S.fe(Ik,:),S.Z(Ik,:),size(In,1));
 
 for k = 1:size(Out,3)
 

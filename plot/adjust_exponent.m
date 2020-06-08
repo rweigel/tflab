@@ -15,6 +15,8 @@ function adjust_exponent(direction, force)
 %  On linear axes, removes an offsetted x10^{N} if it appears near last
 %  axis label and appends $\cdot 10^{N}$ to the last axis label.
 %
+%  Call adjust exponent after limits are set because MATLAB does not update
+%  labels when the limits change if the labels have been modified.
 
 if nargin < 2
     force = 0; 

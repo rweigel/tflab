@@ -190,8 +190,8 @@ S1 = transferfnFD(B(:,1),E(:,1),opts);
 fprintf('---\n');
 S2 = transferfnFD(B(:,1),[E(:,1),E(:,1)],opts);
 
-assert(all(S1.Predicted == S2.Predicted(:,1)));
-assert(all(S1.Predicted == S2.Predicted(:,2)));
+assert(all(S1.Metrics.Predicted == S2.Metrics.Predicted(:,1)));
+assert(all(S1.Metrics.Predicted == S2.Metrics.Predicted(:,2)));
 
 %%%
 fprintf('\n');
@@ -205,8 +205,8 @@ S2 = transferfnFD(B,E(:,2),opts);
 fprintf('---\n');
 S3 = transferfnFD(B,E,opts);
 
-assert(all(S1.Predicted == S3.Predicted(:,1)));
-assert(all(S2.Predicted == S3.Predicted(:,2)));
+assert(all(S1.Metrics.Predicted == S3.Metrics.Predicted(:,1)));
+assert(all(S2.Metrics.Predicted == S3.Metrics.Predicted(:,2)));
 fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -229,8 +229,8 @@ fprintf('---\n');
 S2 = transferfnFD([B;B],[E;E],opts);
 
 % Results for two segments in S2 should be same a single segment in S1.
-assert(all(S1.Predicted == S2.Segment.Predicted(:,1,1)));
-assert(all(S1.Predicted == S2.Segment.Predicted(:,1,2)));
+assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,1)));
+assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,2)));
 assert(all(S1.Z == S2.Segment.Z(:,:,1)))
 assert(all(S1.Z == S2.Segment.Z(:,:,2)))
 assert(all(S1.Z(:) == S2.Z(:)));
@@ -252,8 +252,8 @@ S1 = transferfnFD(B(:,1),E(:,1),opts);
 fprintf('---\n');
 S2 = transferfnFD([B(:,1);B(:,1)],[E;E],opts);
 
-assert(all(S1.Predicted == S2.Segment.Predicted(:,1,1)));
-assert(all(S1.Predicted == S2.Segment.Predicted(:,1,2)));
+assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,1)));
+assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,2)));
 
 fprintf('\n');
 %%%
@@ -261,10 +261,10 @@ logmsg('API Segmenting; Test 3.5.\n');
 
 S3 = transferfnFD(B,E,opts);
 S4 = transferfnFD([B;B],[E;E],opts);
-assert(all(S3.Predicted(:,1) == S4.Segment.Predicted(:,1,1)));
-assert(all(S3.Predicted(:,2) == S4.Segment.Predicted(:,2,1)));
-assert(all(S3.Predicted(:,1) == S4.Segment.Predicted(:,1,2)));
-assert(all(S3.Predicted(:,2) == S4.Segment.Predicted(:,2,2)));
+assert(all(S3.Metrics.Predicted(:,1) == S4.Segment.Metrics.Predicted(:,1,1)));
+assert(all(S3.Metrics.Predicted(:,2) == S4.Segment.Metrics.Predicted(:,2,1)));
+assert(all(S3.Metrics.Predicted(:,1) == S4.Segment.Metrics.Predicted(:,1,2)));
+assert(all(S3.Metrics.Predicted(:,2) == S4.Segment.Metrics.Predicted(:,2,2)));
 assert(all(S3.Z(:) == S4.Z(:)));
 fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -289,7 +289,7 @@ S1 = transferfnFD([B;B],[E;E],opts);
 fprintf('---\n');
 S2 = transferfnFD({B;B},{E;E},opts);
 assert(all(S1.Z(:) == S2.Z(:)));
-assert(all(S1.Segment.Predicted(:) == S2.Segment.Predicted(:)))
+assert(all(S1.Segment.Metrics.Predicted(:) == S2.Segment.Metrics.Predicted(:)))
 
 %%%
 fprintf('\n');
@@ -302,9 +302,9 @@ S2 = transferfnFD({B,[B;B]},{E,[E;E]},opts);
 fprintf('---\n');
 S3 = transferfnFD({B,[B;B]},{0.5*E,[1.0*E;1.5*E]},opts);
 
-assert(all(S1.Predicted == S2.Segment.Predicted(:,:,1)))
-assert(all(S1.Predicted == S2.Segment.Predicted(:,:,2)))
-assert(all(S1.Predicted == S2.Segment.Predicted(:,:,3)))
+assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,:,1)))
+assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,:,2)))
+assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,:,3)))
 % DC value will be different for S3, so omit from test:
 assert(all(S1.Z(2:end)-S3.Z(2:end) < 10*eps));
 

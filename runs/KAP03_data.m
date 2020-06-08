@@ -11,7 +11,7 @@ datapath = [scriptpath,'/data/KAP03'];
 % Content of data file
 matfile = [datapath,'/',id,'-measurements.mat']; 
 
-if 1 || ~exist(matfile,'file')
+if ~exist(matfile,'file')
     fname = [datapath,'/measurements/',lower(id),'as.ts'];
     fid = fopen(fname);
     i = 1;

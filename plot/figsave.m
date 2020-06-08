@@ -18,8 +18,6 @@ else
     end
 end
 
-
-
 fpath = fileparts(filename);
 if ~isempty(fpath) && ~exist(fpath,'dir')
     mkdir(fpath);

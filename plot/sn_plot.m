@@ -2,11 +2,14 @@ function sn_plot(S,popts)
 
 % Default options
 opts = struct();
-    opts.type = 1;
-    opts.unwrap = 1;
-    opts.magnitude = 0;
+    opts.title = '';
     opts.period = 1;
+    opts.unwrap = 1;
+    opts.plottype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re, Im
     opts.period_range = [];
+    opts.savedir = '';
+    opts.savefmt = struct();
+        opts.savefmt.pdf = 0;
 
 % Use default options if option not given
 if nargin > 1
@@ -16,6 +19,10 @@ if nargin > 1
     end
 end
 
+if length(opts.savedir) > 0 && opts.savedir(end) ~= filesep()
+    savedir = [opts.savedir,filesep()];
+end
+
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
@@ -23,8 +30,10 @@ if iscell(S) && length(S) == 1
     S = S{1};
 end
 
+% TODO: Above code is copy of transferfnZ_plot().
+
 % Single transfer function
-if isstruct(S)
+if isstruct(S) || length(S) == 1
     figure();
     figprep();
     if opts.period
@@ -47,8 +56,8 @@ if isstruct(S)
         title(S.Options.description,'FontWeight','Normal');        
         ylabel('Signal to Error');
         grid on;box on;hold on;
-        if isfield(popts,'title') && ~isempty(popts.title)
-            title(popts.title,'FontWeight','normal');
+        if isfield(opts,'title') && ~isempty(opts.title)
+            title(opts.title,'FontWeight','normal');
         end
         if ~isempty(opts.period_range)
             set(gca,'XLim',opts.period_range);
@@ -80,7 +89,7 @@ if isstruct(S)
         if ~isempty(opts.period_range)
             set(gca,'XLim',opts.period_range);
         end
-        figsave(opts,'SN');        
+    figsave(opts,'SN');        
 else    
     for j = 1:size(S{1}.Metrics.SN,2)
         figure();
@@ -110,8 +119,8 @@ else
                     set(gca,'XLim',opts.period_range);
                 end
             end            
-            if isfield(popts,'title') && ~isempty(popts.title)
-                title(popts.title,'FontWeight','normal');
+            if isfield(opts,'title') && ~isempty(opts.title)
+                title(opts.title,'FontWeight','normal');
             end
         subplot('Position', PositionBottom);
             for s = 1:length(S)    
@@ -141,6 +150,7 @@ else
             end            
             ylabel(sprintf('%s Coherence',pre));
             set(gca,'YLim',[0,1]);
-        figsave(opts,['SN-',j]);            
+        figsave(opts,
+            sprintf('SN-%s',strrep(S{1}.Options.info.outstr,'$','')));            
     end
 end

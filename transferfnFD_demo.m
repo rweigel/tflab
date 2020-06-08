@@ -87,16 +87,15 @@ Sx.Options.description = 'Actual';
 
 close all;
 figure(1);clf;
-    timeseries_plot(S1,'raw');   % Plot raw input/output data
+    timeseries_plot(S1,struct('type','raw'));   % Plot raw input/output data
 figure(2);clf;
-    timeseries_plot(S1,'error'); % Plot raw input/output data
+    timeseries_plot(S1,struct('type','error')); % Plot raw input/output data
 figure(3);clf;
-    spectrum_plot(S1,'raw');
+    spectrum_plot(S1,struct('type','raw'));
 figure(4);clf;
-    transferfnZ_plot(S1,S2);   
+    transferfnZ_plot({S1,S2});
 figure(5);clf;  
-    transferfnZ_plot(S1,Sx); % Compare exact with computed
-
+    transferfnZ_plot({S1,Sx}); % Compare exact with computed
 
 break
 
