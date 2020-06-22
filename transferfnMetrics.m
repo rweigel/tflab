@@ -1,17 +1,32 @@
-function S = transferfnMetrics(S,opts,I)
+function S = transferfnMetrics(S,opts,I,update)
 %TRANSFERFNMETRICS
 
-if nargin == 3
+if nargin < 4
+    update = 0;
+end
+
+if nargin > 2 && ~isempty(I)
     % Create segments.
     % The following assumes I(2,1,k)-I(1,1,k) is constant.
     if isfield(S,'Segment')
         logmsg('Segment field already exists. Will replace.\n');
+        % TODO: Should check if S.Segment.Intervals matches I and
+        % only re-do calculation if they are not equal.s
         S = rmfield(S,'Segment');
     end
     S.Segment = struct();
     for k = 1:size(I,3)
         S.Segment.In(:,:,k) = S.In(I(1,1,k):I(2,1,k),:);
         S.Segment.Out(:,:,k) = S.Out(I(1,1,k):I(2,1,k),:);        
+    end
+end
+
+if update == 1
+    if isfield(S,'Metrics')
+        S = rmfield(S,'Metrics');
+    end
+    if isfield(S,'Segment') && isfield(S.Segment,'Metrics')
+        S.Segment = rmfield(S.Segment,'Metrics');
     end
 end
 
@@ -22,23 +37,16 @@ end
 
 if ~isfield(S,'Metrics')
     % If no S.Metrics, compute
+    logmsg('Computing metrics for full interval.\n');
     In = S.In;
     Out = S.Out;
 else
     % If no S.Segment.Metrics, compute
     if isfield(S,'Segment') && ~isfield(S.Segment,'Metrics')
+        logmsg('Computing metrics for segments.\n');
         In = S.Segment.In;
         Out = S.Segment.Out;
     end
-end
-
-if isfield(S,'Segment')
-    % In this case, S.In will be a single segment (the full time series).
-    % This forces PSD calculations on full time series to have evaluation
-    % frequencies that match those for the segments.
-    N = size(S.Segment.In,1);
-else
-
 end
 
 N = size(In,1);
@@ -48,6 +56,7 @@ Metrics.Predicted = [];
 
 % Keep any row of Z without a NaN
 Ik = any(~isnan(S.Z),2);
+% TODO: Pass zinterp options
 [Zi,fi] = zinterp(S.fe(Ik,:),S.Z(Ik,:),size(In,1));
 
 for k = 1:size(Out,3)
@@ -76,7 +85,7 @@ else
 end
 
 if isfield(S,'Segment') && ~isfield(S.Segment,'Metrics')
-    % If no metrics in S and no metrics in S.Segment, then 
+    % If no S.Metrics and no S.Segment.Metrics, then 
     % S.Metrics was computed first. This catches case where both metrics
     % need to be calculated.
     S.Segment = transferfnMetrics(S,opts);

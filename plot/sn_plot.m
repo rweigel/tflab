@@ -150,7 +150,7 @@ else
             end            
             ylabel(sprintf('%s Coherence',pre));
             set(gca,'YLim',[0,1]);
-        figsave(opts,
-            sprintf('SN-%s',strrep(S{1}.Options.info.outstr,'$','')));            
+        figsave(opts,...
+            sprintf('SN-%s',strrep(S{1}.Options.info.outstr{j},'$','')));            
     end
 end

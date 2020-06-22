@@ -39,7 +39,7 @@ else
     Phistrs = {'Z'};
 end
 
-if isstruct(S) || length(S) == 1
+if isstruct(S)
     figure();
     figprep();
     S = defaultmeta(S);
@@ -53,7 +53,8 @@ if isstruct(S) || length(S) == 1
             case 1
                 y = abs(S.Z);
                 for j = 1:size(S.Z,2)
-                    ls{j} = sprintf('$%s$ %s',Zstrs{j},S.Options.description);
+                    ls{j} = sprintf('$%s$ %s',Zstrs{j},...
+                            S.Options.info.stationid, S.Options.description);
                 end
                 loglog(x, y, 'linewidth',2,'marker','.','markersize',10);
             case 2
@@ -152,7 +153,8 @@ else
                 switch opts.plottype
                     case 1
                         y = abs(S{s}.Z(:,j));
-                        ls{s} = sprintf('$%s$ %s',Zstrs{j},S{s}.Options.description);
+                        ls{s} = sprintf('$%s$ %s %s',Zstrs{j},...
+                            S{s}.Options.info.stationid, S{s}.Options.description);
                         loglog(x, y, 'linewidth',2,'marker','.','markersize',10);
                     case 2
                         % See Egbert, Booker, and Schultz 1992 pg 15,116.
@@ -205,7 +207,8 @@ else
                 else
                     y = (180/pi)*unwrap(atan2(imag(S{s}.Z(:,j)),real(S{s}.Z(:,j))));
                     yl = '[degrees]';
-                    ls{s} = sprintf('$%s$ %s',Phistrs{j},S{s}.Options.description);
+                    ls{s} = sprintf('$%s$ %s %s',Phistrs{j},...
+                        S{s}.Options.info.stationidS{s}.Options.description);
                     semilogx(x, y, 'linewidth',2,'marker','.','markersize',10);
                 end
                 if s == 1

@@ -33,6 +33,8 @@ opts.info = struct();
     opts.info.inunit= '';
     opts.info.outunit= '';
     opts.info.timeunit = '';
+    opts.info.stationid = '';
+    opts.info.chainid = '';
     
 opts.transferfnFD = struct();
     opts.transferfnFD.loglevel = 1;

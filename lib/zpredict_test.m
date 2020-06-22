@@ -1,3 +1,4 @@
+
 addpath([fileparts(mfilename('fullpath')),'/../misc/']);
 
 for N = [9,10,99,100,999,1000];
@@ -13,8 +14,8 @@ for N = [9,10,99,100,999,1000];
         end
     end
 
-    % B has only DC component. Output should be constant.
     logmsg('Test 1; N = %4d\n',N);
+        % B has only DC component. Output should be constant.
         Ep = zpredict(Z,B);
         mae = max(abs(Ep - Z(1)));
         assert(mae <= eps);
@@ -39,7 +40,7 @@ for N = [9,10,99,100,999,1000];
     logmsg('Test 4; N = %4d\n',N);
         t = [0:N-1]';
         B = sin(2*pi*t/T);
-        Z = abs(fft(B))/(N/2);
+        Z = abs(fft(B))/(N/2); % Make Z = 1 at period +/- T
         Ep = zpredict(Z,B);
         mae = max(abs(Ep - B));
         logmsg('  T = %d; max abs(error) = %.1e\n',T,mae);
@@ -48,7 +49,7 @@ for N = [9,10,99,100,999,1000];
 
     logmsg('Test 5; N = %4d\n',N);
         Bs = sin(2*pi*t/T-pi/2); % Shifted B
-        Z = fft(B)/(N/2); 
+        Z = fft(B)/(N/2); % Make Z = -/+ 1i at period +/- T
         Ep = zpredict(Z,B);
         mae = max(abs(Ep - Bs));
         logmsg('  T = %d; max abs(error) = %.1e\n',T,mae);

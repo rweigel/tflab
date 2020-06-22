@@ -87,7 +87,9 @@ if f(1) == 0
 end
 
 if f(end) == 0.5
-    assert(all(imag(Z(end,:)) == 0),'If f(end) == 0.5 expect all(imag(Z(end,:))==0)');
+    % Can't do this because we don't know if f is normalized and generally
+    % don't know normalization.
+    %assert(all(imag(Z(end,:)) == 0),'If f(end) == 0.5 expect all(imag(Z(end,:))==0)');
 end
 
 Zi = interp1(f,Z,fi,opts.interp1args{:});
@@ -114,10 +116,12 @@ end
 
 function [Zi,fi] = zfull(Zi,N)
     if mod(N,2) == 0
-        % Last Zi row corresponds to fi = +0.5. This puts Z in conventional
-        % frequency order for even N where
+        % Last Zi row corresponds to fi = +0.5 (or equivalent un-normalized). 
+        % This puts Z in conventional frequency order for even N where
         % f = [0, 1/N, ..., N/2-1 , -0.5, ..., -1/N]
         Zi = [Zi(1:end,:) ; flipud(conj(Zi(2:end-1,:)))];
+        % Force f = +0.5 (or equivalent un-normalized) element to be real  
+        Zi(end/2+1,:) = real(Zi(end/2+1,:));
     else
         Zi = [Zi(1:end,:) ; flipud(conj(Zi(2:end,:)))];
     end

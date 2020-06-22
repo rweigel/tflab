@@ -1,8 +1,8 @@
 clear
 
-lemi  = 1;
+lemi  = 0;
 
-if 1
+if 0
     cid   = 'Middelpos';
     sid    = 'Middelpos';
     start = '2012-07-12T00:00:00.000'; % Must be in this format
@@ -12,14 +12,14 @@ if 1
     [B,E] = Middelpos_data();
 end
 
-if 0
+if 1
     cid   = 'KAP03'; 
     sid    = 'KAP103';
     %id    = 'KAP106';
     %id    = 'KAP109';
     
     % Read input/output data
-    [B,E,H] = KAP03_data(id);
+    [B,E,H] = KAP03_data(sid);
     start = [strrep(H.STARTTIME,' ','T'),'.000'];
     stop  =  [strrep(H.ENDTIME,' ','T'),'.000'];
     timedelta = str2num(H.DELTA_T);
@@ -118,7 +118,7 @@ opts2 = transferfnFD_options(1,iopts);
 %I = 1:86400*10; % Use a sub-set of data
 I = 1:size(B,1); % Use all 55 days of data
 S{1} = transferfnFD(B(I,:),E(I,:),opts1);
-S{2} = transferfnFD(B(I,:),E(I,:),opts2);
+S{2} = transferfnFD(B(I,:),E(I,:),opts2);           
 
 % Modify default descriptions of run
 S{1}.Options.description = desc1;
@@ -134,22 +134,24 @@ if lemi
     S{3}.Options = struct('description','LEMI; One 55-day segment');
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if strcmp(cid,'KAP03')
-    zread = '/home/weigel/git/zread/';
+    zread = '/Users/robertweigel/git/zread/';
     addpath(zread);
-    S{4} = read_edi([zread,'data/Final_with_DeBeers/edi_files/KAP03/kap003.edi']);
+    S{4} = read_edi([zread,'data/samtex/Final_with_DeBeers/edi_files/KAP03/kap003.edi']);
     S{4}.Z(S{4}.Z > 1e31) = NaN;
+    
+    % Does not matter
+    %I = find(S{4}.fe < 0.5);
+    %S{4}.fe = S{4}.fe(I);    
+    %S{4}.Z = S{4}.Z(I,:);
 
     S{4}.Options.info = S{1}.Options.info;
     S{4}.Options.description = 'BIRP';
     S{4}.In  = S{1}.In;
     S{4}.Out = S{1}.Out;
     S{4}.Time = S{1}.Time;
-    S{4} = transferfnMetrics(S{4},S{1}.Options,S{1}.Segment.IndexRange);
+    S{4} = transferfnMetrics(S{4},S{1}.Options,S{1}.Segment.IndexRange,1);
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 save(matfile,'-v7.3','S');
 

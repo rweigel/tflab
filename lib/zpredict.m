@@ -9,7 +9,7 @@ function [Ep,Z] = zpredict(Z,B)
 %  used with B to form the first column of E. The second set of size(B,2)
 %  columns in Z are convolved with B to form the second column of E, etc.
 %
-%  See also ZPREDICT_DEMO.
+%  See also ZPREDICT_TEST.
 
 assert(size(B,1) == size(Z,1),'Requires: size(B,1) == size(Z,1)');
 
@@ -28,7 +28,6 @@ for j = 1:Nout
         end
     end
 end
-
 c = max(max(abs(imag(Ep))));
 if max(abs(imag(Ep))) > eps
     warning(sprintf(...
