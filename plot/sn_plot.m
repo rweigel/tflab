@@ -8,8 +8,8 @@ opts = struct();
     opts.plottype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re, Im
     opts.period_range = [];
     opts.savedir = '';
-    opts.savefmt = struct();
-        opts.savefmt.pdf = 0;
+    opts.filename = 'SN';
+    opts.savefmt = {};
 
 % Use default options if option not given
 if nargin > 1
@@ -20,7 +20,7 @@ if nargin > 1
 end
 
 if length(opts.savedir) > 0 && opts.savedir(end) ~= filesep()
-    savedir = [opts.savedir,filesep()];
+    opts.savedir = [opts.savedir,filesep()];
 end
 
 PositionTop = [0.1300 0.5400 0.7750 0.4];
@@ -89,7 +89,9 @@ if isstruct(S) || length(S) == 1
         if ~isempty(opts.period_range)
             set(gca,'XLim',opts.period_range);
         end
-    figsave(opts,'SN');        
+    for i = 1:length(opts.savefmt)
+        figsave([opts.filename,'.',opts.savefmt{i}]);
+    end
 else    
     for j = 1:size(S{1}.Metrics.SN,2)
         figure();
@@ -146,11 +148,13 @@ else
             if iscell(S{1}.Options.info.outstr)
                 pre = S{1}.Options.info.outstr{j};
             else
-                pre = sprintf('%s(:,%d)',S{1}.Options.info.outstr,j);
+                pre = sprintf('%s(:,%d)',S{1}.Options.info.outstr{j},j);
             end            
             ylabel(sprintf('%s Coherence',pre));
             set(gca,'YLim',[0,1]);
-        figsave(opts,...
-            sprintf('SN-%s',strrep(S{1}.Options.info.outstr{j},'$','')));            
+        ext = regexprep(S{1}.Options.info.outstr{j},'\$','');
+        for i = 1:length(opts.savefmt)
+            figsave([opts.filename,'-',ext,'.',opts.savefmt{i}]);
+        end
     end
 end

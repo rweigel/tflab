@@ -5,11 +5,9 @@ opts = struct();
     opts.title = '';
     opts.period = 1;
     opts.unwrap = 1;
-    opts.plottype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re, Im
+    opts.plottype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re,Im
     opts.period_range = [];
-    opts.savedir = '';
-    opts.savefmt = struct();
-        opts.savefmt.pdf = 0;
+    opts.savefmt = {}; % Any extension allowed by export_fig
 
 % Use default options if options not given    
 if nargin > 1
@@ -19,10 +17,6 @@ if nargin > 1
     end
 end
 
-if length(opts.savedir) > 0 && opts.savedir(end) ~= filesep()
-    opts.savedir = [opts.savedir,filesep()];
-end
-
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
@@ -30,7 +24,7 @@ if iscell(S) && length(S) == 1
     S = S{1};
 end
 
-if (iscell(S) && size(S{1}.Z,2) > 1) || size(S{1}.Z,2) > 1
+if (iscell(S) && size(S{1}.Z,2) > 1) || size(S.Z,2) > 1
     Zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
     Rhostrs = {'\rho^a_{xx}','\rho^a_{xy}','\rho^a_{yx}','\rho^a_{yy}'};
     Phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{yx}','\phi_{yy}'};
@@ -53,8 +47,7 @@ if isstruct(S)
             case 1
                 y = abs(S.Z);
                 for j = 1:size(S.Z,2)
-                    ls{j} = sprintf('$%s$ %s',Zstrs{j},...
-                            S.Options.info.stationid, S.Options.description);
+                    ls{j} = sprintf('$%s$',Zstrs{j});
                 end
                 loglog(x, y, 'linewidth',2,'marker','.','markersize',10);
             case 2
@@ -66,7 +59,7 @@ if isstruct(S)
                 % when f in Hz, Z in (mV/km)/nT
                 y = abs(S.Z).^2./(5*S.fe/S.Options.info.timedelta);
                 for j = 1:size(S.Z,2)
-                    ls{j} = sprintf('$%s$ %s',Rhostrs{j},S.Options.description);
+                    ls{j} = sprintf('$%s$',Rhostrs{j});
                 end
                 loglog(x, y, 'linewidth',2,'marker','.','markersize',10);
             case 3
@@ -77,7 +70,7 @@ if isstruct(S)
         grid on;
         unitstr = sprintf('[(%s)/%s]',S.Options.info.outunit,S.Options.info.inunit);
         ylabel(unitstr);
-        title(description,'FontWeight','Normal');
+        title(S.Options.description,'FontWeight','Normal');
         if opts.period
             if ~isempty(opts.period_range)
                 set(gca,'XLim',opts.period_range);
@@ -114,7 +107,7 @@ if isstruct(S)
             set(gca,'YTick',[-180:60:180]);
         end
         if opts.period
-            xlabel(sprintf('$T$ [%s]', timeunit));
+            xlabel(sprintf('$T$ [%s]', S.Options.info.timeunit));
             if ~isempty(opts.period_range)
                 set(gca,'XLim',opts.period_range);
             end
@@ -124,15 +117,18 @@ if isstruct(S)
         legend(ls,'Location','Best','Orientation','Horizontal');
         adjust_exponent();
         rep = '\{|\}';
+        pre = [opts.filename,'-',regexprep(Zstrs{j},rep,'')];
         switch opts.plottype
             case 1
-                fname = [opts.savedir,regexprep(Zstrs{j},rep,''),'_Magnitude_Phase'];
+                fname = [pre,'_Magnitude_Phase'];
             case 2
-                fname = [opts.savedir,regexprep(Zstrs{j},rep,''),'_Rhoa_Phase'];            
+                fname = [pre,'_Rhoa_Phase'];            
             case 3
-                fname = [opts.savedir,regexprep(Zstrs{j},rep,''),'_Real_Imaginary'];            
+                fname = [pre,'_Real_Imaginary'];            
         end
-        figsave(opts,fname);
+        for i = 1:length(opts.savefmt)
+            figsave([fname,'.',opts.savefmt{i}]);
+        end
 else
     %TODO:
     % assert(all(size(S1.Z) == size(S2.Z)), 'Required: size(S1.Z) == size(S2.Z)');
@@ -208,7 +204,7 @@ else
                     y = (180/pi)*unwrap(atan2(imag(S{s}.Z(:,j)),real(S{s}.Z(:,j))));
                     yl = '[degrees]';
                     ls{s} = sprintf('$%s$ %s %s',Phistrs{j},...
-                        S{s}.Options.info.stationidS{s}.Options.description);
+                        S{s}.Options.info.stationid,S{s}.Options.description);
                     semilogx(x, y, 'linewidth',2,'marker','.','markersize',10);
                 end
                 if s == 1
@@ -234,15 +230,18 @@ else
             legend(ls,'Location','NorthEast');
             adjust_exponent();
         rep = '\{|\}';
+        pre = [opts.filename,'-',regexprep(Zstrs{j},rep,'')];
         switch opts.plottype
             case 1
-                fname = [opts.savedir,regexprep(Zstrs{j},rep,''),'_Magnitude_Phase'];
+                fname = [pre,'_Magnitude_Phase'];
             case 2
-                fname = [opts.savedir,regexprep(Zstrs{j},rep,''),'_Rhoa_Phase'];            
+                fname = [pre,'_Rhoa_Phase'];            
             case 3
-                fname = [opts.savedir,regexprep(Zstrs{j},rep,''),'_Real_Imaginary'];            
+                fname = [pre,'_Real_Imaginary'];            
         end
-        figsave(opts,fname);
+        for i = 1:length(opts.savefmt)
+            figsave([fname,'.',opts.savefmt{i}]);
+        end
         end
     end
 end

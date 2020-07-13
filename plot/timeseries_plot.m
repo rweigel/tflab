@@ -8,9 +8,9 @@ function timeseries_plot(S,popts)
 opts = struct();
     opts.type = 'raw';
     opts.title = '';
-    opts.savedir = '';
-    opts.savefmt = struct();
-        opts.savefmt.pdf = 0;
+    opts.filename = 'timeseries';
+    opts.savefmt = {}; % One or more extensions allowed by export_fig
+                       % e.g. {'pdf'} or {'svg','png'}.
 
 % Use default options if options not given
 if nargin > 1
@@ -28,7 +28,7 @@ if iscell(S) && length(S) == 1
 end
 
 if iscell(S) && ~isempty(opts.type)
-    warning('opts.type ignored when input is cell array');
+    %warning('opts.type ignored when input is cell array');
     opts.type = '';
 end
 
@@ -91,8 +91,8 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
     
     if isempty(opts.title)
         sta = '';
-        if isfield(S.Options,'station')
-            sta = S.Options.station;
+        if isfield(S.Options.info,'stationid')
+            sta = S.Options.info.stationid;
         end
         ts = sprintf('%s Raw Input%s (top) and Raw Output (bottom)',sta,s1);
         if strcmp(opts.type,'windowed')
@@ -147,8 +147,10 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
         adjust_exponent('y');
         adjust_ylim();
         setx(1,info,[t(1),t(end)]);  
-
-    figsave(opts,[opts.savedir,filesep(),'timeseries-',opts.type]);
+    
+    for i = 1:length(opts.savefmt)
+        figsave([opts.filename,'.',opts.savefmt{i}]);
+    end
 
 end
 
@@ -158,27 +160,29 @@ if ~iscell(S) && strcmp(opts.type,'error')
     figprep();
 
     if isempty(opts.title)
-        if isfield(S.Options.station)
-            ts = sprintf('%s',S.Options.station);
+        ts = '';
+        if isfield(S.Options.info,'stationid')
+            ts = sprintf('%s',S.Options.info.stationid);
         end
     else
         ts = opts.title;
-    end    
-
+    end
     for j = 1:size(S.Out,2)        
         metrics = sprintf('PE/CC/MSE = %.3f/%.3f/%.3f',...
                         S.Metrics.PE(j),...
                         S.Metrics.CC(j),...
                         S.Metrics.MSE(j));
         if iscell(info.outstr)
-            ls1{j} = sprintf('%s observed [%s]\n', info.outstr{j}, info.outunit);
+            ls1{j} = sprintf('%s observed [%s]\n',...
+                        info.outstr{j}, info.outunit);
             ls2{j} = sprintf('(%s observed) - (%s predicted) [%s]; %s',...
                         info.outstr{j},...
                         info.outstr{j},...
                         info.outunit,...
                         metrics);
         else
-            ls1{j} = sprintf('%s(:,%d) observed [%s]\n',info.outstr,j,info.outunit);    
+            ls1{j} = sprintf('%s(:,%d) observed [%s]\n',...
+                        info.outstr,j,info.outunit);    
 
             ls2{j} = sprintf('(%s(:,1) observed) - (%s(:,1) predicted) [%s]; %s',...
                         info.outstr,...
@@ -204,7 +208,10 @@ if ~iscell(S) && strcmp(opts.type,'error')
         adjust_exponent('y');
         setx(1,info,[t(1),t(end)]);
 
-    figsave(opts,[opts.savedir,filesep(),'timeseries-',opts.type,'-A']);
+    filename = [opts.filename,'-A'];
+    for i = 1:length(opts.savefmt)
+        figsave([filename,'.',opts.savefmt{i}]);
+    end
 
     if size(S.Out,2) == 2
         figure();
@@ -227,7 +234,10 @@ if ~iscell(S) && strcmp(opts.type,'error')
             adjust_exponent('y');
             setx(1,info,[t(1),t(end)]);
 
-        figsave(opts,[opts.savedir,filesep(),'timeseries-',opts.type,'-B']);
+    filename = [opts.filename,'-B'];
+    for i = 1:length(opts.savefmt)
+        figsave([filename,'.',opts.savefmt{i}]);
+    end
     end
 end
 
@@ -278,7 +288,9 @@ if iscell(S)
         adjust_exponent('y');
         setx(1,info,[t(1),t(end)]);
         
-    figsave(opts,[opts.savedir,filesep(),'timeseries-compare']);
+    for i = 1:length(opts.savefmt)
+        figsave([opts.filename,'.',opts.savefmt{i}]);
+    end
 end
 
 
