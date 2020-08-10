@@ -4,7 +4,7 @@ function transferfnZ_plot(S,popts)
 opts = struct();
     opts.title = '';
     opts.period = 1;
-    opts.unwrap = 1;
+    opts.unwrap = 0;
     opts.plottype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re,Im
     opts.period_range = [];
     opts.savefmt = {}; % Any extension allowed by export_fig
@@ -33,7 +33,16 @@ else
     Phistrs = {'Z'};
 end
 
+% Single transfer function
 if isstruct(S)
+    ts = opts.title;
+    if isempty(ts)
+        sta = '';
+        if isfield(S.Options.info,'stationid')
+            sta = S.Options.info.stationid;
+        end
+        ts = sprintf('Site: %s',sta);
+    end
     figure();
     figprep();
     S = defaultmeta(S);
@@ -115,6 +124,7 @@ if isstruct(S)
             xlabel(sprintf('$f$ [1/%s]', S.Options.info.timeunit));
         end
         legend(ls,'Location','Best','Orientation','Horizontal');
+        title(ts,'FontWeight','Normal');
         adjust_exponent();
         rep = '\{|\}';
         pre = [opts.filename,'-',regexprep(Zstrs{j},rep,'')];
@@ -136,13 +146,16 @@ else
     for j = 1:size(S{1}.Z,2)
         figure();
         figprep();
+        set(gcf,'DefaultLegendAutoUpdate','off')
         for s = 1:length(S)
             S{s} = defaultmeta(S{s});
         end        
         subplot('Position', PositionTop);
+            max_T = 0;
             for s = 1:length(S)
                 if opts.period
                     x = S{s}.Options.info.timedelta./S{s}.fe;
+                    max_T = max(max_T,max(x(x < Inf)));
                 else
                     x = S{s}.fe/S{s}.Options.info.timedelta;
                 end
@@ -170,6 +183,15 @@ else
                 if s == 1
                     grid on;box on;hold on;
                 end
+                adjust_ylim('both')
+                if isfield(S{s},'ZVAR') && ~isfield(S{s},'ZCL')
+                    errorbars(x,y,S{s}.ZVAR(:,j))
+                end
+                if isfield(S{s},'CL')
+                    yl = y-squeeze(abs(S{s}.ZCL.Bootstrap.x_95(:,1,j)));
+                    yu = -y+squeeze(abs(S{s}.ZCL.Bootstrap.x_95(:,2,j)));
+                    errorbars(x,y,yl,yu);
+                end
             end
             if opts.plottype == 2
                 yl = '$\Omega\cdot$m';
@@ -182,10 +204,10 @@ else
             if ~isempty(opts.period_range)
                 set(gca,'XLim',opts.period_range);
             end
-            adjust_exponent();
-            legend(ls,'Location','NorthEast');
+            legend(ls,'Location','NorthEast','Orientation','Horizontal');
             set(gca,'XTickLabel',[]);
-            title(opts.title,'FontWeight','Normal');
+            period_lines(max_T);
+            adjust_exponent();
         subplot('Position', PositionBottom);
             for s = 1:length(S)
                 if opts.period
@@ -201,7 +223,11 @@ else
                     ls{s} = sprintf('Im$(%s)$ %s',Zstrs{j},S{s}.Options.description);
                     semilogx(x, y, 'linewidth',2,'marker','.','markersize',10);
                 else
-                    y = (180/pi)*unwrap(atan2(imag(S{s}.Z(:,j)),real(S{s}.Z(:,j))));
+                    if opts.unwrap
+                        y = (180/pi)*unwrap(atan2(imag(S{s}.Z(:,j)),real(S{s}.Z(:,j))));
+                    else
+                        y = (180/pi)*atan2(imag(S{s}.Z(:,j)),real(S{s}.Z(:,j)));
+                    end
                     yl = '[degrees]';
                     ls{s} = sprintf('$%s$ %s %s',Phistrs{j},...
                         S{s}.Options.info.stationid,S{s}.Options.description);
@@ -213,7 +239,7 @@ else
             end
             ylabel(yl);
             if opts.plottype ~= 3 && ~opts.unwrap
-                set(gca,'YLim',[-185,185])
+                set(gca,'YLim',[-185,185]);
                 set(gca,'YTick',[-180:60:180]);
             end
             if opts.period
@@ -227,8 +253,10 @@ else
                 end
                 xlabel(sprintf('$f$ [1/%s]', S{1}.Options.info.timeunit));
             end
-            legend(ls,'Location','NorthEast');
+            legend(ls,'Location','NorthEast','Orientation','Horizontal');
             adjust_exponent();
+            adjust_ylim('both')
+            period_lines(max_T);
         rep = '\{|\}';
         pre = [opts.filename,'-',regexprep(Zstrs{j},rep,'')];
         switch opts.plottype

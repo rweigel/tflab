@@ -32,7 +32,7 @@ if strncmp(sid,'KAP',3)
     stop  =  [strrep(Info.ENDTIME,' ','T'),'.000'];
     timedelta = str2num(Info.DELTA_T);
 end
-%% End condfiguration
+%% End configuration
 
 %% Run
 addpath([fileparts(mfilename('fullpath')),'/../']);
@@ -91,14 +91,16 @@ Ix = floor(size(B,1)/ppd);
 B = B(1:ppd*Ix,:);
 E = E(1:ppd*Ix,:);
 
-%% Band pass
-% Keep frequencies in range of minimum to maximum frequency used to
-% estimate TF when 1-day segments are used.
-[~,f] = fftfreq(ppd);
-[fe,Ic,Ne] = evalfreq(ppd);
-band = [f(Ic(2)-Ne(2)),f(Ic(end)+Ne(end))];
-B = bandpass(B,band);
-E = bandpass(E,band);
+if 0
+    %% Band pass
+    % Keep frequencies in range of minimum to maximum frequency used to
+    % estimate TF when 1-day segments are used.
+    [~,f] = fftfreq(ppd);
+    [fe,Ic,Ne] = evalfreq(ppd);
+    band = [f(Ic(2)-Ne(2)),f(Ic(end)+Ne(end))];
+    B = bandpass(B,band);
+    E = bandpass(E,band);
+end
 
 %% Compute TFs
 

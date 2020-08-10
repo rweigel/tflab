@@ -16,8 +16,9 @@ popts = struct();
 
 popts.savefmt = {'pdf'};
 popts.filename = [savedir,'SN_compare'];
-sn_plot({Middelpos.S{1}, Middelpos.S{2}, KAP103.S{3}},popts);
+%sn_plot({Middelpos.S{1}, KAP103.S{1}, KAP103.S{3}},popts);
+sn_plot({Middelpos.S{1}, KAP103.S{1}, KAP103.S{3}},popts);
 
 popts.plottype = 1;
 popts.filename = [savedir,'transferfnZ_compare'];
-transferfnZ_plot({Middelpos.S{1}, Middelpos.S{2}, KAP103.S{3}},popts);
+transferfnZ_plot({Middelpos.S{1}, KAP103.S{1}, KAP103.S{3}},popts);

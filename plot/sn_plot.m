@@ -30,10 +30,18 @@ if iscell(S) && length(S) == 1
     S = S{1};
 end
 
-% TODO: Above code is copy of transferfnZ_plot().
+% TODO: Above code is copy of code in transferfnZ_plot().
 
 % Single transfer function
-if isstruct(S) || length(S) == 1
+if isstruct(S)
+    ts = opts.title;
+    if isempty(ts)
+        sta = '';
+        if isfield(S.Options.info,'stationid')
+            sta = S.Options.info.stationid;
+        end
+        ts = sprintf('Site: %s',sta);
+    end
     figure();
     figprep();
     if opts.period
@@ -53,7 +61,7 @@ if isstruct(S) || length(S) == 1
                  'marker','.','markersize',10,'linewidth',2);
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         set(gca,'XTickLabel',[]);
-        title(S.Options.description,'FontWeight','Normal');        
+        title(ts,'FontWeight','Normal');        
         ylabel('Signal to Error');
         grid on;box on;hold on;
         if isfield(opts,'title') && ~isempty(opts.title)
@@ -92,23 +100,34 @@ if isstruct(S) || length(S) == 1
     for i = 1:length(opts.savefmt)
         figsave([opts.filename,'.',opts.savefmt{i}]);
     end
-else    
-    for j = 1:size(S{1}.Metrics.SN,2)
+else
+    segment_aves = 0;
+    for j = 1:size(S{1}.Metrics.SN,2) % Columns of SN (components of output)
         figure();
         figprep();
-        subplot('Position', PositionTop);
+        set(gcf,'DefaultLegendAutoUpdate','off')
+        p1 = subplot('Position', PositionTop);
+            max_T = 0;
             for s = 1:length(S)
-                if opts.period
-                    x = 1./S{s}.Metrics.fe;
+                if segment_aves
+                    Metrics = S{s}.Segment.Metrics;
                 else
-                    x = S{s}.Metrics.fe;
+                    Metrics = S{s}.Metrics;
+                end
+                if opts.period
+                    x = 1./Metrics.fe;
+                    max_T = max(max_T,max(x(x < Inf)));
+                else
+                    x = Metrics.fe;
                 end                
-                semilogx(x,S{s}.Metrics.SN(:,j),...
+                semilogx(x,Metrics.SN(:,j),...
                          'marker','.','markersize',10,'linewidth',2);
                 grid on;box on;hold on;                 
-                ls{s} = S{s}.Options.description;
+                ls{s} = sprintf('%s %s',...
+                    S{s}.Options.info.stationid,...
+                    S{s}.Options.description);
             end                
-            legend(ls,'Location','Best');
+            legend(ls,'Location','NorthEast','Orientation','Horizontal');
             set(gca,'XTickLabel',[]);
             if iscell(S{1}.Options.info.outstr)
                 pre = S{1}.Options.info.outstr{j};
@@ -124,19 +143,25 @@ else
             if isfield(opts,'title') && ~isempty(opts.title)
                 title(opts.title,'FontWeight','normal');
             end
-        subplot('Position', PositionBottom);
+            adjust_ylim('both');
+        p2 = subplot('Position', PositionBottom);
             for s = 1:length(S)    
-                if opts.period
-                    x = 1./S{s}.Metrics.fe;
+                if segment_aves
+                    Metrics = S{s}.Segment.Metrics;
                 else
-                    x = S{s}.Metrics.fe;
+                    Metrics = S{s}.Metrics;
+                end
+                if opts.period
+                    x = 1./Metrics.fe;
+                else
+                    x = Metrics.fe;
                 end                
-                semilogx(x,S{s}.Metrics.Coherence(:,j),...
+                semilogx(x,Metrics.Coherence(:,j),...
                             'marker','.','markersize',10,'linewidth',2);
                 grid on;box on;hold on;
                 ls{s} = S{s}.Options.description;
             end
-            legend(ls,'Location','Best');
+            legend(ls,'Location','NorthEast','Orientation','Horizontal');
             if opts.period
                 xlabel(sprintf('$T$ [%s]', S{1}.Options.info.timeunit));
                 if ~isempty(opts.period_range)
@@ -152,6 +177,10 @@ else
             end            
             ylabel(sprintf('%s Coherence',pre));
             set(gca,'YLim',[0,1]);
+            adjust_ylim('both');
+
+        axes(p1); period_lines(max_T);
+        axes(p2); period_lines(max_T);            
         ext = regexprep(S{1}.Options.info.outstr{j},'\$','');
         for i = 1:length(opts.savefmt)
             figsave([opts.filename,'-',ext,'.',opts.savefmt{i}]);

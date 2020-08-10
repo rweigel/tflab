@@ -94,7 +94,7 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
         if isfield(S.Options.info,'stationid')
             sta = S.Options.info.stationid;
         end
-        ts = sprintf('%s Raw Input%s (top) and Raw Output (bottom)',sta,s1);
+        ts = sprintf('Site: %s; Raw Input%s (top) and Raw Output (bottom)',sta,s1);
         if strcmp(opts.type,'windowed')
             ts = sprintf('%s %s-windowed Input%s (top) and Output (bottom)',...
                          sta,S.Options.td.window.functionstr,...
@@ -129,7 +129,9 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
             end
         end
         title(ts,'FontWeight','Normal');
-        legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        [~,h] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        h = findobj(h,'type','line');
+        set(h,'linewidth',2);
         adjust_exponent('y');
         adjust_ylim();
         setx(0,info,[t(1),t(end)]);        
@@ -138,12 +140,14 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
         grid on;box on;    
         for j = 1:size(Out,2)
             if iscell(info.outstr)        
-                ls{j} = sprintf('%s [%s]\n', info.outstr{j}, info.outunit);
+                ls{j} = sprintf('%s [%s]\n',info.outstr{j}, info.outunit);
             else
                 ls{j} = sprintf('%s(:,%d) [%s]\n',info.outstr,j,info.outunit);    
             end
         end
-        legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        [~,h] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        h = findobj(h,'type','line');
+        set(h,'linewidth',2);
         adjust_exponent('y');
         adjust_ylim();
         setx(1,info,[t(1),t(end)]);  
@@ -162,7 +166,9 @@ if ~iscell(S) && strcmp(opts.type,'error')
     if isempty(opts.title)
         ts = '';
         if isfield(S.Options.info,'stationid')
-            ts = sprintf('%s',S.Options.info.stationid);
+            ts = sprintf('Station: %s; Method: %s',...
+                S.Options.info.stationid,...
+                S.Options.description)
         end
     else
         ts = opts.title;
