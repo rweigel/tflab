@@ -1,5 +1,7 @@
 function period_lines(m)
 
+    drawnow
+    
     set(gcf, 'DefaultLegendAutoUpdate', 'off')
     yl = get(gca,'YLim');
     plot([60,60],yl,'--','Color',[0.5,0.5,0.5]);

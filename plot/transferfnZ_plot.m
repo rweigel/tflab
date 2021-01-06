@@ -164,7 +164,7 @@ else
                         y = abs(S{s}.Z(:,j));
                         ls{s} = sprintf('$%s$ %s %s',Zstrs{j},...
                             S{s}.Options.info.stationid, S{s}.Options.description);
-                        loglog(x, y, 'linewidth',2,'marker','.','markersize',10);
+                        h(s) = loglog(x, y, 'linewidth',2,'marker','.','markersize',10);
                     case 2
                         % See Egbert, Booker, and Schultz 1992 pg 15,116.
                         % rho_ij = (mu_o/omega)*|E_i|^2/|B_j|^2
@@ -174,20 +174,20 @@ else
                         % when f in Hz, Z in (mV/km)/nT
                         y = (abs(S{s}.Z(:,j))).^2./(5*S{s}.fe/S{s}.Options.info.timedelta);
                         ls{s} = sprintf('$%s$ %s',Rhostrs{j},S{s}.Options.description);
-                        loglog(x, y, 'linewidth',2,'marker','.','markersize',10);
+                        h(s) = loglog(x, y, 'linewidth',2,'marker','.','markersize',10);
                     case 3
                         y = real(S{s}.Z(:,j));
                         ls{s} = sprintf('Re$(%s)$ %s',Zstrs{j},S{s}.Options.description);
-                        semilogx(x, y, 'linewidth',2,'marker','.','markersize',10);                        
+                        h(s) = semilogx(x, y, 'linewidth',2,'marker','.','markersize',10);                        
                 end
                 if s == 1
                     grid on;box on;hold on;
                 end
                 adjust_ylim('both')
-                if isfield(S{s},'ZVAR') && ~isfield(S{s},'ZCL')
-                    errorbars(x,y,S{s}.ZVAR(:,j))
-                end
-                if isfield(S{s},'CL')
+                %if isfield(S{s},'ZVAR') && ~isfield(S{s},'ZCL')
+                    %errorbars(x,y,S{s}.ZVAR(:,j))
+                %end
+                if isfield(S{s},'ZCL')
                     yl = y-squeeze(abs(S{s}.ZCL.Bootstrap.x_95(:,1,j)));
                     yu = -y+squeeze(abs(S{s}.ZCL.Bootstrap.x_95(:,2,j)));
                     errorbars(x,y,yl,yu);
@@ -204,7 +204,7 @@ else
             if ~isempty(opts.period_range)
                 set(gca,'XLim',opts.period_range);
             end
-            legend(ls,'Location','NorthEast','Orientation','Horizontal');
+            legend(h,ls,'Location','NorthEast','Orientation','Horizontal');
             set(gca,'XTickLabel',[]);
             period_lines(max_T);
             adjust_exponent();
@@ -255,7 +255,7 @@ else
             end
             legend(ls,'Location','NorthEast','Orientation','Horizontal');
             adjust_exponent();
-            adjust_ylim('both')
+            adjust_ylim('upper')
             period_lines(max_T);
         rep = '\{|\}';
         pre = [opts.filename,'-',regexprep(Zstrs{j},rep,'')];

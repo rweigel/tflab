@@ -168,7 +168,7 @@ if ~iscell(S) && strcmp(opts.type,'error')
         if isfield(S.Options.info,'stationid')
             ts = sprintf('Station: %s; Method: %s',...
                 S.Options.info.stationid,...
-                S.Options.description)
+                S.Options.description);
         end
     else
         ts = opts.title;

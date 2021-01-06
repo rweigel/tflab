@@ -32,8 +32,7 @@ end
 
 % TODO: Above code is copy of code in transferfnZ_plot().
 
-% Single transfer function
-if isstruct(S)
+if isstruct(S) % Single transfer function
     ts = opts.title;
     if isempty(ts)
         sta = '';
@@ -100,34 +99,50 @@ if isstruct(S)
     for i = 1:length(opts.savefmt)
         figsave([opts.filename,'.',opts.savefmt{i}]);
     end
-else
-    segment_aves = 0;
-    for j = 1:size(S{1}.Metrics.SN,2) % Columns of SN (components of output)
+else % Multiple TFs
+    segment_aves = 1;
+     
+    % j = columns of SN (components of output)
+    for j = 1:size(S{1}.Metrics.SN,2) 
         figure();
         figprep();
         set(gcf,'DefaultLegendAutoUpdate','off')
         p1 = subplot('Position', PositionTop);
             max_T = 0;
             for s = 1:length(S)
-                if segment_aves
-                    Metrics = S{s}.Segment.Metrics;
+                if isfield(S{s}.Metrics,'Segment')
+                    segment_aves = 1;
                 else
-                    Metrics = S{s}.Metrics;
+                    segment_aves = 0;
+                end
+                if segment_aves
+                    ye = S{s}.Metrics.Segment.SN_95_boot(:,:,j);
+                    SN = mean(S{s}.Metrics.Segment.SN(:,j,:),3);
+                    fe = S{s}.Metrics.Segment.fe;
+                else
+                    SN = S{s}.Metrics.SN(:,j);
+                    fe = S{s}.Metrics.fe;
                 end
                 if opts.period
-                    x = 1./Metrics.fe;
+                    x = 1./fe;
                     max_T = max(max_T,max(x(x < Inf)));
                 else
-                    x = Metrics.fe;
-                end                
-                semilogx(x,Metrics.SN(:,j),...
+                    x = fe;
+                end
+                h(s) = semilogx(x,SN,...
                          'marker','.','markersize',10,'linewidth',2);
                 grid on;box on;hold on;                 
                 ls{s} = sprintf('%s %s',...
                     S{s}.Options.info.stationid,...
                     S{s}.Options.description);
+                if segment_aves
+                    yl = SN-ye(:,1);
+                    yu = -SN+ye(:,2);
+                    errorbars(x,SN,yl,yu);
+                end
+
             end                
-            legend(ls,'Location','NorthEast','Orientation','Horizontal');
+            legend(h,ls,'Location','NorthEast','Orientation','Horizontal');
             set(gca,'XTickLabel',[]);
             if iscell(S{1}.Options.info.outstr)
                 pre = S{1}.Options.info.outstr{j};
@@ -159,7 +174,6 @@ else
                 semilogx(x,Metrics.Coherence(:,j),...
                             'marker','.','markersize',10,'linewidth',2);
                 grid on;box on;hold on;
-                ls{s} = S{s}.Options.description;
             end
             legend(ls,'Location','NorthEast','Orientation','Horizontal');
             if opts.period
