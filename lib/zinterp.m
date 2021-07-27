@@ -1,11 +1,11 @@
 function [Zi,fi] = zinterp(f,Z,fi,opts)
 % ZINTERP - Interpolate transfer function onto frequency grid
 %
-%  [Zi,fi] = ZINTERP(f,Z,N) returns Zi on N-point DFT grid fi = fftfreq(N)
-%  using INTERP1 with method='linear' and extrapval=0. f >= 0 is required
-%  and f(end) = +0.5 is allowed. The ordering of values in fi follows the
-%  convention of FFTFREQ (and FFT) and a given Z value at f = +0.5 will
-%  appear at fi = -0.5 if N is even.
+%  [Zi,fi] = ZINTERP(f,Z,N) returns Zi on the N-point DFT grid fi given by
+%  fi = fftfreq(N) using INTERP1 with method='linear' and extrapval=0. f >=
+%  0 is required and f(end) = +0.5 is allowed. The ordering of values in fi
+%  follows the convention of FFTFREQ (and FFT) and a given Z value at f =
+%  +0.5 will appear at fi = -0.5 if N is even.
 %
 %  If f(1) = 0, it is not used for interpolation and if fi(1) = 0, Zi(1,:)
 %  is set to Z(1,:).

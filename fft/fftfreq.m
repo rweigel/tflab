@@ -17,7 +17,7 @@ function [f,fu] = fftfreq(N, s)
 %   (For N even, the highest frequency magnitude is 0.5 and negative by
 %   convention. fu uses +0.5.)
 %   
-%   See also FFTFREQP.
+%   See also FFTFREQP, EVALFREQ.
 
 if nargin == 1
     s = 1;

@@ -1,14 +1,13 @@
 clear;
 
-% NB: Tests are intentially not deterministic. TODO: Make deterministic by
-% setting random number seed.
+% NB: Tests are intentially not deterministic.
+% TODO: Make deterministic by setting random number seed.
 
 addpath([fileparts(mfilename('fullpath')),'/misc']);
 
 close all;
 set(0,'defaultFigureWindowStyle','docked');
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Basic calculation test 1.
 % B = randn(), E = B. With evalfreqs = DFT frequencies, should produce
 % perfect predictions b/c # of free parameters in fitted Z equals number of
@@ -30,9 +29,8 @@ for n = N
     assert(1-S.Metrics.CC < 10*eps);
 end
 fprintf('\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Basic calculation test 2.
 % B = cos(w*t), E = A(w)*cos(w*t + phi(w)). No leakage
 logmsg(['Basic calculation; Test 1.2. - '...
@@ -71,9 +69,9 @@ Ac = A.*(cos(Phi) + sqrt(-1)*sin(Phi));
 assert(max( real(S2.Z) - real(A) ) < 1e-12 );
 assert(max( imag(S2.Z) - imag(A) ) < 1e-12 );
 fprintf('\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Basic calculation test 3.
 % B = randn(), H = [1]. evalfreqs = DFT frequencies.
 
@@ -102,10 +100,10 @@ for i = 1:3
     fprintf('---\n');
 end
 fprintf('\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Regression test 1. OLS_REGRESS() using real and complex arguments
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Regression test 1.
 % Expect results to be identical to within machine precision.
 logmsg(['Basic calculation; Test 2.1. - '...
                 'ols_regress() using real and complex arguments.\n']);
@@ -126,10 +124,10 @@ S2 = transferfnFD(B,E,opts);
 % TODO: Justify 4*eps.
 assert(all(abs(S1.Z(:) - S2.Z(:)) <= 4*eps),'');
 fprintf('\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Regression test 2. - Compare OLS_REGRESS() with ROBUSTFIT() when no noise.
+
+%% Regression test 2.
 
 logmsg(['Regression comparison; Test 2.2 - Compare ols_regress() w/ '...
                 'robustfit() and no noise.\n']);
@@ -171,9 +169,9 @@ for n = N
     assert(S1.Metrics.MSE - S3.Metrics.MSE <= 2*eps);
 end
 fprintf('\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% API Test - Multiple Inputs and Ouputs
 logmsg('API I/O Test; Test 3.1. - One or Two Outputs, One Input.\n');
 
@@ -208,9 +206,8 @@ S3 = transferfnFD(B,E,opts);
 assert(all(S1.Metrics.Predicted == S3.Metrics.Predicted(:,1)));
 assert(all(S2.Metrics.Predicted == S3.Metrics.Predicted(:,2)));
 fprintf('\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% API Test - Segmenting
 % E and B are split into segments and transfer functions are computed for
 % each segment.
@@ -267,10 +264,10 @@ assert(all(S3.Metrics.Predicted(:,1) == S4.Segment.Metrics.Predicted(:,1,2)));
 assert(all(S3.Metrics.Predicted(:,2) == S4.Segment.Metrics.Predicted(:,2,2)));
 assert(all(S3.Z(:) == S4.Z(:)));
 fprintf('\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% API Intervals
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% API Test - Intervals
 % When there are gaps in time in the input/data, one can pass a cell array
 % of intervals and then the transfer function is computed on each interval.
 % The intervals may be segemented by specifying a window width and window
@@ -310,9 +307,8 @@ assert(all(S1.Z(2:end)-S3.Z(2:end) < 10*eps));
 
 % Average TF should be 1.0 for all fe, same as S1.Z.
 fprintf('\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% API Test - Stack Regression
 % When intervals and/or segments are used, the default is to compute a
 % transfer function that is the average of each segment. 
@@ -325,8 +321,8 @@ E = B;
 % 1 input/1 output. When using 1 segment, non-stack average should be same
 % as stack average result
 opts = transferfnFD_options(1);
-% The following two lines are not needed as this is default for behavior when
-% transferfnFD_options(1)
+% The following two lines are not needed as this is default for behavior
+% when transferfnFD_options(1)
 opts.td.window.width = N; 
 opts.td.window.shift = N; 
 
@@ -343,8 +339,8 @@ logmsg('API Stack Regression; Test 3.9.\n');
 % 2 inputs/2 outputs. When using 1 segment, stack regression should be
 % same as stack average result
 opts = transferfnFD_options(1);
-% The following two lines are not needed as this is default for behavior when
-% transferfnFD_options(1)
+% The following two lines are not needed as this is default for behavior 
+% when transferfnFD_options(1)
 opts.td.window.width = N;
 opts.td.window.shift = N;
 
@@ -399,6 +395,5 @@ assert(all(S3.Z(:) == S4.Z(:)))
 
 %assert(all(S1.Z == S2.Z));
 fprintf('\n');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 logmsg('transferfnFD_test.m: All tests passed.\n');

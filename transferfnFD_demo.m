@@ -1,6 +1,4 @@
 clear;
-% https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=661333
-% http://articles.adsabs.harvard.edu//full/1995A%26A...300..707T/0000709.000.html
 
 addpath([fileparts(mfilename('fullpath')),'/plot']);
 

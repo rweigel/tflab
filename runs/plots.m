@@ -9,7 +9,7 @@ script_dir = fileparts(mfilename('fullpath'));
 
 if ischar(sid)
     cid = sid;
-    if strnmatch(sid,'KAP')
+    if strcmp(sid,'KAP')
         cid = 'KAP03'; % TODO: Need to pass cid or find file from dirwalk.
     end
     fname = sprintf('%s/data/%s/%s.mat',script_dir,cid,sid);
@@ -26,9 +26,9 @@ savedir = sprintf('%s/figures/%s/',script_dir,sid);
 opts.type = 'raw';
 opts.savefmt = {'pdf'};
 opts.filename = [savedir,'timeseries'];
-%timeseries_plot(S{1},opts);
+timeseries_plot(S{1},opts);
 
-if (all)
+if all
     opts.type = 'error';
     opts.savefmt = {'png'};
     for i = 1:length(S)
@@ -45,11 +45,9 @@ if (all)
     end
 end
 
-if (0)
 % Plot on same axes
 opts.filename = [savedir,'SN_compare'];
 sn_plot(S,opts);
-end
 
 if all
     opts.savefmt = {'pdf'};

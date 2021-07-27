@@ -27,7 +27,7 @@ opts.info = struct();
     %   opts.td.timestart = '2001-01-01T00:00:00.000';
     
     %opts.info.inunit= 'nT';
-    %opts.info.outunit= 'mV/m';
+    %opts.info.outunit= 'mV/km';
     %opts.info.timeunit = 's';
 
     opts.info.inunit= '';

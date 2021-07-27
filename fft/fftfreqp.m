@@ -9,7 +9,7 @@ function f = fftfreqp(N, s)
 %   f = FFTFREQP(N, d) returns FFTFREQP(N)/d, where d is interpreted
 %   as the sampling frequency.
 %   
-%   See also FFTFREQ.
+%   See also FFTFREQ, EVALFREQ.
 
 if nargin == 1
     s = 1;

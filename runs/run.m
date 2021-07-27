@@ -1,4 +1,8 @@
-function S = run(sid,lemi)
+function S = run(sid,lemimt_dir)
+
+if nargin < 2
+    lemimt_dir = 0;
+end
 
 zread_dir = [fileparts(mfilename('fullpath')),'/zread'];
 if ~exist(zread_dir,'dir')
@@ -54,7 +58,7 @@ iopts = struct('info',struct(),'td',struct());
 iopts.info.instr = {'$B_x$','$B_y$'};
 iopts.info.inunit= 'nT';
 iopts.info.outstr = {'$E_x$','$E_y$'};
-iopts.info.outunit= 'mV/m';
+iopts.info.outunit= 'mV/km';
 iopts.info.timeunit = 's';
 iopts.info.timedelta = timedelta;
 iopts.info.timestart = start;
@@ -77,7 +81,7 @@ end
 
 for i = 1:size(E,2)
     I = find(isnan(E(:,i)));
-    if length(I) > 0
+    if ~isempty(I)
         logmsg(sprintf('Set %d leading or trailing NaNs in column %d of E to zero\n',length(I),i))
         E(I,:) = 0;
     end
@@ -143,7 +147,7 @@ if strcmp(cid,'KAP03')
 end
 
 %% Compute TF using LEMI MT
-if lemi
+if ischar(lemimt_dir)
     tf = tf+1;
     % Use LEMI MT program to compute TF. Note that LEMI MT requires
     % three components of B. (Bz is used to compute another TF that is
@@ -159,4 +163,5 @@ if lemi
     S{tf}.Options.description = 'LEMI; One 55-day segment';
 end
 
+fprintf('run.m: Writing %s\n',matfile);
 save(matfile,'-v7.3','S');

@@ -23,7 +23,7 @@ function [fe,Ic,Ne] = evalfreq(N,Npd,scale)
 %  [fe,Ic,Ne] = evalfreq(N,[dN,w],'linear') returns evaluation frequencies
 %  separated by dN points and windows of size 2*w+1.
 %
-%  See also EVALFREQ_DEMO.
+%  See also FFTFREQ, FFTFREQP, EVALFREQ_DEMO.
 
 if nargin < 2
     Npd = 7;

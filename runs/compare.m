@@ -1,10 +1,11 @@
 % TODO: Add option to show LEMIMT if it was run
+set(0,'defaultFigureWindowStyle','docked');
 
 scriptpath = fileparts(mfilename('fullpath'));
 
 addpath([fileparts(mfilename('fullpath')),'/../plot']);
 
-fprintf('Reading run files\n');
+fprintf('Reading run files.\n');
 Middelpos = load([scriptpath,sprintf('/data/Middelpos/Middelpos.mat')]);
 KAP103 = load([scriptpath,sprintf('/data/KAP03/KAP103.mat')]);
 
@@ -16,7 +17,6 @@ popts = struct();
 
 popts.savefmt = {'pdf'};
 popts.filename = [savedir,'SN_compare'];
-%sn_plot({Middelpos.S{1}, KAP103.S{1}, KAP103.S{3}},popts);
 sn_plot({Middelpos.S{1}, KAP103.S{1}, KAP103.S{3}},popts);
 
 popts.plottype = 1;
