@@ -20,6 +20,10 @@ if nargin > 1
     end
 end
 
+if ischar(opts.savefmt)
+    opts.savefmt = {opts.savefmt};
+end
+
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
@@ -71,7 +75,8 @@ if ~isempty(info.timestart)
     elseif strcmp(info.timeunit,'m')
         ppd = 1440/info.timedelta;
     else
-        warning('Options.td.timeunit = %s not recognized. Must be ms, s, or m\n',info.timeunit);
+        warning('Options.td.timeunit = %s not recognized. Must be ms, s, or m\n',...
+            info.timeunit);
         info.timestart = '';
     end
     t = to + t/ppd;
@@ -83,7 +88,7 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
     figure();
     figprep();
 
-    if size(S.In,2) > 1,
+    if size(S.In,2) > 1
         s1 = 's';
     else
         s1 = '';
@@ -93,8 +98,10 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
         sta = '';
         if isfield(S.Options.info,'stationid')
             sta = S.Options.info.stationid;
+        else
+            sta = sprintf('Site: %s; ',sta);
         end
-        ts = sprintf('Site: %s; Raw Input%s (top) and Raw Output (bottom)',sta,s1);
+        ts = sprintf('%sRaw Input%s (top) and Raw Output (bottom)',sta,s1);
         if strcmp(opts.type,'windowed')
             ts = sprintf('%s %s-windowed Input%s (top) and Output (bottom)',...
                          sta,S.Options.td.window.functionstr,...
@@ -122,10 +129,14 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
         plot(t,In);
         grid on;box on;
         for j = 1:size(In,2)
-            if iscell(info.instr)        
-                ls{j} = sprintf('%s [%s]\n', info.instr{j}, info.inunit);
+            inunit = info.inunit;
+            if length(inunit) > 0
+                inunit = sprintf('[%s]',inunit);
+            end
+            if iscell(info.instr)
+                ls{j} = sprintf('%s %s', info.instr{j}, inunit);
             else
-                ls{j} = sprintf('%s(:,%d) [%s]\n',info.instr,j,info.inunit);
+                ls{j} = sprintf('%s(:,%d) %s',info.instr,j,inunit);
             end
         end
         title(ts,'FontWeight','Normal');
@@ -139,10 +150,14 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
         plot(t,Out);
         grid on;box on;    
         for j = 1:size(Out,2)
+            outunit = info.outunit;
+            if length(outunit) > 0
+                outunit = sprintf('[%s]',outunit);
+            end
             if iscell(info.outstr)        
-                ls{j} = sprintf('%s [%s]\n',info.outstr{j}, info.outunit);
+                ls{j} = sprintf('%s %s',info.outstr{j}, outunit);
             else
-                ls{j} = sprintf('%s(:,%d) [%s]\n',info.outstr,j,info.outunit);    
+                ls{j} = sprintf('%s(:,%d) %s',info.outstr,j,outunit);    
             end
         end
         [~,h] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
@@ -214,7 +229,7 @@ if ~iscell(S) && strcmp(opts.type,'error')
         adjust_exponent('y');
         setx(1,info,[t(1),t(end)]);
 
-    filename = [opts.filename,'-A'];
+    filename = [opts.filename,'-Error-1'];
     for i = 1:length(opts.savefmt)
         figsave([filename,'.',opts.savefmt{i}]);
     end
@@ -240,7 +255,7 @@ if ~iscell(S) && strcmp(opts.type,'error')
             adjust_exponent('y');
             setx(1,info,[t(1),t(end)]);
 
-    filename = [opts.filename,'-B'];
+    filename = [opts.filename,'-Error-2'];
     for i = 1:length(opts.savefmt)
         figsave([filename,'.',opts.savefmt{i}]);
     end
@@ -322,8 +337,12 @@ function setx(last,info,tl)
     end
     if last && isempty(info.timestart)
         % Use default label
-        xlabel(sprintf('%s since start', info.timeunit));
-        adjust_exponent();
+        if isempty(info.timeunit)
+            xlabel('Time index');
+        else
+            xlabel(sprintf('%s since start', info.timeunit));
+        end
+        adjust_exponent('x');
     end
         
 end

@@ -92,6 +92,8 @@ if tn == -1
     [z,w] = freqz(opts.H,1,f,1);
     [Z,fi] = zinterp(f,z,opts.N);    
 
+    % Set random number generator seed
+    rng(1);
     B = randn(opts.N,1);
     E = zpredict(Z,B);
 
@@ -215,6 +217,7 @@ end
 Z(Z==0) = eps; % So points show up on loglog plot.
 
 S.In  = B;
+S.Time = [1:size(B,1)]';
 S.Out = E;
 S.Z  = Z;
 S.fe = f';

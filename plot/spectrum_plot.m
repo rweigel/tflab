@@ -3,16 +3,23 @@ function fh = spectrum_plot(S,popts)
 
 opts = struct();
     opts.type = 'raw';
+    opts.filename = 'spectrum';
     opts.title = '';
-    opts.period = 1;
-    opts.period_range = 1;    
-    
+    opts.period = 1; % 1 to plot spectra vs period instead of frequency.
+    opts.period_range = [];    
+    opts.savefmt = {}; % One or more extensions allowed by export_fig
+                       % e.g. {'pdf'} or {'svg','png'}.
+
 % Use default options if options not given
 if nargin > 1
     fns = fieldnames(popts);
     for i = 1:length(fns)
         opts.(fns{i}) = popts.(fns{i});
     end
+end
+
+if ischar(opts.savefmt)
+    opts.savefmt = {opts.savefmt};
 end
 
 info = S.Options.info;
@@ -49,6 +56,7 @@ if strcmp(opts.type,'raw')
             end
         end
         if ~isempty(opts.period_range)
+            keyboard
             set(gca,'XLim',opts.period_range);
         end
         legend(ls,'Location','NorthWest','Orientation','Horizontal');
@@ -185,4 +193,6 @@ elseif strcmp(opts.type,'error')
         xlabel(sprintf('Frequency [1/%s]',info.timeunit));
 end
 
-figsave(opts,['spectrum-',opts.type]);
+for i = 1:length(opts.savefmt)
+    figsave([opts.filename,'.',opts.savefmt{i}]);
+end

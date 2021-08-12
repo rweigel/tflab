@@ -52,7 +52,7 @@ if strcmp(scale,'linear')
     
     % Linearly spaced center frequencies
     Ic = [1,2+w:Npd:length(f)-w]; % Indices of center points
-    % e.g., if Npd = 3, first window center at 5 and
+    % e.g., if w = 3, first window center at 5 and
     % window will extend from 2 through 8.
     % second window center at 12 and window from 9 through 15.
     Ne = w*ones(size(f));

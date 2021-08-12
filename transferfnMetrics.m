@@ -37,13 +37,17 @@ end
 
 if ~isfield(S,'Metrics')
     % If no S.Metrics, compute
-    logmsg('Computing metrics for full interval.\n');
+    if opts.transferfnFD.loglevel
+        logmsg('Computing metrics for full interval.\n');
+    end
     In = S.In;
     Out = S.Out;
 else
     % If no S.Segment.Metrics, compute
     if isfield(S,'Segment') && ~isfield(S.Segment,'Metrics')
-        logmsg('Computing metrics for segments.\n');
+        if opts.transferfnFD.loglevel
+            logmsg('Computing metrics for segments.\n');
+        end
         In = S.Segment.In;
         Out = S.Segment.Out;
     end

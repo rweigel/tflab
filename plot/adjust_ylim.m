@@ -39,3 +39,4 @@ else
     end
 end
 set(gca,'YLim',yl);
+drawnow

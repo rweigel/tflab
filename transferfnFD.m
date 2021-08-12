@@ -508,7 +508,7 @@ if opts.transferfnFD.loglevel > 0
             'No regression performed for each freq. band of segment\n']);
     else
         logmsg(['Starting freq band and regression '...
-                        'calcs for %d frequencies.\n'],length(Ic)-1);
+                        'calcs for %d frequencies.\n'],length(Ic));
         logmsg(...
             ['Using %s() with additional arguments given in\n'...
              'opts.fd.regression.functionargs\n'],...
@@ -542,7 +542,7 @@ for j = 1:length(Ic)
         logmsg(...
                 ['Starting freq band and regression '...
                  'calcs on frequency %d of %d\n'],...
-                 j, length(fe)-1);
+                 j, length(fe));
     end
     
     W = winfn(2*Ne(j)+1);
@@ -567,20 +567,19 @@ for j = 1:length(Ic)
                  f(Ic(j)+Ne(j)));
     end
 
+    % If not computing Z based on stack averages, don't need to do
+    % regression as it is done later.
     if ~isempty(opts.fd.stack.average.function) ...
        && strcmp(opts.fd.program.name,'transferfnFD')
-        % If not computing Z based on stack averages, don't need to do
-        % regression as it is done later.
         args = opts.fd.regression.functionargs;    
-
-        warning('');
 
         [Z(j,:),stats] = opts.fd.regression.function(...
                                 Wr.*ftB(r,:),W.*ftE(r,1),args{:});
-                            
+
         [warnMsg, warnId] = lastwarn;                            
-        if ~isempty(warnMsg) && j > 1 % Ignore rank deficient error for f = 0.
-            logmsg( 'Warning above occured on eval freq. = %d\n', j);
+        if ~isempty(warnMsg) && j > 1
+            % Show rank deficient error for j > 1 (f ~= 0).
+            logmsg( 'Warning occured on eval freq. = %d\n', j);
             %ftE
             %ftB
             %keyboard
@@ -639,12 +638,12 @@ if opts.transferfnFD.loglevel > 0
         logmsg(...
                 ['Finished freq band calculations '...
                  'for %d eval freqs.\n'],...
-                 length(Ic)-1);
+                 length(Ic));
     else
         logmsg(...
                 ['Finished freq band and regression '...
                  'calculations for %d eval. freqs.\n'],...
-                 length(Ic)-1);
+                 length(Ic));
     end
 end
 

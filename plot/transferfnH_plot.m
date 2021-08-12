@@ -1,5 +1,6 @@
 function transferfnH_plot(S1,S2,xl)
 
+figure();
 figprep();
 
 if nargin < 2

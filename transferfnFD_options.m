@@ -104,8 +104,7 @@ opts.td.prewhiten = struct();
 
 opts.fd.progam = struct();
     opts.fd.program.name = 'transferfnFD';
-    % Use lemimt program. All fd options below are ignored.
-    %opts.fd.progam.name = 'lemimt';
+    %opts.fd.progam.name = 'lemimt'; % Use lemimt program. All fd options below are ignored.
     opts.fd.program.options = '';
 
 opts.fd.evalfreq = struct();
@@ -149,9 +148,9 @@ opts.fd.interpolation = struct();
 opts.fd.regression = struct();
     opts.fd.regression.function = @ols_regress;
     opts.fd.regression.functionstr = 'OLS using regress() function';
-    opts.fd.regression.functionargs = {struct('realvalued',0,'loglevel',0)};
+    opts.fd.regression.functionargs = {struct('realvalued',0,'loglevel',1)};
     opts.fd.regression.plot = 0;
-    opts.fd.regression.loglevel = 0;
+    opts.fd.regression.loglevel = 1;
 
     %opts.fd.regression.function = @ols_analytic;
     %opts.fd.regression.functionstr = 'OLS using analytic formula';
@@ -175,7 +174,7 @@ opts.fd.regression = struct();
 if os == 0
     % When no noise, should get exact TF used to generate the output data
     % (within limits of numerical precision).
-    opts.description = 'OLS and $\Delta_f = 0$, $N_f = 0$.';
+    opts.description = 'OLS and $\Delta {f_e} = 1$, $\Delta w = 0$.';
     opts.fd.evalfreq.functionargs = {[1,0], 'linear'};
     opts.fd.evalfreq.functionstr  = '1 DFT point per freq. band';
 elseif os == 1 || nargs == 0
