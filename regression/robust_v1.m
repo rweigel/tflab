@@ -1,4 +1,4 @@
-function [Z,stats] = robust_v1(ftB,ftE,varargin)
+function [Z,W,R,stats] = robust_v1(ftB,ftE,varargin)
 %ROBUST_V1 Robust regression with hard cut-off
 
 % If anything is modified that changes result or API, create a new
@@ -43,7 +43,7 @@ end
 
 % This algorithm downweights both the real and imaginary parts of ftB
 % and ftE when there is a large complex residual. For example, for
-% size(ftB,2) = 1, the system of 2N equations being solved for in ftE =
+% size(ftB,2) = 1, the system of 2*N equations being solved for in ftE =
 % Z*ftB, where ftE and ftB are complex, is
 %
 %   ftEr(1) = Zr*ftBr(1) - Zi*ftBi(1)
@@ -125,7 +125,7 @@ while 1
         fprintf('robust_v1(): Step %d: std(abs(ftE))/mad(abs(residuals)) = %.2g\n',step,so/s);
     end
 
-    if strcmp(opts.weightfn,'bisquare');
+    if strcmp(opts.weightfn,'bisquare')
         % W = (1-(R/const)^2)^2 for R <= const
         % W = 0 otherwise.
         const = 4.685;    % 95% efficiency when the errors are normal
@@ -138,7 +138,7 @@ while 1
             Iz = abs(Rs*const) > opts.hardcut;
             W(Iz) = 0;
         end
-    elseif strcmp(opts.weightfn,'huber');
+    elseif strcmp(opts.weightfn,'huber')
         % W = 1 for |R| <= const
         % W = const/|R| for |R| > const
         const = 1.345;    % 95% efficiency when the errors are normal
@@ -192,6 +192,4 @@ while 1
     step = step + 1;
 
 end
-stats.w = W;
-stats.Z = Z;
 Z = Z(end,:);

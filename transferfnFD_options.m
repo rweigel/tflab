@@ -38,13 +38,6 @@ opts.info = struct();
     
 opts.transferfnFD = struct();
     opts.transferfnFD.loglevel = 1;
-    % Elements of arrays for plot.* are 0 or 1 and
-    % [showplot, savepng, savepdf] 
-    opts.transferfnFD.plot = struct();
-        opts.transferfnFD.plot.timeseries = [0,0,0];
-        opts.transferfnFD.plot.spectrum = [0,0,0];
-        opts.transferfnFD.plot.Z = [0,0,0];
-        opts.transferfnFD.plot.H = [0,0,0];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Time domain options
@@ -53,15 +46,16 @@ opts.transferfnFD = struct();
 % # of points at start and end to trim before computing metrics
 % (pe/cc/mse/sn/coherence)
 opts.td.Ntrim = NaN;
+% Dimensionless start; ignored if time array passed to transferfnFD.
+opts.td.start = 1; 
+% Number of zeros added to the end of all time series
+opts.td.zeropad = NaN;
 
 opts.td.detrend.function = struct();
     %opts.td.detrend.function = @removemean;
     opts.td.detrend.function = '';
     opts.td.detrend.functionstr = '';  % Optional descriptive name
     opts.td.detrend.functionargs = {}; % Arguments after first argument to fn.
-
-% Dimensionless start; ignored if time array passed to transferfnFD.
-opts.td.start = 1; 
 
 opts.td.window = struct();
     % Note: Same window applied to input and output
@@ -70,25 +64,22 @@ opts.td.window = struct();
     opts.td.window.functionargs = {};
     opts.td.window.width = NaN;   % Segment width.
     opts.td.window.shift = NaN;   % Shift amount to form new segment.
-    opts.td.window.plot = [0,0,0];
     opts.td.window.loglevel = 0;
 
     % Example of applying a time domain window function to each segment.
     if 0
-        % See 'help rectwin' for list of available MATLAB functions that
-        % can be passed to tdwindow() (which is part of this package).
+        % See https://www.mathworks.com/help/signal/ug/windows.html
+        % for list of available MATLAB functions that can be passed to
+        % tdwindow() (which is function in this package).
         % Default is equivalent to
-        opts.td.window.function = @tdwindow; 
-        opts.td.window.functionstr = 'Rectangular';
-        opts.td.window.functionargs = {@rectwin};
-        %opts.td.window.functionstr = 'Parzen';        
-        %opts.td.window.functionargs = {@parzenwin};        
+        %opts.td.window.function = @tdwindow; 
+        %opts.td.window.functionstr = 'Rectangular';
+        %opts.td.window.functionargs = {@rectwin};
     end
 
 opts.td.prewhiten = struct();
     % Note: Same prewhitening filter applied to input and output
     opts.td.prewhiten.function = '';
-    opts.td.prewhiten.plot = [0,0,0];
     opts.td.prewhiten.loglevel = 0;
     
     % Example of prewhitening.
@@ -102,16 +93,14 @@ opts.td.prewhiten = struct();
 % Frequency domain options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-opts.fd.progam = struct();
+opts.fd.program = struct();
     opts.fd.program.name = 'transferfnFD';
     % Use lemimt program. All fd options below are ignored.
-    %opts.fd.progam.name = 'lemimt';
+    %opts.fd.program.name = 'lemimt';
     opts.fd.program.options = '';
 
 opts.fd.evalfreq = struct();
-    opts.fd.evalfreq.plot = [0,0,0];
     opts.fd.evalfreq.loglevel = 0;
-
     % See evalfreq_demo.m for evalfreq() examples.
     opts.fd.evalfreq.function = @evalfreq;   
     opts.fd.evalfreq.functionargs = {7, 'logarithmic'};
@@ -123,7 +112,6 @@ opts.fd.window = struct();
     opts.fd.window.function = @rectwin; 
     opts.fd.window.functionstr = 'rectangular';
     opts.fd.window.loglevel = 0; 
-    opts.fd.window.plot = 0; 
 
 % When stack.average.function = @transferfnAverage is used, ffts in each
 % time window are computed and the ffts in a frequency band are used for a
@@ -150,7 +138,6 @@ opts.fd.regression = struct();
     opts.fd.regression.function = @ols_regress;
     opts.fd.regression.functionstr = 'OLS using regress() function';
     opts.fd.regression.functionargs = {struct('realvalued',0,'loglevel',0)};
-    opts.fd.regression.plot = 0;
     opts.fd.regression.loglevel = 0;
 
     %opts.fd.regression.function = @ols_analytic;

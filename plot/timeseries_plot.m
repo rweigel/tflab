@@ -22,6 +22,7 @@ end
 
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
+figprep();
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -31,6 +32,7 @@ if iscell(S) && ~isempty(opts.type)
     %warning('opts.type ignored when input is cell array');
     opts.type = '';
 end
+
 
 if iscell(S)
     info = S{1}.Options.info;
@@ -77,28 +79,19 @@ if ~isempty(info.timestart)
     t = to + t/ppd;
 end
 
+if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
 
-if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
-
-    figure();
-    figprep();
-
-    if size(S.In,2) > 1,
-        s1 = 's';
-    else
-        s1 = '';
-    end
-    
+    ts = '';
     if isempty(opts.title)
-        sta = '';
+        site_str = '';
         if isfield(S.Options.info,'stationid')
             sta = S.Options.info.stationid;
+            if isempty(sta) == 0
+                site_str = sprintf('Site: %s; ',sta);
+            end
         end
-        ts = sprintf('Site: %s; Raw Input%s (top) and Raw Output (bottom)',sta,s1);
-        if strcmp(opts.type,'windowed')
-            ts = sprintf('%s %s-windowed Input%s (top) and Output (bottom)',...
-                         sta,S.Options.td.window.functionstr,...
-                         s1);
+        if strcmp(opts.type,'raw')
+            ts = '';
         end
     else
         ts = opts.title;
@@ -114,19 +107,34 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
             logmsg('Data were not windowed. Not plotting windowed timeseries.\n');
             return
         end
+        if isempty(ts)
+            ts = sprintf('%s%s-windowed',...
+                         site_str,S.Options.td.window.functionstr);
+        end        
         In = S.Window.In;
         Out = S.Window.Out;
     end
+    if strcmp(opts.type,'prewhitened')
+        if ~isfield(S,'Prewhiten')
+            logmsg('Data were not prewhitened. Not plotting prewhitened timeseries.\n');
+            return
+        end
+        if isempty(ts)
+            ts = sprintf('%s%s prewhitened',...
+                         site_str,S.Options.td.prewhiten.functionstr);
+        end        
+        In = S.Prewhiten.In;
+        Out = S.Prewhiten.Out;
+    end
     
     subplot('Position',PositionTop);
+    
         plot(t,In);
         grid on;box on;
-        for j = 1:size(In,2)
-            if iscell(info.instr)        
-                ls{j} = sprintf('%s [%s]\n', info.instr{j}, info.inunit);
-            else
-                ls{j} = sprintf('%s(:,%d) [%s]\n',info.instr,j,info.inunit);
-            end
+        ls = legendlabels('In');
+        if isfield(S,'InNoise') && ~strcmp(opts.type,'windowed')
+            hold on;
+            plot(t,S.InNoise);
         end
         title(ts,'FontWeight','Normal');
         [~,h] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
@@ -138,12 +146,10 @@ if ~iscell(S) && (strcmp(opts.type,'raw') || strcmp(opts.type,'windowed'))
     subplot('Position',PositionBottom);
         plot(t,Out);
         grid on;box on;    
-        for j = 1:size(Out,2)
-            if iscell(info.outstr)        
-                ls{j} = sprintf('%s [%s]\n',info.outstr{j}, info.outunit);
-            else
-                ls{j} = sprintf('%s(:,%d) [%s]\n',info.outstr,j,info.outunit);    
-            end
+        ls = legendlabels('Out');
+        if isfield(S,'OutNoise') && ~strcmp(opts.type,'windowed')
+            hold on;
+            plot(t,S.OutNoise);
         end
         [~,h] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
         h = findobj(h,'type','line');
@@ -160,46 +166,32 @@ end
 
 if ~iscell(S) && strcmp(opts.type,'error')
 
-    figure();
-    figprep();
-
-    if isempty(opts.title)
-        ts = '';
-        if isfield(S.Options.info,'stationid')
-            ts = sprintf('Station: %s; Method: %s',...
-                S.Options.info.stationid,...
-                S.Options.description);
-        end
-    else
+    ts = '';
+    if ~isempty(opts.title)
         ts = opts.title;
     end
-    for j = 1:size(S.Out,2)        
+    
+    for j = 1:size(S.Out,2)
+        outunit = '';
+        if ~isempty(info.outunit)
+            outunit = sprintf(' [%s]', info.outunit);
+        end
+        if iscell(info.outstr)
+            outstr = sprintf('%s(:,%d) ',info.outstr{j},j);
+        else
+            outstr = info.outstr;
+        end
         metrics = sprintf('PE/CC/MSE = %.3f/%.3f/%.3f',...
                         S.Metrics.PE(j),...
                         S.Metrics.CC(j),...
                         S.Metrics.MSE(j));
-        if iscell(info.outstr)
-            ls1{j} = sprintf('%s observed [%s]\n',...
-                        info.outstr{j}, info.outunit);
-            ls2{j} = sprintf('(%s observed) - (%s predicted) [%s]; %s',...
-                        info.outstr{j},...
-                        info.outstr{j},...
-                        info.outunit,...
-                        metrics);
-        else
-            ls1{j} = sprintf('%s(:,%d) observed [%s]\n',...
-                        info.outstr,j,info.outunit);    
-
-            ls2{j} = sprintf('(%s(:,1) observed) - (%s(:,1) predicted) [%s]; %s',...
-                        info.outstr,...
-                        info.outstr,...
-                        info.outunit,...
-                        metrics);    
-        end
+        desc = S.Options.description;
+        ls1{j} = sprintf('%s Predicted%s',outstr,outunit);
+        ls2{j} = sprintf('%s Error%s; %s',outstr,outunit,metrics);
     end
 
     subplot('Position',PositionTop);
-        plot(t,S.Out);
+        plot(t,S.Metrics.Predicted);
         grid on;box on;
         legend(ls1,'Location','NorthEast','Orientation','Vertical');
         adjust_ylim();
@@ -207,7 +199,7 @@ if ~iscell(S) && strcmp(opts.type,'error')
         setx(0,info,[t(1),t(end)]);
         title(ts,'FontWeight','Normal');
     subplot('Position',PositionBottom);
-        plot(t,S.Out-S.Metrics.Predicted);
+        plot(t,S.Metrics.Predicted-S.Out);
         grid on;box on;
         legend(ls2,'Location','NorthEast','Orientation','Vertical');
         adjust_ylim();
@@ -226,7 +218,8 @@ if ~iscell(S) && strcmp(opts.type,'error')
             plot(t,S.Out(:,1));
             grid on;box on;hold on;
             plot(t,S.Metrics.Predicted(:,1));        
-            legend({ls1{1},ls2{1}},'Location','NorthEast','Orientation','Vertical');
+            legend({ls1{1},ls2{1}},...
+                'Location','NorthEast','Orientation','Vertical');
             adjust_ylim();
             adjust_exponent('y');
             setx(0,info,[t(1),t(end)]);
@@ -235,15 +228,16 @@ if ~iscell(S) && strcmp(opts.type,'error')
             plot(t,S.Out(:,2));
             grid on;box on;hold on;
             plot(t,S.Metrics.Predicted(:,2));
-            legend({ls1{2},ls2{2}},'Location','NorthEast','Orientation','Vertical');
+            legend({ls1{2},ls2{2}},...
+                    'Location','NorthEast','Orientation','Vertical');
             adjust_ylim();
             adjust_exponent('y');
             setx(1,info,[t(1),t(end)]);
 
-    filename = [opts.filename,'-B'];
-    for i = 1:length(opts.savefmt)
-        figsave([filename,'.',opts.savefmt{i}]);
-    end
+        filename = [opts.filename,'-B'];
+        for i = 1:length(opts.savefmt)
+            figsave([filename,'.',opts.savefmt{i}]);
+        end
     end
 end
 
@@ -251,8 +245,6 @@ c = {'k','r','g','b'}; % TODO: Define more colors
 
 % Compare
 if iscell(S)
-    figure();
-    figprep();
     subplot('Position',PositionTop);
         plot(t,S{1}.Out(:,1),c{1});
         grid on;box on;hold on;
@@ -268,7 +260,8 @@ if iscell(S)
         if ~isempty(opts.title)
             title(opts.title,'FontWeight','Normal');
         end
-        [lh, lo] = legend({ls0,ls{:}},'Location','NorthEast','Orientation','Vertical');
+        [lh, lo] = legend({ls0,ls{:}},...
+                        'Location','NorthEast','Orientation','Vertical');
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
@@ -288,7 +281,8 @@ if iscell(S)
                             S{j}.Options.description);
             end
         end
-        [lh, lo] = legend({ls0,ls{:}},'Location','NorthEast','Orientation','Vertical');
+        [lh, lo] = legend({ls0,ls{:}},...
+                        'Location','NorthEast','Orientation','Vertical');
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
@@ -299,6 +293,48 @@ if iscell(S)
     end
 end
 
+
+function ls = legendlabels(comp)
+
+    unit =  '';
+    if strcmp(comp,'In')
+        compstrs = info.instr;
+        if ~isempty(info.inunit)
+            unit = info.inunit;
+        end
+    else
+        compstrs = info.outstr;
+        if ~isempty(info.outunit)
+            unit = info.outunit;
+        end
+    end
+    unitstr = '';
+    if ~isempty(unit)
+        unitstr = sprintf(' [%s]',unit);
+    end
+    for j = 1:size(S.(comp),2)
+        if ~iscell(compstrs) && size(S.(comp),2) > 1
+            ls{j} = sprintf('%s(:,%d)%s\n',compstrs,j,unitstr);
+        else
+            if iscell(compstrs)
+                ls{j} = sprintf('%s%s\n', compstrs{j}, unitstr);
+            else
+                ls{j} = sprintf('%s%s\n', compstrs, unitstr);
+            end
+        end
+    end
+    
+    if isfield(S,[comp,'Noise'])
+        jl = j;
+        for j = 1:size(S.([comp,'Noise']),2)
+            if iscell(compstrs)        
+                ls{j+jl} = sprintf('%s Noise%s\n',compstrs{j}, unistr);
+            else
+                ls{j+jl} = sprintf('%s(:,%d) Noise%s\n',compstrs,j,unitstr);    
+            end
+        end
+    end
+end
 
 function setx(last,info,tl)
 
@@ -322,7 +358,11 @@ function setx(last,info,tl)
     end
     if last && isempty(info.timestart)
         % Use default label
-        xlabel(sprintf('%s since start', info.timeunit));
+        if ~isempty(info.timeunit)
+            xlabel(sprintf('%s since start', info.timeunit));
+        else
+            xlabel('$t$');
+        end
         adjust_exponent();
     end
         

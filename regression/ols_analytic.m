@@ -1,4 +1,4 @@
-function [Z,W,stats] = ols_analytic(ftB,ftE,varargin)
+function [Z,W,R] = ols_analytic(ftB,ftE,varargin)
 %OLS_ANALYTIC - TF estimate using analytic ordinary least-squares regression
 % 
 %   Z = OLS_ANALYTIC(B,E) uses an analytic formula to compute the OLS
@@ -37,5 +37,5 @@ end
 I = isnan(Z(1,:));
 Z(1,I) = 0;
 
+R = [];
 W = [];
-stats = struct();    

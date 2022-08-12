@@ -34,12 +34,12 @@ end
 %S{1}.ZVAR = std(abs(S{1}.Segment.Z),0,3)...
 %                /sqrt(size(S{1}.Segment.Z,3));
 S{1}.Metrics.Segment.fe = S{1}.Segment.fe;
-S{1}.Metrics.Segment.SN = mean(S{1}.Segment.Metrics.SN,3);
+S{1}.Metrics.Segment.SN = mean(S{1}.Segment.Metrics.SN.Raw,3);
 
 for i = 1:2
     S{1}.Metrics.Segment.SN_1sigma_normal = ...
-        std(S{1}.Segment.Metrics.SN,0,3)/sqrt(size(S{1}.Segment.Metrics.SN,3));
-    tmp = squeeze(S{1}.Segment.Metrics.SN(:,i,:));
+        std(S{1}.Segment.Metrics.SN.Raw,0,3)/sqrt(size(S{1}.Segment.Metrics.SN.Raw,3));
+    tmp = squeeze(S{1}.Segment.Metrics.SN.Raw(:,i,:));
     S{1}.Metrics.Segment.SN_95_boot(:,:,i) = ...
         bootcl(tmp, @mean, 1000, 0.025);
     S{1}.Metrics.Segment.SN_1sigma_boot(:,:,i) = ...

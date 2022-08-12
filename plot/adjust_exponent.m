@@ -1,4 +1,4 @@
-function adjust_exponent(direction, force)
+function adjust_exponent(direction, force, listen)
 %ADJUST_EXPONENT - Relabel axes number with exponents
 %
 %  ADJUST_EXPONENT() Relabels x, y, and z labels
@@ -18,20 +18,23 @@ function adjust_exponent(direction, force)
 %  Call adjust exponent after limits are set because MATLAB does not update
 %  labels when the limits change if the labels have been modified.
 
+if nargin < 3
+    listen = 1;
+end
+
 if nargin < 2
     force = 0; 
-    % For use if algorthim for detecting offsetted x10^{N} does not catch
-    % all cases.
+    % For use if algorthim for detecting offsetted x10^{N} does not work.
 end
 
 if nargin == 0
     adjust_exponent('x');
     adjust_exponent('y');
-    adjust_exponent('z');
+    %adjust_exponent('z'); % Not tested
     return;
 end
 
-assert(any(strcmp(direction,{'x','y','z'})), 'dir must be x, y, or z');
+assert(any(strcmp(direction,{'x','y'})), 'dir must be x or y');
 
 drawnow;
 
@@ -80,37 +83,61 @@ if strcmp(get(gca, [direction,'Scale']), 'log')
 end
 
 % Remove the offsetted x10^{N} notation that appears on last axis label
-% and add it to the last label.
+% and add it to the last (top) label.
 if strcmp(get(gca, [direction,'Scale']),'linear')
     labels = get(gca, [direction,'TickLabel']);
     ticks = get(gca, [direction,'Tick']);
     if isempty(labels)
         return;
     end
-    if ticks(end) == 0
-        return;
+    ax = get(gca,[direction,'Axis']);
+    if length(ax) > 1
+        % If yyaxis used, ax will have two elements.
+        % This will only adjust left axis.
+        % TODO: Loop over both.
+        ax = ax(1);
     end
-    if force || ticks(end) > 1000 || ticks(end) < 0.001 % Check 1
+    if isprop(ax,'Exponent') && ax.Exponent ~= 0
+        % Newer versions of MATLAB (when?)
+        force = 1;
+        ed = ax.Exponent;
+    else
+        ed = NaN;
+    end
+    if force || ticks(end) >= 1000 || ticks(end) <= 0.001 % Check 1
         % There does not seem to be a direct way of determining if the
-        % offset notation is used (or what it is), so Check 1 and Check 2
-        % are used.
+        % offset notation is used (or what it is) in older versions of
+        % MATLAB, so Check 1 and Check 2 are used then.
+
         if ~iscell(labels)
             for i = 1:length(ticks)
                 labelsc{i} = labels(i,:);
             end
             labels = labelsc;
         end
-        r = abs(ticks(end)/str2double(labels{end}));
-        if force || (r < 1.1 && r > 0.9) % Check 2.
-            % E.g., ticks(end) = 2000 and labels{end} = '2';
-            return;
+        if contains(labels{end},'$')
+            return
         end
-        % Exponent digit
-        ed = floor(log10(r));
-        if abs(r-10^ed) > eps
-            warning('Relabeling failed')
-            fprintf('Original: %.6e, New: %.6e\n',r,10^ed);
-            return;
+        if isnan(ed)
+            r = abs(ticks(end)/str2double(labels{end}));
+            if force == 0
+                if (r < 1.1 && r > 0.9) % Check 2.
+                    % E.g., ticks(end) = 2000 and labels{end} = '2';
+                    return;
+                end
+            end
+        
+            % Exponent digit
+            ed = floor(log10(r));
+            if ed == 0
+                return
+            end
+            if abs(r-10^ed) > eps
+                % We have exact value already
+                warning('Relabeling failed')
+                fprintf('Original: %.6e, New: %.6e\n',r,10^ed);
+                return;
+            end
         end
         for i = 1:length(ticks)-1
             labels_new{i} = sprintf('%s', labels{i});
@@ -127,3 +154,24 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
 end
 
 drawnow
+
+if listen
+    % On zoom, compute default tick labels.
+    % Based on
+    % https://blogs.mathworks.com/loren/2015/12/14/axes-limits-scream-louder-i-cant-hear-you/
+
+    % Ideally we would determine if this listener has already been attached
+    % to gca and then return if it has. Then we would not need to pass the
+    % 'listen' argument. To do this, would need to loop through the
+    % AutoListeners__ cell array (undocumented). See commented out code below
+    % and https://stackoverflow.com/questions/48345311/find-and-delete-listeners
+    addlistener(gca, [upper(direction),'Lim'], 'PostSet', @(a,b)reset(a,b));
+    %tmp = gca;
+    %tmp.AutoListeners__
+end
+
+function reset(~,~)
+    set(gca,[upper(direction), 'TickLabelMode'],'auto');
+    adjust_exponent(direction, force, 0);
+end
+end

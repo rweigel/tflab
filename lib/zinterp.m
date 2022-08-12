@@ -1,4 +1,4 @@
-function [Zi,fi] = zinterp(f,Z,fi,opts)
+function [Zi,fi,Zir,fir] = zinterp(f,Z,fi,opts)
 % ZINTERP - Interpolate transfer function onto frequency grid
 %
 %  [Zi,fi] = ZINTERP(f,Z,N) returns Zi on the N-point DFT grid fi given by
@@ -60,6 +60,8 @@ if length(f) == length(fi) && all(f(:) == fi(:))
              'No interpolation will be performed.\n']);
     end
     if ~isnan(N)
+        fir = fi;
+        Zir = Z;
         % Zinterp(f,Z,N) usage.
         % Create Z having negative frequency elements.
         [Zi,fi] = zfull(Z,N);
@@ -87,12 +89,14 @@ if f(1) == 0
 end
 
 if f(end) == 0.5
-    % Can't do this because we don't know if f is normalized and generally
-    % don't know normalization.
-    %assert(all(imag(Z(end,:)) == 0),'If f(end) == 0.5 expect all(imag(Z(end,:))==0)');
+    % TODO: This assumes f is normalized
+    assert(all(imag(Z(end,:)) == 0),'If f(end) == 0.5 expect all(imag(Z(end,:))==0)');
+    Zi_re = interp1(f,real(Z),fi,opts.interp1args{:});
+    Zi_im = interp1(f(1:end-1),imag(Z(1:end-1,:)),fi,opts.interp1args{:});
+    Zi = Zi_re + 1j*Zi_im;
+else
+    Zi = interp1(f,Z,fi,opts.interp1args{:});
 end
-
-Zi = interp1(f,Z,fi,opts.interp1args{:});
 
 if fi(1) == 0 % If lowest interp. frequency is zero (and so was removed)
     if f0 
@@ -109,6 +113,8 @@ if fi(1) == 0 % If lowest interp. frequency is zero (and so was removed)
 end
 
 if ~isnan(N)
+    Zir = Zi; % Reduced Zi.
+    fir = fi;
     % Zinterp(f,Z,N) usage. Create z with negative frequencies (for use
     % with ifft, for example).
     [Zi,fi] = zfull(Zi,N);

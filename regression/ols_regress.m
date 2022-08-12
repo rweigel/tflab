@@ -1,4 +1,4 @@
-function [Z,W,stats] = ols_regress(ftB,ftE,varargin)
+function [Z,W,R] = ols_regress(ftB,ftE,varargin)
 %OLS_REGRESS - Ordinary least-squares regression
 %
 %   Z = OLS_REGRESS(B, E) returns Z = regress(B, E);
@@ -14,7 +14,7 @@ function [Z,W,stats] = ols_regress(ftB,ftE,varargin)
 %
 %   Notes:
 %
-%   Ec = Zc*Bc for complex-valued matrices (subscript c) can be written as
+%   Ec = Zc*Bc for complex-valued scalars (subscript c) can be written as
 %
 %   Er + jEi = (Zr + jZi)*(Br + jBi),
 %
@@ -56,18 +56,18 @@ if realvalued == 1
         fprintf(['ols_regress(): Using regress() '...
                 'with real-valued matrices\n']);
     end
-    % Calculation using only reals numbers
-    Zreal = regress([real(ftE) ; imag(ftE)], ...
+    % Calculation using only real numbers
+    [Zreal,~,Rreal] = regress([real(ftE) ; imag(ftE)], ...
                     [real(ftB), -imag(ftB) ; imag(ftB), real(ftB)]);
     Z = Zreal(1:end/2,:) + sqrt(-1)*Zreal(end/2+1:end,:);
+    R = Rreal(1:end/2,:) + sqrt(-1)*Rreal(end/2+1:end,:);
 else
     if loglevel > 0
         fprintf(['ols_regress(): Using regress() '...
                  'with complex-valued matrices\n']);
     end
-    Z = regress(ftE,ftB);
+    [Z,~,R] = regress(ftE,ftB);
 end
 
 W = [];
-stats = struct();
     

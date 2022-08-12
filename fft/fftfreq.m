@@ -1,5 +1,5 @@
 function [f,fu] = fftfreq(N, s)
-%FFTFREQ Discrete Fourier Transform sample frequencies
+%FFTFREQ    Discrete Fourier Transform sample frequencies
 %
 %   f = FFTFREQ(N) returns
 %
@@ -12,7 +12,7 @@ function [f,fu] = fftfreq(N, s)
 %   [f,fu] = FFTFREQ(...) returns the unique DFT frequencies:
 %
 %   fu = (1/N)*[0,1,...,N/2] if N is even
-%   fu = (1/N)*[0,1,...,(N-1)/2] if N is even
+%   fu = (1/N)*[0,1,...,(N-1)/2] if N is odd
 %
 %   (For N even, the highest frequency magnitude is 0.5 and negative by
 %   convention. fu uses +0.5.)

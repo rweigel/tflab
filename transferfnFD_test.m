@@ -1,9 +1,10 @@
 clear;
 
 % NB: Tests are intentially not deterministic.
-% TODO: Make deterministic by setting random number seed.
+% TODO: Allow deterministic by setting random number seed.
 
 addpath([fileparts(mfilename('fullpath')),'/misc']);
+addpath([fileparts(mfilename('fullpath')),'/demos']);
 
 close all;
 set(0,'defaultFigureWindowStyle','docked');
@@ -34,23 +35,26 @@ fprintf('\n');
 %% Basic calculation test 2.
 % B = cos(w*t), E = A(w)*cos(w*t + phi(w)). No leakage
 logmsg(['Basic calculation; Test 1.2. - '...
-        'B = cos(w*t), E ~ A(w)*cos(w*t + phi(w)). No leakage.\n']);
+        'B = cos(w*t), E ~ w*cos(w*t + w). No leakage.\n']);
 
 clear E B
 N = 101;
 f = fftfreqp(N);
 t = (0:N-1)';
 for i = 2:length(f)
-    A(i,1)   = (i-1);
-    Phi(i,1) = -2*pi*f(i);
+    A(i,1)   = (i-1);       % Exact amplitude
+    Phi(i,1) = -2*pi*f(i);  % Exact phase
+    
+    % Generate input/output using exact amplitude and phase
     B(:,i) = cos(2*pi*f(i)*t);
     E(:,i) = A(i)*cos(2*pi*f(i)*t + Phi(i));
 end
 
+% Input and Output are sum over all frequencies
 B = sum(B,2);
 E = sum(E,2);
 
-% Compute DC component
+% DC component
 A(1) = mean(E)/mean(B);
 if A(1) >= 0
     Phi(1) = 0;
@@ -60,14 +64,11 @@ end
 A(1) = abs(A(1));
 
 opts = transferfnFD_options(0); 
-S2 = transferfnFD(B,E,opts);
-
-% Complex version of A
-Ac = A.*(cos(Phi) + sqrt(-1)*sin(Phi));
+S = transferfnFD(B,E,opts); % Estimate transfer function
 
 % TODO: Justify 1e-12.
-assert(max( real(S2.Z) - real(A) ) < 1e-12 );
-assert(max( imag(S2.Z) - imag(A) ) < 1e-12 );
+assert(max( real(S.Z) - real(A) ) < 1e-12 );
+assert(max( imag(S.Z) - imag(A) ) < 1e-12 );
 fprintf('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -82,7 +83,7 @@ logmsg(['Basic calculation; Test 1.3. - '...
 for i = 1:3     
     H = zeros(i+1,1);
     H(1) = 1;
-    S0 = transferfnFD_demo_signals(0, struct('H',H,'N',100));
+    S0 = demo_signals(0, struct('H',H,'N',100));
 
     opts = transferfnFD_options(0);
     S1 = transferfnFD(S0.In, S0.Out, opts);
@@ -345,8 +346,8 @@ opts.td.window.width = N;
 opts.td.window.shift = N;
 
 S1 = transferfnFD(B,E,opts);
-opts.fd.stack.average.function = ''; % Don't compute stack average.
 fprintf('---\n');
+opts.fd.stack.average.function = ''; % Don't compute stack average.
 S2 = transferfnFD(B,E,opts);
 assert(all(S1.Z(:) == S2.Z(:)))
 
