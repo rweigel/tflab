@@ -9,7 +9,7 @@ script_dir = fileparts(mfilename('fullpath'));
 
 if ischar(sid)
     cid = sid;
-    if strcmp(sid,'KAP')
+    if strncmp(sid,'KAP',3)
         cid = 'KAP03'; % TODO: Need to pass cid or find file from dirwalk.
     end
     fname = sprintf('%s/data/%s/%s.mat',script_dir,cid,sid);
@@ -21,43 +21,49 @@ else
     cid = S{1}.Options.info.chainid;
 end
 
-savedir = sprintf('%s/figures/%s/',script_dir,sid);
+savedir = sprintf('%s/data/figures/%s/',script_dir,sid);
+
+opts.savefmt = {'pdf'};
 
 opts.type = 'raw';
-opts.savefmt = {'pdf'};
 opts.filename = [savedir,'timeseries'];
-timeseries_plot(S{1},opts);
+figure()
+tsplot(S{1},opts);
+
+% Plot on same axes
+figure()
+opts.filename = [savedir,'SN_compare'];
+[ax1,ax2] = snplot(S,opts);
+
+% Plot on same axes
+opts.filename = [savedir,'transferfnZ_compare'];
+figure()
+[ax1, ax2] = zplot(S,opts);
+
 
 if all
     opts.type = 'error';
     opts.savefmt = {'png'};
     for i = 1:length(S)
         if ~isempty(S{i})
+            figure()
             opts.filename = [savedir,sprintf('timeseries-error_method_%d',i)];
-            timeseries_plot(S{i},opts);
+            tsplot(S{i},opts);
         end
     end
 
     opts.savefmt = {'pdf'};
     for i = 1:length(S)
         opts.filename = [savedir,sprintf('SN_method_%d',i)];
-        sn_plot(S{i},opts);
+        figure()
+        snplot(S{i},opts);
     end
-end
-
-% Plot on same axes
-opts.filename = [savedir,'SN_compare'];
-sn_plot(S,opts);
-
-if all
+    
     opts.savefmt = {'pdf'};
     for i = 1:length(S)
         opts.filename = [savedir,sprintf('transferfnZ_method_%d',i)];
-        transferfnZ_plot(S{i},opts);
+        figure()
+        zplot(S{i},opts);
     end
 end
-
-% Plot on same axes
-opts.filename = [savedir,'transferfnZ_compare'];
-transferfnZ_plot(S,opts);
 

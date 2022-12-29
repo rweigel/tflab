@@ -1,30 +1,30 @@
-function period_lines(m)
+function period_lines()
+%PERIOD_LINES Vertical lines and labels at periods in current x-axis range.
 
-    drawnow
-    
-    set(gcf, 'DefaultLegendAutoUpdate', 'off')
-    yl = get(gca,'YLim');
-    plot([60,60],yl,'--','Color',[0.5,0.5,0.5]);
-    text(60,yl(1),'1m','VerticalAlignment','bottom');
-    hr = 3600;
-    if m >= 60*10
-        yl = get(gca,'YLim');
-        loglog([hr,hr],yl,'--','Color',[0.5,0.5,0.5]);
-        text(hr,yl(1),'1h','VerticalAlignment','bottom');
+% TODO: Allow timeunit to be passed.
+
+drawnow; % Updates axes limits
+
+held = ishold();
+if ~held
+    hold on;
+end
+
+xl = get(gca,'XLim');
+yl = get(gca,'YLim');
+
+at = [60,   60*60, 60*60*6, 60*60*12, 60*60*24, 60*60*24*5, 60*60*24*10, 60*60*24*20];
+ls = {'1m','1h' , '6h',    '12h',    '1d',     '5d',       '10d',       '20d'};
+
+for i = 1:length(at)
+    if at(i) > xl(end)
+        break
     end
-    if m >= hr*2
-        yl = get(gca,'YLim');
-        loglog([6*hr,6*hr],yl,'--','Color',[0.5,0.5,0.5]);
-        text(6*hr,yl(1),'6h','VerticalAlignment','bottom');
-    end            
-    if m >= hr*7
-        yl = get(gca,'YLim');
-        loglog([12*hr,12*hr],yl,'--','Color',[0.5,0.5,0.5]);
-        text(12*hr,yl(1),'12h','VerticalAlignment','bottom');
-    end
-    if m >= hr*13 
-        yl = get(gca,'YLim');
-        loglog([24*hr,24*hr],yl,'--','Color',[0.5,0.5,0.5]);
-        text(24*hr,yl(1),'1d','VerticalAlignment','bottom');
-    end    
+    plot([at(i),at(i)],yl,'--','Color',[0.5,0.5,0.5]);
+    text(at(i),yl(1),ls{i},'VerticalAlignment','bottom');
+end
+
+if ~held
+    % Reset hold state to initial.
+    hold off;
 end

@@ -11,6 +11,9 @@ opts = struct();
 
 opts.filestr = sprintf('transferfnFD_options-%d',os);
 
+opts.transferfnFD = struct();
+    opts.transferfnFD.loglevel = 1;
+
 opts.info = struct();
     opts.info.instr = 'In'; % Cell array or string. 
     % Or {'$B_x$', ...} (1 cell element per column in In)
@@ -36,9 +39,6 @@ opts.info = struct();
     opts.info.stationid = '';
     opts.info.chainid = '';
     
-opts.transferfnFD = struct();
-    opts.transferfnFD.loglevel = 1;
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Time domain options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -46,8 +46,10 @@ opts.transferfnFD = struct();
 % # of points at start and end to trim before computing metrics
 % (pe/cc/mse/sn/coherence)
 opts.td.Ntrim = NaN;
+
 % Dimensionless start; ignored if time array passed to transferfnFD.
 opts.td.start = 1; 
+
 % Number of zeros added to the end of all time series
 opts.td.zeropad = NaN;
 
@@ -162,7 +164,7 @@ opts.fd.regression = struct();
 if os == 0
     % When no noise, should get exact TF used to generate the output data
     % (within limits of numerical precision).
-    opts.description = 'OLS and $\Delta_f = 0$, $N_f = 0$.';
+    opts.description = 'OLS and $\Delta {f_e} = 1$, $\Delta w = 0$.';
     opts.fd.evalfreq.functionargs = {[1,0], 'linear'};
     opts.fd.evalfreq.functionstr  = '1 DFT point per freq. band';
 elseif os == 1 || nargs == 0

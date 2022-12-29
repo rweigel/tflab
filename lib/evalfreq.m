@@ -17,8 +17,8 @@ function [fe,Ic,Ne] = evalfreq(N,Npd,scale)
 %  [fe,Ic,Ne] = evalfreq(N,Npd) returns approximately Npd frequencies per
 %  decade.
 %
-%  [fe,Ic,Ne] = evalfreq(N,dN,'linear') returns evaluation frequencies
-%  separated by dN points and windows of size 2*dN+1. For fe = 0, Ne = 0.
+%  [fe,Ic,Ne] = evalfreq(N,w,'linear') returns evaluation frequencies
+%  separated by dN points and windows of size 2*w+1. For fe = 0, Ne = 0.
 %
 %  [fe,Ic,Ne] = evalfreq(N,[dN,w],'linear') returns evaluation frequencies
 %  separated by dN points and windows of size 2*w+1.

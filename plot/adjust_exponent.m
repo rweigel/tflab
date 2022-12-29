@@ -107,7 +107,7 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
     if force || ticks(end) >= 1000 || ticks(end) <= 0.001 % Check 1
         % There does not seem to be a direct way of determining if the
         % offset notation is used (or what it is) in older versions of
-        % MATLAB, so Check 1 and Check 2 are used then.
+        % MATLAB, so Check 1 and Check 2 are used.
 
         if ~iscell(labels)
             for i = 1:length(ticks)
@@ -120,6 +120,9 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
         end
         if isnan(ed)
             r = abs(ticks(end)/str2double(labels{end}));
+            if isnan(r) % Catch 0/0 case
+                return;
+            end
             if force == 0
                 if (r < 1.1 && r > 0.9) % Check 2.
                     % E.g., ticks(end) = 2000 and labels{end} = '2';

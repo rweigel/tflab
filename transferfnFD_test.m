@@ -105,9 +105,9 @@ fprintf('\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Regression test 1.
-% Expect results to be identical to within machine precision.
+% Expect results to be identical to within ~ machine precision.
 logmsg(['Basic calculation; Test 2.1. - '...
-                'ols_regress() using real and complex arguments.\n']);
+                'ols_regress() using real or complex arguments.\n']);
 
 B = randn(n,1);
 E = B;
@@ -141,8 +141,8 @@ for n = N
     opts = transferfnFD_options(0);
 
     opts.fd.evalfreq.function = @evalfreq;
-    % Can't use 1 DFT point per freq. band because regression needs more
-    % points to not have rank deficiency.
+    % Can't use 1 DFT point per freq. band because robust regression will
+    % have rank deficiency.
     opts.fd.evalfreq.functionstr  = '3 DFT points per freq. band';
     opts.fd.evalfreq.functionargs = {[1,1],'linear'};
 

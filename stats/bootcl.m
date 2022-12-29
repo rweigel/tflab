@@ -1,10 +1,10 @@
 function lims = bootcl(z,fn,N,f)
 %BOOTCL Bootstrap confidence limits
 %
-%   lims = BOOTCL(z) - for each row in z, compute the N bootstrap means
-%   each computed by resampling 63% of the columns with replacement. Each
-%   row of lims contains the value nearest the lowest/highest 2.5%/97.5%
-%   of the N boostrap means.
+%   lims = BOOTCL(z) - for each row in z, compute N=1000 bootstrap means
+%   by resampling 63% of the columns with replacement. Each row of lims
+%   contains the value nearest the lowest/highest 2.5%/97.5% of the
+%   N boostrap means.
 %
 %   lims = BOOTCL(z,fn)
 %   lims = BOOTCL(z,fn,N)

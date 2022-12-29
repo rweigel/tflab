@@ -51,10 +51,15 @@ if nargin > 2
     end
 end
 
+sE = size(ftE);
+sB = size(ftB);
+
 if realvalued == 1
+    % Should give same answer as realvalued == 0
     if loglevel > 0
-        fprintf(['ols_regress(): Using regress() '...
-                'with real-valued matrices\n']);
+        msg = 'Using regress(y, x) with real-valued matrices;';
+        logmsg('%s size(y)=[%d,%d]; size(x) = [%d,%d]\n',...
+                msg,sE(1),sE(2),sB(1),sB(2));
     end
     % Calculation using only real numbers
     [Zreal,~,Rreal] = regress([real(ftE) ; imag(ftE)], ...
@@ -63,8 +68,9 @@ if realvalued == 1
     R = Rreal(1:end/2,:) + sqrt(-1)*Rreal(end/2+1:end,:);
 else
     if loglevel > 0
-        fprintf(['ols_regress(): Using regress() '...
-                 'with complex-valued matrices\n']);
+        msg = 'Using regress(y, x) with complex-valued matrices;';
+        logmsg('%s size(y)=[%d,%d]; size(x) = [%d,%d]\n',...
+                msg,sE(1),sE(2),sB(1),sB(2));
     end
     [Z,~,R] = regress(ftE,ftB);
 end

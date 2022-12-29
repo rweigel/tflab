@@ -13,25 +13,29 @@ function print2eps(name, fig, export_options, varargin)
 % Secondly, it substitutes original font names back into the eps file,
 % where these have been changed by MATLAB, for up to 11 different fonts.
 %
-%IN:
+% Inputs:
 %   filename - string containing the name (optionally including full or
 %              relative path) of the file the figure is to be saved as. A
 %              ".eps" extension is added if not there already. If a path is
 %              not specified, the figure is saved in the current directory.
 %   fig_handle - The handle of the figure to be saved. Default: gcf().
-%   export_options - array or struct of optional scalar values:
-%       bb_padding - Scalar value of amount of padding to add to border around
-%                    the cropped image, in points (if >1) or percent (if <1).
-%                    Can be negative as well as positive; Default: 0
-%       crop       - Cropping flag. Deafult: 0
-%       fontswap   - Whether to swap non-default fonts in figure. Default: true
-%       font_space - Character used to separate font-name terms in the EPS output
-%                    e.g. "Courier New" => "Courier-New". Default: ''
-%                    (available only via the struct alternative)
-%       renderer   - Renderer used to generate bounding-box. Default: 'opengl'
-%                    (available only via the struct alternative)
-%       crop_amounts - 4-element vector of crop amounts: [top,right,bottom,left]
-%                    (available only via the struct alternative)
+%   export_options - array or struct of optional values:
+%       bb_padding    - Scalar value of amount of padding to add to border around
+%                       the cropped image, in points (if >1) or percent (if <1).
+%                       Can be negative as well as positive; Default: 0
+%       crop          - Cropping flag. Deafult: 0
+%       fontswap      - Whether to swap non-default fonts in figure. Default: true
+%       preserve_size - Whether to preserve the figure's PaperSize. Default: false
+%       font_space    - Character used to separate font-name terms in the EPS output
+%                       e.g. "Courier New" => "Courier-New". Default: ''
+%                       (available only via the struct alternative)
+%       renderer      - Renderer used to generate bounding-box. Default: 'opengl'
+%                       (available only via the struct alternative)
+%       crop_amounts  - 4-element vector of crop amounts: [top,right,bottom,left]
+%                       (available only via the struct alternative)
+%       regexprep     - 2-element cell-array of regular-expression replacement in the
+%                       generated EPS. 1st element is the replaced string(s), 2nd is
+%                       the replacement(s) (available only via the struct alternative)
 %   print_options - Additional parameter strings to be passed to the print command
 
 %{
@@ -97,6 +101,19 @@ function print2eps(name, fig, export_options, varargin)
 % 15/11/17: Updated issue #211: only set SortMethod='ChildOrder' in HG2, and when it looks the same onscreen; support multiple figure axes
 % 18/11/17: Fixed issue #225: transparent/translucent dashed/dotted lines appear solid in EPS/PDF
 % 24/03/18: Fixed issue #239: black title meshes with temporary black background figure bgcolor, causing bad cropping
+% 21/03/19: Improvement for issue #258: missing fonts in output EPS/PDF (still *NOT* fully solved)
+% 21/03/19: Fixed issues #166,#251: Arial font is no longer replaced with Helvetica but rather treated as a non-standard user font
+% 14/05/19: Made Helvetica the top default font-swap, replacing Courier
+% 12/06/19: Issue #277: Enabled preservation of figure's PaperSize in output PDF/EPS file
+% 06/08/19: Issue #281: only fix patch/textbox color if it's not opaque
+% 15/01/20: Added warning ID for easier suppression by users
+% 20/01/20: Added comment about unsupported patch transparency in some Ghostscript versions (issue #285)
+% 10/12/20: Enabled user-specified regexp replacements in the generated EPS file (issue #324)
+% 11/03/21: Added documentation about export_options.regexprep; added sanity check (issue #324)
+% 21/07/21: Fixed misleading warning message about regexprep field when it's empty (issue #338)
+% 26/08/21: Added a short pause to avoid unintended image cropping (issue #318)
+% 16/03/22: Fixed occasional empty files due to excessive cropping (issues #350, #351)
+% 15/05/22: Fixed EPS bounding box (issue #356)
 %}
 
     options = {'-loose'};
@@ -112,15 +129,21 @@ function print2eps(name, fig, export_options, varargin)
     % Retrieve padding, crop & font-swap values
     crop_amounts = nan(1,4);  % auto-crop all 4 sides by default
     if isstruct(export_options)
-        try fontswap     = export_options.fontswap;     catch, fontswap = true;     end
-        try font_space   = export_options.font_space;   catch, font_space = '';     end
+        try preserve_size = export_options.preserve_size; catch, preserve_size = false; end
+        try fontswap      = export_options.fontswap;      catch, fontswap = true;       end
+        try font_space    = export_options.font_space;    catch, font_space = '';       end
         font_space(2:end) = '';
-        try bb_crop      = export_options.crop;         catch, bb_crop = 0;         end
-        try crop_amounts = export_options.crop_amounts; catch,                      end
-        try bb_padding   = export_options.bb_padding;   catch, bb_padding = 0;      end
-        try renderer     = export_options.rendererStr;  catch, renderer = 'opengl'; end  % fix for issue #110
+        try bb_crop       = export_options.crop;          catch, bb_crop = 0;           end
+        try crop_amounts  = export_options.crop_amounts;  catch,                        end
+        try bb_padding    = export_options.bb_padding;    catch, bb_padding = 0;        end
+        try renderer      = export_options.rendererStr;   catch, renderer = 'opengl';   end  % fix for issue #110
         if renderer(1)~='-',  renderer = ['-' renderer];  end
     else
+        if numel(export_options) > 3  % preserve_size
+            preserve_size = export_options(4);
+        else
+            preserve_size = false;
+        end
         if numel(export_options) > 2  % font-swapping
             fontswap = export_options(3);
         else
@@ -146,9 +169,10 @@ function print2eps(name, fig, export_options, varargin)
     end
 
     % Set paper size
-    old_pos_mode = get(fig, 'PaperPositionMode');
+    old_pos_mode    = get(fig, 'PaperPositionMode');
     old_orientation = get(fig, 'PaperOrientation');
-    set(fig, 'PaperPositionMode', 'auto', 'PaperOrientation', 'portrait');
+    old_paper_units = get(fig, 'PaperUnits');
+    set(fig, 'PaperPositionMode','auto', 'PaperOrientation','portrait', 'PaperUnits','points');
 
     % Find all the used fonts in the figure
     font_handles = findall(fig, '-property', 'FontName');
@@ -166,9 +190,9 @@ function print2eps(name, fig, export_options, varargin)
         f(f==' ') = [];
         switch f
             case {'times', 'timesnewroman', 'times-roman'}
-                fontsl{a} = 'times-roman';
-            case {'arial', 'helvetica'}
-                fontsl{a} = 'helvetica';
+                fontsl{a} = 'times';
+            %case {'arial', 'helvetica'}  % issues #166, #251
+            %    fontsl{a} = 'helvetica';
             case {'newcenturyschoolbook', 'newcenturyschlbk'}
                 fontsl{a} = 'newcenturyschlbk';
             otherwise
@@ -178,8 +202,13 @@ function print2eps(name, fig, export_options, varargin)
 
     % Determine the font swap table
     if fontswap
-        matlab_fonts = {'Helvetica', 'Times-Roman', 'Palatino', 'Bookman', 'Helvetica-Narrow', 'Symbol', ...
-                        'AvantGarde', 'NewCenturySchlbk', 'Courier', 'ZapfChancery', 'ZapfDingbats'};
+        % Issue #258: Rearrange standard fonts list based on decending "problematicness"
+        % The issue is still *NOT* fully solved because I cannot figure out how to force
+        % the EPS postscript engine to look for the user's font on disk
+        % Also see: https://stat.ethz.ch/pipermail/r-help/2005-January/064374.html
+        matlab_fonts = {'Helvetica', 'Times', 'Courier', 'Symbol', 'ZapfDingbats', ...
+                        'Palatino', 'Bookman', 'ZapfChancery', 'AvantGarde', ...
+                        'NewCenturySchlbk', 'Helvetica-Narrow'};
         matlab_fontsl = lower(matlab_fonts);
         require_swap = find(~ismember(fontslu, matlab_fontsl));
         unused_fonts = find(~ismember(matlab_fontsl, fontslu));
@@ -297,6 +326,9 @@ function print2eps(name, fig, export_options, varargin)
         origAlphaColors = eps_maintainAlpha(fig);
     end
 
+    % Ensure that everything is fully rendered, to avoid cropping (issue #318)
+    drawnow; pause(0.02);
+
     % Print to eps file
     print(fig, options{:}, name);
 
@@ -335,9 +367,15 @@ function print2eps(name, fig, export_options, varargin)
         end
     end
 
+    % Bail out if EPS post-processing is not possible
+    if isempty(fstrm)
+        warning('YMA:export_fig:EPS','Loading EPS file failed, so unable to perform post-processing. This is usually because the figure contains a large number of patch objects. Consider exporting to a bitmap format in this case.');
+        return
+    end
+
     % Fix for Matlab R2014b bug (issue #31): LineWidths<0.75 are not set in the EPS (default line width is used)
     try
-        if ~isempty(fstrm) && using_hg2(fig)
+        if using_hg2(fig)
             % Convert miter joins to line joins
             %fstrm = regexprep(fstrm, '\n10.0 ML\n', '\n1 LJ\n');
             % This is faster (the original regexprep could take many seconds when the axes contains many lines):
@@ -420,24 +458,22 @@ function print2eps(name, fig, export_options, varargin)
     end
     set(white_line_handles, 'Color', [1 1 1]);
 
+    % Preserve the figure's PaperSize in the output file, if requested (issue #277)
+    if preserve_size
+        % https://stackoverflow.com/questions/19646329/postscript-document-size
+        paper_size = get(fig, 'PaperSize');  % in [points]
+        fstrm = sprintf('<< /PageSize [%d %d] >> setpagedevice\n%s', paper_size, fstrm);
+    end
+
     % Reset paper size
-    set(fig, 'PaperPositionMode', old_pos_mode, 'PaperOrientation', old_orientation);
+    set(fig, 'PaperPositionMode',old_pos_mode, 'PaperOrientation',old_orientation, 'PaperUnits',old_paper_units);
 
     % Reset the font names in the figure
     if ~isempty(font_swap)
         for a = update
             set(font_handles(a), 'FontName', fonts{a}, 'FontSize', fonts_size(a));
         end
-    end
 
-    % Bail out if EPS post-processing is not possible
-    if isempty(fstrm)
-        warning('Loading EPS file failed, so unable to perform post-processing. This is usually because the figure contains a large number of patch objects. Consider exporting to a bitmap format in this case.');
-        return
-    end
-
-    % Replace the font names
-    if ~isempty(font_swap)
         for a = 1:size(font_swap, 2)
             fontName = font_swap{3,a};
             %fontName = fontName(~isspace(font_swap{3,a}));
@@ -449,8 +485,14 @@ function print2eps(name, fig, export_options, varargin)
             else
                 fontName(fontName==' ') = char(font_space);
             end
+
+            % Replace all instances of the standard Matlab fonts with the original user's font names
             %fstrm = regexprep(fstrm, [font_swap{1,a} '-?[a-zA-Z]*\>'], fontName);
-            fstrm = regexprep(fstrm, font_swap{2,a}, fontName);
+            %fstrm = regexprep(fstrm, [font_swap{2,a} '([ \n])'], [fontName '$1']);
+            %fstrm = regexprep(fstrm, font_swap{2,a}, fontName);  % also replace -Bold, -Italic, -BoldItalic
+
+            % Times-Roman's Bold/Italic fontnames don't include '-Roman'
+            fstrm = regexprep(fstrm, [font_swap{2,a} '(\-Roman)?'], fontName);
         end
     end
 
@@ -500,8 +542,16 @@ function print2eps(name, fig, export_options, varargin)
 
         % 2. Create a bitmap image and use crop_borders to create the relative
         %    bb with respect to the PageBoundingBox
+        drawnow; pause(0.05);  % avoid unintended cropping (issue #318)
         [A, bcol] = print2array(fig, 1, renderer);
         [aa, aa, aa, bb_rel] = crop_borders(A, bcol, bb_padding, crop_amounts); %#ok<ASGLU>
+        if any(bb_rel>1) || any(bb_rel<=0)  % invalid cropping - retry after prolonged pause
+            pause(0.15);  % avoid unintended cropping (issues #350, #351)
+            [A, bcol] = print2array(fig, 1, renderer);
+            [aa, aa, aa, bb_rel] = crop_borders(A, bcol, bb_padding, crop_amounts); %#ok<ASGLU>
+        end
+        bb_rel(bb_rel>1) = 1;  % ignore invalid values
+        bb_rel(bb_rel<0) = 1;  % ignore invalid values (fix issue #356)
 
         try set(hTitles,'Color','k'); catch, end
 
@@ -537,8 +587,21 @@ function print2eps(name, fig, export_options, varargin)
     fstrm = regexprep(fstrm, '\n([-\d.]+ [-\d.]+) ([-\d.]+ [-\d.]+) ([-\d.]+ [-\d.]+) 3 MP\nPP\n\3 \1 \2 3 MP\nPP\n','\n$1 $2 $3 0 0 4 MP\nPP\n');
     fstrm = regexprep(fstrm, '\n([-\d.]+ [-\d.]+) ([-\d.]+ [-\d.]+) ([-\d.]+ [-\d.]+) 3 MP\nPP\n\3 \2 \1 3 MP\nPP\n','\n$1 $2 $3 0 0 4 MP\nPP\n');
 
+    % If user requested a regexprep replacement of string(s), do this now (issue #324)
+    if isstruct(export_options) && isfield(export_options,'regexprep') && ~isempty(export_options.regexprep)  %issue #338
+        try
+            oldStrOrRegexp = export_options.regexprep{1};
+            newStrOrRegexp = export_options.regexprep{2};
+            fstrm = regexprep(fstrm, oldStrOrRegexp, newStrOrRegexp);
+        catch err
+            warning('YMA:export_fig:regexprep', 'Error parsing regexprep: %s', err.message);
+        end
+    end
+
     % Write out the fixed eps file
     read_write_entire_textfile(name, fstrm);
+
+    drawnow; pause(0.01);
 end
 
 function [StoredColors, fstrm, foundFlags] = eps_maintainAlpha(fig, fstrm, StoredColors)
@@ -552,11 +615,13 @@ function [StoredColors, fstrm, foundFlags] = eps_maintainAlpha(fig, fstrm, Store
                 try
                     propName = propNames{propIdx};
                     if strcmp(hObj.(propName).ColorType, 'truecoloralpha')
-                        nColors = length(StoredColors);
                         oldColor = hObj.(propName).ColorData;
-                        newColor = uint8([101; 102+floor(nColors/255); mod(nColors,255); 255]);
-                        StoredColors{end+1} = {hObj, propName, oldColor, newColor}; %#ok<AGROW>
-                        hObj.(propName).ColorData = newColor;
+                        if numel(oldColor)>3 && oldColor(4)~=255  % issue #281: only fix patch/textbox color if it's not opaque
+                            nColors = length(StoredColors);
+                            newColor = uint8([101; 102+floor(nColors/255); mod(nColors,255); 255]);
+                            StoredColors{end+1} = {hObj, propName, oldColor, newColor}; %#ok<AGROW>
+                            hObj.(propName).ColorData = newColor;
+                        end
                     end
                 catch
                     % Never mind - ignore (either doesn't have the property or cannot change it)
@@ -581,6 +646,8 @@ function [StoredColors, fstrm, foundFlags] = eps_maintainAlpha(fig, fstrm, Store
                 origAlpha = num2str(round(double(origColor(end)) /255,3),'%.3g'); %Convert alpha value for EPS
 
                 %Find and replace the RGBA values within the EPS text fstrm
+                %Note: .setopacityalpha is an unsupported PS extension that croaks in some GS versions (issue #285, https://bugzilla.redhat.com/show_bug.cgi?id=1632030)
+                %      (such cases are caught in eps2pdf.m and corrected by adding the -dNOSAFER Ghosscript option or by removing the .setopacityalpha line)
                 if strcmpi(propName,'Face')
                     oldStr = sprintf(['\n' colorID ' RC\n']);  % ...N\n (removed to fix issue #225)
                     newStr = sprintf(['\n' origRGB ' RC\n' origAlpha ' .setopacityalpha true\n']);  % ...N\n

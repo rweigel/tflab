@@ -34,12 +34,27 @@ if update == 1
 end
 
 if isfield(S,'Metrics') && isfield(S,'Segment') && isfield(S.Segment,'Metrics')
-    logmsg('No metrics calculated because full and segment metrics already computied.\n');
+    logmsg('No metrics calculated because full and segment metrics already computed.\n');
     return
 end
 
-In = S.In;
-Out = S.Out;
+if ~isfield(S,'Metrics')
+    % If no S.Metrics, compute
+    if opts.transferfnFD.loglevel
+        logmsg('Computing metrics for single segment.\n');
+    end
+    In = S.In;
+    Out = S.Out;
+else
+    % If no S.Segment.Metrics, compute
+    if isfield(S,'Segment') && ~isfield(S.Segment,'Metrics')
+        if opts.transferfnFD.loglevel
+            logmsg('Computing metrics for %d segments.\n',size(S.Segment.Out,3));
+        end
+        In = S.Segment.In;
+        Out = S.Segment.Out;
+    end
+end
 
 N = size(In,1);
 Metrics = struct();
@@ -59,10 +74,15 @@ Ik = any(~isnan(S.Z),2);
 [Zi,~] = zinterp(S.fe(Ik,:),S.Z(Ik,:),size(In,1));
 
 fnargs = opts.fd.evalfreq.functionargs;
-smoothed = 0;
-if length(fnargs(2)) == 1 && strcmp('linear',fnargs{2})
-    if length(fnargs{1}) > 1 && fnargs{1}(2) > 0
-        smoothed = 1;
+smoothed = 1;
+if length(fnargs) == 3 && strcmp('linear',fnargs{2})
+    if length(fnargs{1}) > 1 && fnargs{1}(2) == 0
+        % evalfreq(N,[dN,0],'linear')
+        smoothed = 0;
+    end
+    if length(fnargs{1}) == 1 && fnargs{1}(1) == 0
+        % evalfreq(N,0,'linear')
+        smoothed = 0;
     end
 end
 

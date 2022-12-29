@@ -4,18 +4,6 @@ if nargin < 2
     lemimt_dir = 0;
 end
 
-zread_dir = [fileparts(mfilename('fullpath')),'/zread'];
-if ~exist(zread_dir,'dir')
-    url = 'https://github.com/rweigel/zread';
-    com = sprintf('cd %s; git clone %s; cd zread; git checkout 8be764e50439db308bbb0b51b886bf0b7fb10c24',fileparts(mfilename('fullpath')),url);
-    fprintf('Calling system with command %s\n',com);
-    [status,msg] = system(com);
-    if status ~= 0
-        error('System command failed: %s\nMessage:\n%s\n',com,msg);
-    end
-end
-addpath(zread_dir);
-
 if strcmp(sid,'Middelpos')
     cid = 'Middelpos';  % Chain ID
     sid = 'Middelpos'; % Station ID
@@ -49,9 +37,6 @@ scriptpath = fileparts(mfilename('fullpath'));
 
 % Ouput file
 matfile = [scriptpath,sprintf('/data/%s/%s',cid,sid)];
-
-% Plot title information
-ptitle = sprintf('%s %s - %s',sid,start,stop);
 
 % Variable name information
 iopts = struct('info',struct(),'td',struct());
@@ -134,6 +119,18 @@ tf = length(S);
 
 %% TF computed using BIRP
 if strcmp(cid,'KAP03')
+    zread_dir = [fileparts(mfilename('fullpath')),'/zread'];
+    if ~exist(zread_dir,'dir')
+        url = 'https://github.com/rweigel/zread';
+        com = sprintf('cd %s; git clone %s; cd zread; git checkout 8be764e50439db308bbb0b51b886bf0b7fb10c24',fileparts(mfilename('fullpath')),url);
+        fprintf('Calling system with command %s\n',com);
+        [status,msg] = system(com);
+        if status ~= 0
+            error('System command failed: %s\nMessage:\n%s\n',com,msg);
+        end
+    end
+    addpath(zread_dir);
+
     tf = tf+1;
     S{tf} = read_edi([zread_dir,'/data/kap003.edi']);
     S{tf}.Z(S{tf}.Z > 1e31) = NaN;
