@@ -119,6 +119,7 @@ if tn == -1
     [z,w] = freqz(opts.H,1,f,1);
     [Z,fi] = zinterp(f,z,opts.N);    
 
+    rng(1);
     B = randn(opts.N,1);
     E = zpredict(Z,B);
 
