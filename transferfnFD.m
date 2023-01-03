@@ -180,7 +180,7 @@ if iscell(B)
                     ['Computing metrics for B{%d} and E{%d} using stack '...
                      'regression transfer function.\n'],c,c);
             end
-            Sc = transferfnMetrics(Sc,opts);
+            Sc = transferfnFDMetrics(Sc,opts);
             if opts.transferfnFD.loglevel > 0
                 logmsg(...
                     ['Finished computing metrics for B{%d} and E{%d} using '...
@@ -400,7 +400,7 @@ else
         S.Time = t;
 
         logmsg('Computing stack regression metrics.\n');
-        S = transferfnMetrics(S,opts);
+        S = transferfnFDMetrics(S,opts);
     end
 end
 
@@ -652,7 +652,7 @@ function S = main(B, E, t, opts)
         if opts.transferfnFD.loglevel > 0
             logmsg('Computing metrics\n');
         end
-        S = transferfnMetrics(S,opts);
+        S = transferfnFDMetrics(S,opts);
         if opts.transferfnFD.loglevel > 0
             logmsg('Computed metrics\n');
             logmsg('PE/CC/MSE = %.2f/%.2f/%.3f\n',...
@@ -678,14 +678,14 @@ function S = stackAverage(S,opts)
             tmp.Out = S.Out{i};
             tmp.Z = S.Z;
             tmp.fe = S.fe;
-            tmp = transferfnMetrics(tmp,opts);
+            tmp = transferfnFDMetrics(tmp,opts);
             S.Metrics{i} = tmp.Metrics;
         end
     else
         if opts.transferfnFD.loglevel > 0
             logmsg('Computing metrics using stack averaged Z.\n');
         end        
-        S = transferfnMetrics(S,opts);
+        S = transferfnFDMetrics(S,opts);
         if opts.transferfnFD.loglevel > 0
             logmsg('Computed metrics using stack averaged Z.\n');
         end
@@ -802,7 +802,7 @@ function S = stackRegression(S,opts)
     end
     
     S.Segment.Z = Z;
-    S.Segment = transferfnMetrics(S.Segment,opts);
+    S.Segment = transferfnFDMetrics(S.Segment,opts);
     S.Segment = rmfield(S.Segment,'Z');
 
     if opts.transferfnFD.loglevel > 0

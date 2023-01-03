@@ -1,4 +1,4 @@
-function S = transferfnMetrics(S,opts,I,update)
+function S = transferfnFDMetrics(S,opts,I,update)
 %TRANSFERFNMETRICS
 
 if nargin < 4
@@ -146,6 +146,6 @@ if isfield(S,'Segment') && ~isfield(S.Segment,'Metrics')
     % If no S.Metrics and no S.Segment.Metrics, then 
     % S.Metrics was computed first. This catches case where both metrics
     % need to be calculated.
-    S.Segment = transferfnMetrics(S,opts);
+    S.Segment = transferfnFDMetrics(S,opts);
     return
 end

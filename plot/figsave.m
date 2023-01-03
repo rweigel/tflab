@@ -29,7 +29,7 @@ end
 set(gcf,'color','w');
 set(gcf,'defaultFigureColor',[1,1,1]); 
 
-% Need to dock window for export_fig() size commands to work.
+% Need to undock window for export_fig() size commands to work.
 windowstyle = get(gcf,'WindowStyle');
 cf = gcf;
 if ~strcmp(windowstyle,'normal')
@@ -44,5 +44,5 @@ logmsg(sprintf('Wrote %s\n',filename));
 if ~strcmp(windowstyle,'normal')
     % Causes
     % Exception in thread "AWT-EventQueue-0": java.lang.NullPointerException
-    % set(cf,'WindowStyle','docked')
+    set(cf,'WindowStyle','docked')
 end

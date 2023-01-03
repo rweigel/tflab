@@ -1,73 +1,99 @@
-function S = transferfnFD_demo_signals(tn, opts)
+function S = demo_signals(tn, opts)
 
-addpath([fileparts(mfilename('fullpath')),'/lib']);
+addpath([fileparts(mfilename('fullpath')),'/../lib']);
 
 assert(nargin == 2,'Two inputs are required');
 
-if tn == -2
-    N = opts.N;
-    addpath([fileparts(mfilename('fullpath')),'/fft']);
-    addpath([fileparts(mfilename('fullpath')),'/lib']);
+if tn == -3
+    Nt = opts.Nt;
+    t = (0:Nt-1)';
+    Z = opts.Z;
+    if isfield(opts,'f')
+        f = opts.f;
+    end
+    if isfield(opts,'k')
+        k = opts.k;
+        f = k/Nt;
+    end
+    % Generate input/output using exact amplitude and phase
+    for i = 1:length(f)
+        B(:,i) = cos(2*pi*f(i)*t);
+        E(:,i) = real(Z(i))*cos(2*pi*f(i)*t) - imag(Z(i))*sin(2*pi*f(i)*t);
+    end
 
+    S.In  = sum(B,2) + opts.dB*randn(Nt,1);
+    S.Out = sum(E,2) + opts.dE*randn(Nt,1);
+    S.Time = t;
+    S.Z  = Z;
+    S.fe = f;
+
+    %S.H = z2h(zinterp(f,Z,N));
+    %S.tH = t;
+    return
+end
+
+if tn == -2
+    addpath([fileparts(mfilename('fullpath')),'/../fft']);
+
+    assert(opts.N > 1, 'N > 1 is required');
+
+    % Create signal using N frequencies    
     [~,F] = fftfreq(opts.N);
     F = F';
+
     t = (0:opts.n-1)';
     [~,f] = fftfreq(opts.n);
+    f = f';
 
-    % Create signal using N frequencies
-    F = F(F >= f(2));
-
+    % TODO: In the case that n = N, we could create time series
+    % by first creating ffts and then inverting ffts. 
+ 
+    if isfield(opts,'keep')
+        F = F(opts.keep);
+    end
+    % Keep only frequencies in range of frequencies in f.
+    F = F(F >= f(2) & F <= f(end));
+    
     Ff = repmat(F',length(t),1);
     tf = repmat(t, 1, length(F));
     E = zeros(length(t),length(F));
 
-    for k = 1:length(opts.A.B) % Loop over vector component
-        Phi = 2*pi*rand(1, length(F));    
+    for k = 1:length(opts.A.B) % Loop over vector component        
+        % Give each frequency a random phase
+        Phi = 2*pi*rand(1, length(F));
         %Phi = zeros(1, length(F)); 
         PhiB = repmat(Phi, length(t), 1);
-        
-        Phi = zeros(1, length(F));
-        PhidB = repmat(Phi, length(t), 1);        
 
         % PhiB depends on column, not row.
         % Each column in B is a time series with column-dependent freq.
         % Third dimension is component of B.
         B(:,:,k) = opts.A.B(k)*(Ff.^opts.alpha.B(k)).*cos(2*pi*Ff.*tf + PhiB);
-        %dB(:,:,k) = opts.A.dB(k)*(Ff.^opts.alpha.dB(k)).*cos(2*pi*Ff.*tf + PhidB);
+
         % Add noise to B
-        %B(:,:,k) = B(:,:,k) + dB(:,:,k);
+        PhidB = 2*pi*rand(1, length(F));
+        %PhidB = zeros(1, length(F));
+        PhidB = repmat(PhidB, length(t), 1);        
+        dB(:,:,k) = opts.A.dB(k)*(Ff.^opts.alpha.dB(k)).*cos(2*pi*Ff.*tf + PhidB);
+
         E = E + opts.A.Z(k)*(Ff.^opts.alpha.Z(k)).*B(:,:,k);
     end
     % Add noise to E
-    Phi = 2*pi*rand(1, length(F));
-    PhidE = repmat(Phi, length(t), 1);
-    %Enoise = opts.A.dE*(Ff.^opts.alpha.dE).*randn(length(t), length(F)); %cos(2*pi*Ff.*tf + PhidE);
-    
-    Estd = std(E,1);
-    Estd = repmat(Estd,size(E,1),1);
-    Enoise = opts.A.dE.*(Ff.^opts.alpha.dE).*randn(length(t), length(F)); %cos(2*pi*Ff.*tf + PhidE);
+    PhidE = 2*pi*rand(1, length(F));
+    PhidE = repmat(PhidE, length(t), 1);    
+    dE = opts.A.dE.*(Ff.^opts.alpha.dE).*cos(2*pi*Ff.*tf + PhidE);
 
-    if 0
-    clf;
-    subplot(2,1,1)
-    plot(E(:,40));hold on;
-    plot(Enoise(:,40));
-    subplot(2,1,2)
-    plot(E(:,4));hold on;
-    plot(Enoise(:,4));
-    keyboard
+    if dE ~= 0
+        S.OutNoise = sum(dE,2);
+        E = E + dE;
     end
-    
-    Eo = E;
-    Ec = Eo + Enoise;
-    E = sum(Ec,2);          % Sum across frequencies
-    Eo = sum(Eo,2);
-    Enoise = sum(Enoise,2);
-
+    E = sum(E,2);          % Sum across frequencies
+ 
+    if dB ~= 0
+        S.InNoise = squeeze(sum(dB,2));
+        B = B + dB;
+    end
     B = squeeze(sum(B,2)); % Sum across frequencies
-    
-    [~,f] = fftfreq(opts.n);
-    f = f';
+
     % Compute exact Z at n frequencies
     for k = 1:length(opts.A.B)
         Z(:,k) = opts.A.Z(k)*(f.^opts.alpha.Z(k));%*(cos(Phi(i)) + sqrt(-1)*sin(Phi(i)));
@@ -75,6 +101,7 @@ if tn == -2
     
     S.In  = B;
     S.Out = E;
+    S.Time = t;
     S.Z  = Z;
     S.fe = f;
     S.H = z2h(zinterp(f,Z,opts.n));
@@ -89,11 +116,9 @@ if tn == -1
     [~,f] = fftfreq(N);
     H = opts.H;
     f = f';
-    z = freqz(opts.H,1,f,1);
-    Z = zinterp(f,z,opts.N);    
+    [z,w] = freqz(opts.H,1,f,1);
+    [Z,fi] = zinterp(f,z,opts.N);    
 
-    % Set random number generator seed
-    rng(1);
     B = randn(opts.N,1);
     E = zpredict(Z,B);
 
@@ -217,7 +242,6 @@ end
 Z(Z==0) = eps; % So points show up on loglog plot.
 
 S.In  = B;
-S.Time = [1:size(B,1)]';
 S.Out = E;
 S.Z  = Z;
 S.fe = f';

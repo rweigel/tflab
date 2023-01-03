@@ -113,7 +113,7 @@ S{2} = transferfnFD(B(:,1:2),E,opts2);
 S{2}.Options.description = desc2;
     
 % Test S{2}.Z on same segments as S{1}.
-S{2} = transferfnMetrics(S{2},opts2,S{1}.Segment.IndexRange);
+S{2} = transferfnFDMetrics(S{2},opts2,S{1}.Segment.IndexRange);
 
 tf = length(S);
 
@@ -140,7 +140,7 @@ if strcmp(cid,'KAP03')
     S{tf}.In  = S{1}.In;
     S{tf}.Out = S{1}.Out;
     S{tf}.Time = S{1}.Time;
-    S{tf} = transferfnMetrics(S{tf},S{1}.Options,S{1}.Segment.IndexRange,1);
+    S{tf} = transferfnFDMetrics(S{tf},S{1}.Options,S{1}.Segment.IndexRange,1);
 end
 
 %% Compute TF using LEMI MT
@@ -155,7 +155,7 @@ if ischar(lemimt_dir)
     S{tf}.Out = E;
     % Test S{tf}.Z on same segments as S{1}.
     S{tf}.Time = S{1}.Time;
-    S{tf} = transferfnMetrics(S{tf},opts2,S{1}.Segment.IndexRange);
+    S{tf} = transferfnFDMetrics(S{tf},opts2,S{1}.Segment.IndexRange);
     S{tf}.Options.info = S{1}.Options.info;
     S{tf}.Options.description = 'LEMI; One 55-day segment';
 end
