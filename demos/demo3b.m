@@ -1,4 +1,8 @@
-% Average of 5 vs full time series
+%% Average of 5 vs full time series
+
+clear;
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 N = 1000; % Number of frequencies
 n = 1000; % Number of data points

@@ -1,7 +1,8 @@
-% Flat spectra and frequency dependent phase shift
+%% Flat spectra and frequency dependent phase shift
 
-clear
-addpath(fullfile(scriptdir(),'..','/plot'));
+clear;
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 N = 101;
 f = fftfreqp(N);

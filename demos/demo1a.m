@@ -1,7 +1,6 @@
 %% Z nonzero at single frequency on DFT grid (so no leakage)
 
 clear;
-
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 setpaths();
 

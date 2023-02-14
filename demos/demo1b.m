@@ -1,10 +1,8 @@
 %% Z nonzero at single frequency on DFT grid (so no leakage) with time domain window
 
 clear;
-
-addpath([fileparts(mfilename('fullpath')),'/../plot']);
-addpath([fileparts(mfilename('fullpath')),'/..']);
-
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 Nt = 100;
 k  = 25;

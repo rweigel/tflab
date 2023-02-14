@@ -6,9 +6,8 @@
 %   they use "interpolation" instead of "weighted average").
 
 clear;
-
-addpath([fileparts(mfilename('fullpath')),'/../plot']);
-addpath([fileparts(mfilename('fullpath')),'/..']);
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 Nt = 100;
 k  = 25;

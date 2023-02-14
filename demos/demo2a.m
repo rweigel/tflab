@@ -3,10 +3,8 @@
 % about f when signal phase is not zero or pi/2 (is not pure sin or cos).
 
 clear;
-
-addpath([fileparts(mfilename('fullpath')),'/../plot']);
-addpath([fileparts(mfilename('fullpath')),'/..']);
-
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 Nt = 100;
 f  = 25.5/Nt;

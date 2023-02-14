@@ -1,7 +1,8 @@
-% Transfer function is time shift
+%% Transfer function is time shift
 
-clear
-addpath(fullfile(scriptdir(),'..','/plot'));
+clear;
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 %% E(t+1) = B(t)
 N = 11;     % Number of input/output points

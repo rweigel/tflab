@@ -2,9 +2,8 @@
 % Demonstrates use of non-rectangular time domain window (Parzen).
 
 clear;
-
-addpath([fileparts(mfilename('fullpath')),'/../plot']);
-addpath([fileparts(mfilename('fullpath')),'/..']);
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 Nt = 100;
 f  = 25.5/Nt;

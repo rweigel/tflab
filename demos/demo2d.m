@@ -1,9 +1,8 @@
 %% Single frequency on DFT grid (so leakage) and zero padding
 
 clear;
-
-addpath([fileparts(mfilename('fullpath')),'/../plot']);
-addpath([fileparts(mfilename('fullpath')),'/..']);
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 Nt = 100;
 f  = 25.5/Nt;

@@ -1,9 +1,8 @@
 %% Compare OLS and TLS
 
 clear;
-
-addpath([fileparts(mfilename('fullpath')),'/../plot']);
-addpath([fileparts(mfilename('fullpath')),'/..']);
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 n = 1000; % Number of data points
 N = 1000; % Number of frequencies (including 0)
