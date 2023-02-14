@@ -48,14 +48,8 @@ function S = transferfnFD(B,E,t,opts)
 %
 %  See also TRANSFERFNFD_OPTIONS, TRANSFERFNFD_TEST, TRANSFERFNFD_DEMO.
 
-addpath([fileparts(mfilename('fullpath')),'/misc']);
-addpath([fileparts(mfilename('fullpath')),'/lib']);
-addpath([fileparts(mfilename('fullpath')),'/fft']);
-addpath([fileparts(mfilename('fullpath')),'/spectra']);
-addpath([fileparts(mfilename('fullpath')),'/regression']);
-addpath([fileparts(mfilename('fullpath')),'/stats']);
-addpath([fileparts(mfilename('fullpath')),'/window']);
-addpath([fileparts(mfilename('fullpath')),'/deps/printstruct']);
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 if nargin == 2
     t = [];
@@ -180,7 +174,7 @@ if iscell(B)
                     ['Computing metrics for B{%d} and E{%d} using stack '...
                      'regression transfer function.\n'],c,c);
             end
-            Sc = transferfnFDMetrics(Sc,opts);
+            Sc = transferfnFD_metrics(Sc,opts);
             if opts.transferfnFD.loglevel > 0
                 logmsg(...
                     ['Finished computing metrics for B{%d} and E{%d} using '...
@@ -400,7 +394,7 @@ else
         S.Time = t;
 
         logmsg('Computing stack regression metrics.\n');
-        S = transferfnFDMetrics(S,opts);
+        S = transferfnFD_metrics(S,opts);
     end
 end
 
@@ -421,7 +415,7 @@ function S = main(B, E, t, opts)
         B = opts.td.detrend.function(B,opts.td.detrend.functionargs{:});
         E = opts.td.detrend.function(E,opts.td.detrend.functionargs{:});
     end
-
+    
     % TODO?: Allow TD window and prewhiten to not be same for input and output
     % and then compute corrected Z.
     if ~isempty(opts.td.window.function)
@@ -562,9 +556,9 @@ function S = main(B, E, t, opts)
         % If not computing Z based on stack averages, don't need to do
         % regression as it is done later.
         if ~isempty(opts.fd.stack.average.function) ...
-           && strcmp(opts.fd.program.name,'transferfnFD')
+                && strcmp(opts.fd.program.name,'transferfnFD')
             args = opts.fd.regression.functionargs;    
-
+        
             lastwarn('');
 
             if length(r) < size(ftB,2)
@@ -582,17 +576,33 @@ function S = main(B, E, t, opts)
                 continue;
             end
 
-            [Z(j,:),W,Res] = opts.fd.regression.function(...
+            if length(r) == 1 && size(ftB,2) == 1
+                if ftB(r,1) == 0 && ftE(r,1) ~= 0 && fe(j) == 0.5
+                    % Special case for when there is an evaluation freq.
+                    % at 0.5. Will occur if frequency window is of length
+                    % 1, as it is for some of the tests and demos.
+                    Z(j,:) = zeros(1,size(ftB,2)) + 1j*zeros(1,size(ftB,2));
+                    S.Regression.Weights{j,1} = nan*W;
+                    S.Regression.Residuals{j,1} = nan*W;
+                    logmsg('System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j));
+                    continue;
+                end
+            end
+
+            [Z(j,:),Weights,Residuals] = opts.fd.regression.function(...
                                     Wr.*ftB(r,:),W.*ftE(r,1),args{:});
 
             if ~isempty(lastwarn)
-                logmsg('Warning above occured on eval freq. # = %d; fe = %.f\n', j,fe(j));
-                %ftE
-                %ftB
-                %keyboard
+                logmsg('Above is for eval. freq. #%d; fe = %f; Te = %f\n', ...
+                    j,fe(j),1/fe(j));
+                logmsg(sprintf('ftE = \n'));
+                logmsg(sprintf('   %.16f\n',ftE(r,1)));
+                logmsg(sprintf('ftB = \n'));
+                logmsg(sprintf('   %.16f\n',ftB(r,:)));
             end
-            S.Regression.Weights{j,1} = W;
-            S.Regression.Residuals{j,1} = Res;
+            
+            S.Regression.Weights{j,1} = Weights;
+            S.Regression.Residuals{j,1} = Residuals;
         end
 
     end
@@ -635,8 +645,8 @@ function S = main(B, E, t, opts)
             logmsg('Interpolating Z\n');
         end
         [Zi,~,Zir,fir] = zinterp(S.fe,S.Z,size(S.In,1));
-        S.Zi = Zir;
-        S.fi = fir;
+        %S.Zi = Zir;
+        %S.fi = fir;
         if opts.transferfnFD.loglevel > 0
             logmsg('Interpolated Z\n');
         end
@@ -652,7 +662,7 @@ function S = main(B, E, t, opts)
         if opts.transferfnFD.loglevel > 0
             logmsg('Computing metrics\n');
         end
-        S = transferfnFDMetrics(S,opts);
+        S = transferfnFD_metrics(S,opts);
         if opts.transferfnFD.loglevel > 0
             logmsg('Computed metrics\n');
             logmsg('PE/CC/MSE = %.2f/%.2f/%.3f\n',...
@@ -678,14 +688,14 @@ function S = stackAverage(S,opts)
             tmp.Out = S.Out{i};
             tmp.Z = S.Z;
             tmp.fe = S.fe;
-            tmp = transferfnFDMetrics(tmp,opts);
+            tmp = transferfnFD_metrics(tmp,opts);
             S.Metrics{i} = tmp.Metrics;
         end
     else
         if opts.transferfnFD.loglevel > 0
             logmsg('Computing metrics using stack averaged Z.\n');
         end        
-        S = transferfnFDMetrics(S,opts);
+        S = transferfnFD_metrics(S,opts);
         if opts.transferfnFD.loglevel > 0
             logmsg('Computed metrics using stack averaged Z.\n');
         end
@@ -781,8 +791,8 @@ function S = stackRegression(S,opts)
         logmsg('Interpolating Z\n');    
     end
     [Zi,~,Zir,fir] = zinterp(S.fe,S.Z,size(S.Segment.In,1));
-    S.Zi = Zir;
-    S.fi = fir;
+    %S.Zi = Zir;
+    %S.fi = fir;
     if opts.transferfnFD.loglevel > 1
         logmsg('Finished interpolating Z\n');
     end
@@ -802,7 +812,7 @@ function S = stackRegression(S,opts)
     end
     
     S.Segment.Z = Z;
-    S.Segment = transferfnFDMetrics(S.Segment,opts);
+    S.Segment = transferfnFD_metrics(S.Segment,opts);
     S.Segment = rmfield(S.Segment,'Z');
 
     if opts.transferfnFD.loglevel > 0

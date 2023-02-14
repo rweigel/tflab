@@ -1,6 +1,6 @@
 function S = demo_signals(tn, opts)
 
-addpath([fileparts(mfilename('fullpath')),'/../lib']);
+addpath(genpath(fileparts(mfilename('fullpath'))));
 
 assert(nargin == 2,'Two inputs are required');
 

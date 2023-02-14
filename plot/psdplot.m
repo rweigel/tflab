@@ -296,9 +296,9 @@ if any(strcmp(opts.type,{'raw','raw-phase','windowed','prewhitened','zeropadded'
         grid on;box on;
         legend(lg1,lgopts{:});
         setx(opts,0);
-        adjust_ylim('both');
-        adjust_yticks();
-        adjust_exponent('y');
+        adjust_ylim('upper');
+        adjust_yticks(1e-4);
+        adjust_exponent();
         period_lines_(S);
 
     subplot('Position',PositionBottom);
@@ -323,9 +323,9 @@ if any(strcmp(opts.type,{'raw','raw-phase','windowed','prewhitened','zeropadded'
         grid on;box on;
         legend(lg2,lgopts{:});
         setx(opts, 1);
-        adjust_ylim('both');
-        adjust_yticks();
-        adjust_exponent('y');
+        adjust_ylim('upper');
+        adjust_yticks(1e-4);
+        adjust_exponent();
         period_lines_(S);
 else
     subplot('Position',PositionTop)
@@ -361,7 +361,7 @@ else
         plot_(x,y1,lnopts)
         set(gca,'YScale','log');
         if opts.vs_period
-            set(gca,'YScale','log');
+            set(gca,'XScale','log');
         end
         title(ts,'FontWeight','Normal');
         grid on;box on;
@@ -374,9 +374,9 @@ else
             end
         end
         setx(opts,0);
-        adjust_ylim();
-        adjust_yticks();
-        adjust_exponent('y');
+        adjust_ylim('upper');
+        adjust_yticks(1e-4);
+        adjust_exponent();
         period_lines_(S);
         
     subplot('Position',PositionBottom)
@@ -393,6 +393,9 @@ else
         plot_(x,y2a,lnopts);
         set(gca,'YScale','log');
         if opts.vs_period
+            set(gca,'XScale','log');
+        end
+        if opts.vs_period
             set(gca,'YScale','log');
         end
         if iscell(S)
@@ -401,7 +404,6 @@ else
             ls2{1} = '[PSD Out]/[PSD Error]';
         end
         adjust_ylim();
-        %adjust_yticks();
         adjust_exponent('y');
         
         yyaxis right
@@ -431,10 +433,9 @@ if opts.print
 end
 
 function period_lines_(S)
-
 end
 
-    function plot_(x,y,lnopts)
+function plot_(x,y,lnopts)
     if iscell(x) && iscell(y)
         hold on;
         for c = 1:length(x)
@@ -496,8 +497,6 @@ function setx(opts,last)
     end
 end
 
-end
-
 function y = ftrim(fe,y)
     if iscell(y)
         % For 1-D case, f = 0 and f = 0.5 are always computed
@@ -526,3 +525,6 @@ function y = ftrim(fe,y)
         end    
     end
 end
+
+end
+

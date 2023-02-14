@@ -2,9 +2,8 @@
 
 clear;
 
-addpath([fileparts(mfilename('fullpath')),'/../plot']);
-addpath([fileparts(mfilename('fullpath')),'/..']);
-
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 Nt = 100;  % Number of time samples
 k  = 10;   % Freq. index of non-zero Z
@@ -23,7 +22,7 @@ S1 = transferfnFD(Sa.In,Sa.Out,opts1);
 S1.Options.description = 'Estimated';
 Sa.Options.description = 'Actual';
 
-set(0,'DefaultFigureWindowStyle','docked')
+set(0,'DefaultFigureWindowStyle','docked');
 fn = 1;
 figure(fn);clf;fn = fn+1;
     tsplot(S1,struct('type','raw'));
@@ -40,7 +39,7 @@ figure(fn);clf;fn = fn+1;
 figure(fn);clf;fn = fn+1;
     zplot({Sa,S1});
 figure(fn);clf;fn = fn+1;
-    zplot({Sa,S1},struct('plottype',3));
+    zplot({Sa,S1},struct('type',3));
 
 if wf > 0
     % Regression was used. Show qq plot.

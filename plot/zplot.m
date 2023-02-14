@@ -35,7 +35,6 @@ opts = struct();
             opts.frequency_range = [0, 0.5];
         end
     end
-    opts.savefmt = {}; % Any extension allowed by export_fig
     
 % Use default options if options not given
 if nargin > 1
@@ -43,10 +42,6 @@ if nargin > 1
     for i = 1:length(fns)
         opts.(fns{i}) = popts.(fns{i});
     end
-end
-
-if ischar(opts.savefmt)
-    opts.savefmt = {opts.savefmt};
 end
 
 PositionTop = [0.1300 0.5400 0.7750 0.4];
@@ -66,6 +61,7 @@ if (iscell(S) && size(S{1}.Z,2) > 1) || (isstruct(S) && size(S.Z,2) > 1)
     Phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{yx}','\phi_{yy}'};
 else
     Zstrs = {'Z'};
+    Rhostrs = {'\rho^a'};
     Phistrs = {'\phi'};
 end
 
@@ -79,20 +75,31 @@ if isstruct(S)
         end
         ts = sprintf('Site: %s',sta);
     end
+    interp_Z_exists = 0;
+    if isfield(S,'Zi')
+        interp_Z_exists = 1;
+    end
+    
     figprep();
     S = defaultmeta(S);
     if opts.vs_period
         x = S.Options.info.timedelta./S.fe;
-        xi = S.Options.info.timedelta./S.fi;
+        if interp_Z_exists
+            xi = S.Options.info.timedelta./S.fi;
+        end
     else
         x = S.Options.info.timedelta*S.fe;
-        xi = S.Options.info.timedelta*S.fi;
+        if interp_Z_exists
+            xi = S.Options.info.timedelta*S.fi;
+        end
     end
     ax1 = subplot('Position', PositionTop);
         switch opts.type
             case 1
                 y = abs(S.Z);
-                yi = abs(S.Zi);
+                if interp_Z_exists
+                    yi = abs(S.Zi);
+                end
                 for j = 1:size(S.Z,2)
                     ls{j} = sprintf('$%s$',Zstrs{j});
                 end
@@ -104,30 +111,38 @@ if isstruct(S)
                 % rho_ij = |Z_ij|^2/(5*f)
                 % when f in Hz, Z in (mV/km)/nT
                 y = abs(S.Z).^2./(5*S.fe/S.Options.info.timedelta);
-                yi = abs(S.Zi).^2./(5*S.fi/S.Options.info.timedelta);
+                if interp_Z_exists
+                    yi = abs(S.Zi).^2./(5*S.fi/S.Options.info.timedelta);
+                end
                 for j = 1:size(S.Z,2)
                     ls{j} = sprintf('$%s$',Rhostrs{j});
                 end
             case 3
                 y = real(S.Z);
-                yi = real(S.Zi);
                 for j = 1:size(S.Z,2)
-                    ls{j} = sprintf('Re$(%s)$ Interpolated',Zstrs{j});
+                    ls{j} = sprintf('Re$(%s)$ Estimated',Zstrs{j});
                 end
-                jx = size(S.Z,2);
-                for j = 1:size(S.Z,2)
-                    ls{jx+j} = sprintf('Re$(%s)$',Zstrs{j});
+                if interp_Z_exists
+                    yi = real(S.Zi);
+                    jx = size(S.Z,2);
+                    for j = 1:size(S.Z,2)
+                        ls{jx+j} = sprintf('Re$(%s)$ Interpolated',Zstrs{j});
+                    end
                 end
         end
         if opts.vs_period && ~isempty(opts.period_range)
             idx = find(x <= opts.period_range(1) | x >= opts.period_range(2));
             y(idx) = NaN;
-            idx = find(xi <= opts.period_range(1) | xi >= opts.period_range(2));
-            yi(idx) = NaN;
+            if interp_Z_exists
+                idx = find(xi <= opts.period_range(1) | xi >= opts.period_range(2));
+                yi(idx) = NaN;
+            end
         end
-        plot(xi, yi, '.','markersize',20);
+        plot(x, y, '.','markersize',20);
         hold on;grid on;
-        plot(x, y, '.','markersize',15);
+        if interp_Z_exists
+            plot(xi, yi, '.','markersize',15);
+        end
         if opts.type < 3
             set(gca,'YScale','log');
         end
@@ -136,7 +151,8 @@ if isstruct(S)
         end
         unitstr = '';
         if ~isempty(S.Options.info.outunit)
-            unitstr = sprintf('[(%s)/%s]',S.Options.info.outunit,S.Options.info.inunit);
+            unitstr = sprintf('[(%s)/%s]',...
+                        S.Options.info.outunit,S.Options.info.inunit);
         end
         ylabel(unitstr);
         
@@ -154,10 +170,14 @@ if isstruct(S)
         if opts.type ~= 3
             if opts.unwrap
                 y = (180/pi)*unwrap(atan2(imag(S.Z),real(S.Z)));
-                yi = (180/pi)*unwrap(atan2(imag(S.Z),real(S.Z)));
+                if interp_Z_exists
+                    yi = (180/pi)*unwrap(atan2(imag(S.Zi),real(S.Zi)));
+                end
             else
-                y = (180/pi)*(atan2(imag(S.Zi),real(S.Zi)));    
-                yi = (180/pi)*unwrap(atan2(imag(S.Zi),real(S.Zi)));
+                y = (180/pi)*(atan2(imag(S.Z),real(S.Z)));
+                if interp_Z_exists
+                    yi = (180/pi)*(atan2(imag(S.Zi),real(S.Zi)));
+                end
             end
             for j = 1:size(S.Z,2)
                 ls{j} = sprintf('Re$(%s)$',Phistrs{j});
@@ -165,25 +185,31 @@ if isstruct(S)
             ylabel('[$^\circ$]');
         else
             y = imag(S.Z);
-            yi = imag(S.Zi);
             ylabel(unitstr);
             for j = 1:size(S.Z,2)
-                ls{j} = sprintf('Im$(%s)$ Interpolated',Zstrs{j});
+                ls{j} = sprintf('Im$(%s)$ Estimated',Zstrs{j});
             end
-            jx = size(S.Z,2);
-            for j = 1:size(S.Z,2)
-                ls{jx+j} = sprintf('Im$(%s)$',Zstrs{j});
+            if interp_Z_exists
+                yi = imag(S.Zi);
+                jx = size(S.Z,2);
+                for j = 1:size(S.Z,2)
+                    ls{jx+j} = sprintf('Im$(%s)$ Interpolated',Zstrs{j});
+                end
             end
         end
         if opts.vs_period && ~isempty(opts.period_range)
             idx = find(x <= opts.period_range(1) | x >= opts.period_range(2));
             y(idx) = NaN;
-            idx = find(xi <= opts.period_range(1) | xi >= opts.period_range(2));
-            yi(idx) = NaN;
-        end                
-        plot(xi, yi, '.','markersize',20);
+            if interp_Z_exists
+                idx = find(xi <= opts.period_range(1) | xi >= opts.period_range(2));
+                yi(idx) = NaN;
+            end
+        end
+        plot(x, y, '.','markersize',20);
         hold on;grid on;
-        plot(x, y, '.','markersize',15);
+        if interp_Z_exists
+            plot(xi, yi, '.','markersize',15);
+        end
         if ~opts.unwrap && opts.type ~= 3
             set(gca,'YLim',[-185,185])
             set(gca,'YTick',[-180:60:180]);
@@ -220,9 +246,9 @@ else
     % assert(all(size(S1.Z) == size(S2.Z)), 'Required: size(S1.Z) == size(S2.Z)');
     % Assumes units are the same. Check this.
     for j = 1:size(S{1}.Z,2)
+        figprep();
         if j > 1
             figure();
-            figprep();
         end
         for s = 1:length(S)
             S{s} = defaultmeta(S{s});
@@ -290,7 +316,7 @@ else
                 end
             end
 
-             yunitstr = '';
+            yunitstr = '';
             if ~isempty(S{1}.Options.info.outunit) ...
                     && ~isempty(S{1}.Options.info.inunit)
                 yunitstr = sprintf(' [(%s)/%s]',...
@@ -347,7 +373,6 @@ else
                                      S{1}.Options.info.inunit);
                     end
                     ls{s} = sprintf('%s',S{s}.Options.description);
-                    semilogx(x, y, 'linewidth',2,'marker','.','markersize',10);
                     if isfield(S{s},'ZCL')
                         yebl = squeeze(imag(S{s}.ZCL.Z.Normal.x_1sigma(:,j,1)));
                         yebu = squeeze(imag(S{s}.ZCL.Z.Normal.x_1sigma(:,j,2)));
@@ -366,9 +391,9 @@ else
                     y(idx) = NaN;
                 end
                 if opts.vs_period
-                    semilogx(x, y,lineopts{:});
+                    semilogx(x, y, lineopts{:});
                 else
-                    plot(x, y,lineopts{:});
+                    plot(x, y, lineopts{:});
                 end
                 if s == 1
                     grid on;box on;hold on;
@@ -405,7 +430,7 @@ else
             adjust_ylim('upper');
             adjust_yticks(1e-4);
             adjust_exponent();
-            adjust_ylim('upper')
+            adjust_ylim('upper');
             if ~isempty(S{1}.Options.info.timeunit) && opts.vs_period
                 period_lines();
             end
@@ -415,7 +440,7 @@ else
                 fname = sprintf('%s-%s.%s',opts.printname, comp, opts.printfmt{i});
                 figsave(fullfile(opts.printdir, fname), opts);
             end
-        end
+        end    
     end % j
 end
 

@@ -12,6 +12,14 @@ function [Z,W,R] = ols_regress(ftB,ftE,varargin)
 %
 %   Z = Zreal(1:end/2,:) + sqrt(-1)*Zreal(end/2+1:end,:);
 %
+%   Caution:
+%
+%   A constant term is not used for regression, so we need to compute the
+%   uncertainties manually (not implemented). (The uncertainties provided
+%   by REGRESS assume a constant term.) We should perform regression with
+%   a constant term and run a  test the hypothesis that the constant differs
+%   from zero.
+%
 %   Notes:
 %
 %   Ec = Zc*Bc for complex-valued scalars (subscript c) can be written as
@@ -73,6 +81,9 @@ else
                 msg,sE(1),sE(2),sB(1),sB(2));
     end
     [Z,~,R] = regress(ftE,ftB);
+    if ~isempty(lastwarn)
+        %keyboard
+    end
 end
 
 W = [];

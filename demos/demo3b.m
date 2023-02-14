@@ -54,7 +54,7 @@ if 0
     S1.Out = E(:,1:1);
     S1.Time = [0:size(B,1)-1]';
     S1.Options = opts;
-    S1 = transferfnFDMetrics(S1, opts);
+    S1 = transferfnFD_metrics(S1, opts);
 end
 
 Sx.Time = S1.Time;                 % Use default computed time from S1 for S0

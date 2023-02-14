@@ -54,8 +54,8 @@ opts.td.start = 1;
 opts.td.zeropad = NaN;
 
 opts.td.detrend.function = struct();
-    %opts.td.detrend.function = @removemean;
-    opts.td.detrend.function = '';
+    opts.td.detrend.function = @removemean;
+    %opts.td.detrend.function = '';
     opts.td.detrend.functionstr = '';  % Optional descriptive name
     opts.td.detrend.functionargs = {}; % Arguments after first argument to fn.
 

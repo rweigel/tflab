@@ -59,7 +59,7 @@ figure(f);clf;f = f+1;
 figure(f);clf;f = f+1;
     zplot({Sx,S1,S2});
 figure(f);clf;f = f+1;
-    zplot({Sx,S1,S2},struct('plottype',3));
+    zplot({Sx,S1,S2},struct('type',3));
 
 if wf > 0    
     figure(f);clf;f = f+1;

@@ -215,7 +215,9 @@ if ~iscell(S) && strcmp(opts.type,'error')
             plot(t,S.Out(:,j));
             grid on;box on;hold on;
             plot(t,S.Metrics.Predicted(:,j));
-            legend(ls1(:),'Location','NorthEast','Orientation','Vertical');
+            h = legend(ls1(:),'Location','NorthEast','Orientation','Vertical');
+            h = findobj(h,'type','line');
+            set(h,'linewidth',2);
             adjust_ylim();
             adjust_exponent('y');
             setx(0,info,[t(1),t(end)]);
@@ -223,9 +225,11 @@ if ~iscell(S) && strcmp(opts.type,'error')
         subplot('Position',PositionBottom);
             plot(t,S.Metrics.Predicted(:,j)-S.Out(:,j));
             grid on;box on;
-            legend(ls2,'Location','NorthEast','Orientation','Vertical');
+            l = legend(ls2,'Location','NorthEast','Orientation','Vertical');
+            h = findobj(h,'type','line');
+            set(h,'linewidth',2);
             adjust_ylim();
-            adjust_exponent('y');
+            adjust_exponent('y')            
             setx(1,info,[t(1),t(end)]);
 
         if opts.print

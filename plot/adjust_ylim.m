@@ -15,7 +15,7 @@ yl = get(gca,'YLim');
 if strcmp(pos, 'upper') || strcmp(pos, 'both')
     if strcmp(get(gca(),'YScale'),'log')
         if length(yt) > 1
-            yl(end) = 10^(log10(yl(end)) + 2*(log10(yt(end))-log10(yt(end-1))));
+            yl(end) = 10^(log10(yl(end)) + 1.0*(log10(yt(end))-log10(yt(end-1))));
         end
     else
         if (yl(1) == -yl(end)) && ~strcmp(pos, 'both')
@@ -25,6 +25,7 @@ if strcmp(pos, 'upper') || strcmp(pos, 'both')
         yl(end) = yl(end) + (yt(end)-yt(end-1));
     end
 end
+
 if strcmp(pos,'lower') || strcmp(pos, 'both')
     if strcmp(get(gca(),'YScale'),'log')
         if length(yt) > 1

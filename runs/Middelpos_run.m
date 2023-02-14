@@ -1,30 +1,43 @@
+clear;
+
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
+
 % Get input/output data
 [B,E,t,infile,outfile] = Middelpos_clean(); 
 
-B = B(1:12*86400,:);
-E = E(1:12*86400,:);
-t = t(1:12*86400);
+if 0 % For testing a run that takes less time.
+    B = B(1:12*86400,:);
+    E = E(1:12*86400,:);
+    t = t(1:12*86400);
+end
 
+if 0
 %% Band pass
-Tm = 3*86400;
-band = [1/Tm,0.5];
-B = bandpass(B,band);
-E = bandpass(E,band);
-E = E(Tm+1:end-Tm,:);
-B = B(Tm+1:end-Tm,:);
+    addpath(fullfile(scriptdir(),'..','fft'));
+    Tm = 3*86400;
+    band = [1/Tm,0.5];
+    B = bandpass(B,band);
+    E = bandpass(E,band);
+    E = E(Tm+1:end-Tm,:);
+    B = B(Tm+1:end-Tm,:);
+end
 
 %%
-% Make length an integer number of days.
-ppd = 86400;
-I = ppd*floor(size(B,1)/ppd);
+% Make length an integer number of segments.
+pps = 3*86400;
+I = pps*floor(size(B,1)/pps);
 B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-startstr = datestr(t(1),'yyyymmddTHHMMSS.FFF');
-stopstr = datestr(t(end),'yyyymmddTHHMMSS.FFF');
+startstr = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');
+stopstr = datestr(t(end),'yyyy-mm-ddTHH:MM:SS.FFF');
 
-filestr = sprintf('Middelpos-%s-%s',startstr,stopstr);
+startstr2 = datestr(t(1),'yyyymmdd');
+stopstr2 = datestr(t(end),'yyyymmdd');
+
+filestr = sprintf('Middelpos-%s-%s',startstr2,stopstr2);
 
 % Variable name information
 iopts = struct('info',struct(),'td',struct());
@@ -42,11 +55,11 @@ iopts.info.chainid = '';
 
 %%
 % First TF
-desc1 = sprintf('OLS; %d 1-day segments',size(B,1)/ppd);
+desc1 = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
 opts1 = transferfnFD_options(1,iopts);
     opts1.transferfnFD.loglevel = 1;
-    opts1.td.window.width = 86400;
-    opts1.td.window.shift = 86400;
+    opts1.td.window.width = pps;
+    opts1.td.window.shift = pps;
     opts1.filestr = sprintf('%s-tf1',filestr);
 
 S1 = transferfnFD(B(:,1:2),E,opts1);
@@ -61,7 +74,7 @@ fprintf('Saved: %s\n',fname);
 
 %%
 % Second TF
-desc2 = sprintf('OLS; One %d-day segment',size(B,1)/ppd);
+desc2 = sprintf('OLS; One %d-day segment',size(B,1)/pps);
 opts2 = transferfnFD_options(1,iopts);
     opts2.transferfnFD.loglevel = 1;
     opts2.filestr = sprintf('%s-tf2',filestr);

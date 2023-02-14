@@ -72,7 +72,7 @@ figure(fn);clf;fn = fn+1;
     psdplot({S1,S2},struct('type','error-smoothed'));
 
 figure(fn);clf;fn = fn+1;
-    zplot({Sx, S1, S2},struct('plottype',3));
+    zplot({Sx, S1, S2},struct('type',3));
     
 if wf > 0
     figure(fn);clf;fn = fn+1;

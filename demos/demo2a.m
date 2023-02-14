@@ -39,7 +39,7 @@ figure(fn);clf;fn = fn+1;
     psdplot(S1,struct('type','error'));
 
 figure(fn);clf;fn = fn+1;
-    zplot({Sa,S1},struct('plottype',3));
+    zplot({Sa,S1},struct('type',3));
 figure(fn);clf;fn = fn+1;
     zplot({Sa,S1});
 

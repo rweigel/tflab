@@ -1,4 +1,6 @@
 *~
 .DS_Store
 *.mat
-runs/data
+runs/data/
+runs/hapi-data/
+deps/export_fig/

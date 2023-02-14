@@ -11,8 +11,7 @@ function figsave(filename, varargin)
 %
 %   See also PRINT, EXPORT_FIG.
 
-addpath([fileparts(mfilename('fullpath')),'/../misc']); % for logmsg.m
-addpath([fileparts(mfilename('fullpath')),'/export_fig']);
+addpath(fullfile(fileparts(mfilename('fullpath')),'..','deps','export_fig'));
 
 if endsWith(filename, '.png')
     varargin = {varargin{:},'-r','300'};
