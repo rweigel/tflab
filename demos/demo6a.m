@@ -16,18 +16,32 @@ if ~exist(lemimt_dir,'dir')
 end
 addpath(lemimt_dir);
 
-N = 10001; % Number of frequencies
-n = 1001;  % Number of data points
+n = 1000; % Number of data points
+N = 1000; % Number of frequencies (including 0)
 
-S0a = demo_signals(-2,struct('N',N,'n',n));
-S0b = demo_signals(-2,struct('N',N,'n',n));
+alpha = struct();
+    alpha.B  = 0;
+    alpha.dB = 0;
+    alpha.dE = 0;
+    alpha.Z  = 0;
+
+% Amplitudes
+A = struct();
+    A.B  = 1;
+    A.E  = 1;
+    A.dB = 0.2;
+    A.dE = 0.2;
+    A.Z  = 1;
+
+Sx_opts = struct('N',N,'n',n,'alpha',alpha,'A',A);
+Sx = demo_signals(-2,Sx_opts);
 
 opts = transferfnFD_options(0);
   opts.fd.program.name = 'lemimt';
   opts.transferfnFD.loglevel = 0;
 
-B(:,1) = S0a.In;
-B(:,2) = S0b.In;
+B(:,1) = Sx.In;
+B(:,2) = Sx.In;
 B(:,3) = randn(size(B,1),1);
 
 E(:,1) = 0.5*B(:,1) + 0.5*B(:,2);
@@ -36,7 +50,7 @@ E(:,2) = 0.5*B(:,1) + 0.5*B(:,2);
 S = transferfnFD_lemimt(B,E);
 S.In = B(:,1:2);
 S.Out = E;
-S = transferfnFDMetrics(S{tf},opts2,S{1}.Segment.IndexRange);
+S = transferfnFDMetrics(S,opts);
 S.Options.description = 'LEMI';
 
 figure(1);clf;

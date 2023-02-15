@@ -13,8 +13,10 @@ alpha = struct();
     alpha.dE = 0;
     alpha.Z  = 0;
 
+% Amplitudes
 A = struct();
     A.B  = 1;
+    A.E  = 1;
     A.dB = 0.2;
     A.dE = 0.2;
     A.Z  = 1;
