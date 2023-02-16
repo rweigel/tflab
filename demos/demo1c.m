@@ -10,7 +10,7 @@ f  = k/Nt;
 wf = 1;
 
 Sx_opts = struct('Nt',Nt,'Z',1+1j,'f',f,'dB',0.0,'dE',0.0);
-Sx = demo_signals(-3,Sx_opts);
+Sx = demo_signals('simple',Sx_opts);
 
 opts1 = transferfnFD_options(0);
     opts1.transferfnFD.loglevel = 1;

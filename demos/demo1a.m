@@ -10,7 +10,7 @@ Z  = 1+1j;
 wf = 0;    % 2*wf + 1 is number of points for regression.
 
 Sa_opts = struct('Nt',Nt,'Z',Z,'k',k,'dB',0,'dE',0);
-Sa = demo_signals(-3,Sa_opts);
+Sa = demo_signals('simple',Sa_opts);
 
 opts1 = transferfnFD_options(0);
     opts1.transferfnFD.loglevel = 1;
@@ -64,7 +64,7 @@ if 0
         k = round(N/4);
 
         Sa_opts = struct('Nt',Nt,'Z',1+1j,'k',k,'dB',0,'dE',0);
-        Sa = demo_signals(-3,Sa_opts);
+        Sa = demo_signals('simple',Sa_opts);
 
         S1 = transferfnFD(Sa.In,Sa.Out,opts1);
         Ikeep = 1:size(S1.Z,1);

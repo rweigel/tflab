@@ -34,7 +34,7 @@ A = struct();
     A.Z  = 1;
 
 Sx_opts = struct('N',N,'n',n,'alpha',alpha,'A',A);
-Sx = demo_signals(-2,Sx_opts);
+Sx = demo_signals('powerlaw',Sx_opts);
 
 opts = transferfnFD_options(0);
   opts.fd.program.name = 'lemimt';

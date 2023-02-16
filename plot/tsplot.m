@@ -149,9 +149,8 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
             plot(t,S.InNoise);
         end
         title(ts,'FontWeight','Normal');
-        [~,h] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
-        h = findobj(h,'type','line');
-        set(h,'linewidth',2);
+        [~, lo] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        adjust_legend_lines(lo);
         adjust_exponent('y');
         adjust_ylim();
         setx(0,info,[t(1),t(end)]);        
@@ -163,9 +162,8 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
             hold on;
             plot(t,S.OutNoise);
         end
-        [~,h] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
-        h = findobj(h,'type','line');
-        set(h,'linewidth',2);
+        [~, lo] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        adjust_legend_lines(lo);
         adjust_exponent('y');
         adjust_ylim();
         setx(1,info,[t(1),t(end)]);  
@@ -215,9 +213,8 @@ if ~iscell(S) && strcmp(opts.type,'error')
             plot(t,S.Out(:,j));
             grid on;box on;hold on;
             plot(t,S.Metrics.Predicted(:,j));
-            h = legend(ls1(:),'Location','NorthEast','Orientation','Vertical');
-            h = findobj(h,'type','line');
-            set(h,'linewidth',2);
+            [~, lo] = legend(ls1(:),'Location','NorthEast','Orientation','Vertical');
+            adjust_legend_lines(lo);
             adjust_ylim();
             adjust_exponent('y');
             setx(0,info,[t(1),t(end)]);
@@ -225,9 +222,8 @@ if ~iscell(S) && strcmp(opts.type,'error')
         subplot('Position',PositionBottom);
             plot(t,S.Metrics.Predicted(:,j)-S.Out(:,j));
             grid on;box on;
-            l = legend(ls2,'Location','NorthEast','Orientation','Vertical');
-            h = findobj(h,'type','line');
-            set(h,'linewidth',2);
+            [~, lo] = legend(ls2,'Location','NorthEast','Orientation','Vertical');
+            adjust_legend_lines(lo);
             adjust_ylim();
             adjust_exponent('y')            
             setx(1,info,[t(1),t(end)]);

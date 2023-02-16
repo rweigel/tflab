@@ -410,9 +410,10 @@ else
         set(gca,'YScale','linear');
         plot_(x,y2b,lnopts);
         if opts.vs_period
-            set(gca,'YScale','log');
+            %set(gca,'YScale','log');
         end
-        set(gca,'YLim',[-0.01,1.19]);
+        set(gca,'YLim',[-0.01,1.21]);
+        set(gca,'YTick',[0:0.2:1.0]);
         if iscell(S)
             ylabel('Coherence');
         else

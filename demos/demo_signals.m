@@ -1,10 +1,20 @@
-function S = demo_signals(tn, opts)
+function S = demo_signals(stype, opts)
+%DEMO_SIGNALS
+%
+%  S = DEMO_SIGNALS('simple', opts)
+%
+%  S = DEMO_SIGNALS('powerlaw', opts)
+%
+%  S = DEMO_SIGNALS('fromH/zpredict()', opts)
+%
+%  S = DEMO_SIGNALS('fromZ/filter()', opts)
 
-addpath(genpath(fileparts(mfilename('fullpath'))));
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 assert(nargin == 2,'Two inputs are required');
 
-if tn == -3
+if strcmp(stype,'simple')
     Nt = opts.Nt;
     t = (0:Nt-1)';
     Z = opts.Z;
@@ -32,8 +42,7 @@ if tn == -3
     return
 end
 
-if tn == -2
-    addpath([fileparts(mfilename('fullpath')),'/../fft']);
+if strcmp(stype,'powerlaw')
 
     assert(opts.N > 1, 'N > 1 is required');
 
@@ -109,10 +118,9 @@ if tn == -2
     return
 end
 
-if tn == -1
+if strcmp(stype,'fromH/zpredict()')
+
     N = opts.N;
-    addpath([fileparts(mfilename('fullpath')),'/fft']);
-    addpath([fileparts(mfilename('fullpath')),'/lib']);
     [~,f] = fftfreq(N);
     H = opts.H;
     f = f';
@@ -132,7 +140,7 @@ if tn == -1
     return
 end
 
-if tn == 0 % Prescribed impulse response
+if strcmp(stype,'fromH/filter()')
     description = '';
 
     H = opts.H;

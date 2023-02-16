@@ -3,8 +3,9 @@ clear;
 % NB: Tests are intentially not deterministic.
 % TODO: Allow deterministic by setting random number seed.
 
-addpath([fileparts(mfilename('fullpath')),'/misc']);
-addpath([fileparts(mfilename('fullpath')),'/demos']);
+clear;
+addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+setpaths();
 
 close all;
 set(0,'defaultFigureWindowStyle','docked');
@@ -83,7 +84,7 @@ logmsg(['Basic calculation; Test 1.3. - '...
 for i = 1:3     
     H = zeros(i+1,1);
     H(1) = 1;
-    S0 = demo_signals(0, struct('H',H,'N',100));
+    S0 = demo_signals('fromH/filter()', struct('H',H,'N',100));
 
     opts = transferfnFD_options(0);
     S1 = transferfnFD(S0.In, S0.Out, opts);

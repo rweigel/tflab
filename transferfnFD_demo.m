@@ -3,7 +3,7 @@ clear
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 setpaths();
 
-%% Example 1
+%% Demo 1
 % Input signal a 1-D time series that has flat spectrum and random phase.
 % (If phase is not random, signal is delta function.)
 % Output signal is a 1-D time series with a linear frequency dependent phase.

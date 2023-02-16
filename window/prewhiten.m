@@ -7,7 +7,7 @@ if strcmp(varargin{1},'diff')
 end
 
 if strcmp(varargin{1},'yulewalker')
-    % Not implemented
+    % Implementation not tested
     [S,f] = spectrogram(X);
     [b,a] = yulewalk(N,f.'/f(end),1./mean(abs(S.')));
     X = filter(b,a,X);

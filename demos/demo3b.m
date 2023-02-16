@@ -31,7 +31,7 @@ A = struct();
     A.dE = 0.1;
     A.Z  = 1;
     
-Sx = demo_signals(-2,struct('N',10*N,'n',10*n,'alpha',alpha,'A',A));
+Sx = demo_signals('powerlaw',struct('N',10*N,'n',10*n,'alpha',alpha,'A',A));
 
 opts = transferfnFD_options(1);
     opts.transferfnFD.loglevel = 1;

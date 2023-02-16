@@ -11,7 +11,7 @@ f  = 25.5/Nt;
 wf = 0;
 
 Sa_opts = struct('Nt',Nt,'Z',1+1j,'f',f,'dB',0.0,'dE',0.0);
-Sa = demo_signals(-3,Sa_opts);
+Sa = demo_signals('simple',Sa_opts);
 
 opts1 = transferfnFD_options(0);
     opts1.transferfnFD.loglevel = 1;

@@ -9,7 +9,7 @@ N = 11;     % Number of input/output points
 H = [0,1]'; % Impulse reponse filter E(f) = H(f)*B(f)
 
 % Get in/out signals and exact transfer function
-S0 = demo_signals(-1,struct('H',H,'N',N));
+S0 = demo_signals('fromH',struct('H',H,'N',N));
 
 opts = transferfnFD_options(0);         % Use default options
 opts.transferfnFD.loglevel = 1;

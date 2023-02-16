@@ -22,7 +22,7 @@ A = struct();
     A.Z  = 1;
 
 Sx_opts = struct('N',N,'n',n,'alpha',alpha,'A',A);
-Sx = demo_signals(-2,Sx_opts);
+Sx = demo_signals('powerlaw',Sx_opts);
 
 opts1 = transferfnFD_options(0);
     opts1.transferfnFD.loglevel = 1;
