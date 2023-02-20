@@ -23,10 +23,10 @@ Unit tests may be run by executing `tflab_test`.
 
 The functions called for the following may be user-defined.
 
-* Time domain windowing using any function available in MATLAB's Signal Processing Toolbox (see `help window` for a list)
+* Time domain windowing using any function available in MATLAB's Signal Processing Toolbox (e.g., Hamming, see `help window` for a list)
 * Prewhitening using `filter()` or `yulewalker()`
-* Multiple regression methods (Ordinary Least Squares, Total Least Squares, Weighted, Robust). Some methods have multiple implementations. For example, MATLAB's `robustfit()` can be used or an implementation based on references cited in the MT literature can be used.
-* Computing $Z$ for time windows and averaging Z (e.g., "stacking")
+* Multiple regression methods (Ordinary Least Squares, Total Least Squares, Weighted Least Squares, Robust Regression). Some methods have multiple implementations. For example, MATLAB's `robustfit()` can be used or an implementation based on references cited in the MT literature can be used.
+* Computing $Z$ for time windows and then averag to get composite $Z$ (e.g., "stacking")
 * Computing DFTs in time windows and computing Z based on combined frequency bins.
 * Binning of frequencies using log and linear windows. (See `evalfreq()`.)
 
@@ -34,6 +34,8 @@ In addition, this package supports
 
 * Interpolation of estimated $Z$ onto a uniform frequency grid
 * Prediction (using interpolated $Z$)
+* Calculation of metrics ...
 * Computation and display of all aspects of $Z$ calculation and evaluation
 * Intercomparison of $Z$ computed using different options
+* Use of LEMI MT Fortran ...
 * Comparison of `tflab` $Z$s those found in IDE, EDI, and XML files (using the [zread](https://github.com/rweigel/zread) reader)

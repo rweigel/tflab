@@ -2,7 +2,7 @@ function tsplot(S,popts)
 %TSPLOT - Plot timeseries in output of TRANSFERFNFD.
 %
 %  TSPLOT(S), where S is the output of TRANSFERFNFD.
-%  TSPLOT(S, opts), where S is the output of TRANSFERFNFD.
+%  TSPLOT(S, opts)
 
 % Default options
 opts = struct();

@@ -29,6 +29,7 @@ E = E/max(E);
 
 % Get default options
 opts = transferfnFD_options(0); 
+
 % Compute estimate of Z
 S1 = transferfnFD(B,E,opts);
 

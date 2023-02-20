@@ -12,7 +12,8 @@ setpaths();
 
 lemimt_dir = '~/git/lemimt';
 if ~exist(lemimt_dir,'dir')
-    error('Need to download and compile lemimt code from https://github.com/rweigel/lemimt');
+    url = 'https://github.com/rweigel/lemimt';
+    error('Need to download and compile lemimt code from %s', url);
 end
 addpath(lemimt_dir);
 
@@ -37,8 +38,14 @@ Sx_opts = struct('N',N,'n',n,'alpha',alpha,'A',A);
 Sx = demo_signals('powerlaw',Sx_opts);
 
 opts = transferfnFD_options(0);
-  opts.fd.program.name = 'lemimt';
   opts.transferfnFD.loglevel = 0;
+  opts.fd.program.name = 'lemimt';
+  opts.fd.program.options = ''; % Command line options, e.g., '-r -c'
+  opts.info.inunit= 'nT';
+  opts.info.outunit= 'mV/km';
+  opts.info.timeunit = 's';
+  opts.info.timedelta = 1; % time in timeunit between records.
+  opts.info.description = 'LEMI';
 
 B(:,1) = Sx.In;
 B(:,2) = Sx.In;
@@ -47,20 +54,18 @@ B(:,3) = randn(size(B,1),1);
 E(:,1) = 0.5*B(:,1) + 0.5*B(:,2);
 E(:,2) = 0.5*B(:,1) + 0.5*B(:,2);
 
-S = transferfnFD_lemimt(B,E);
-S.In = B(:,1:2);
-S.Out = E;
-S = transferfnFDMetrics(S,opts);
-S.Options.description = 'LEMI';
+S = transferfnFD_lemimt(B,E,opts);
+S = transferfnFD_metrics(S,opts);
 
 figure(1);clf;
-    tsplot(S1,'raw');   % Plot raw input/output data
+    tsplot(S,struct('type','raw'));
+
 figure(2);clf;
-    tsplot(S1,'error'); % Plot raw input/output data
+    tsplot(S,struct('type','error'));
+
 %figure(3);clf;
-%    psdplot(S1,'raw');
+%    psdplot(S,'raw');
+
 figure(4);clf;
-    %zplot(S0a,S1);   % Compare exact with computed
-    zplot(S1);
-%figure(5);clf;
-%    hplot(S1,[-5,5]);   % Compare exact with computed
+    %zplot(S0a,S1);
+    zplot(S);

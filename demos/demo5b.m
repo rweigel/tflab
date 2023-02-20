@@ -1,10 +1,10 @@
 %% Transfer function is time shift
+% E(t+1) = B(t)
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 setpaths();
 
-%% E(t+1) = B(t)
 N = 11;     % Number of input/output points
 H = [0,1]'; % Impulse reponse filter E(f) = H(f)*B(f)
 

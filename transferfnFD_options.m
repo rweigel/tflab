@@ -161,6 +161,22 @@ opts.fd.regression = struct();
         %ropts.verbose = 0;    
         %opts.fd.regression.functionargs = {ropts};
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Plot options
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+opts.plot = struct();
+    opts.plot.figprep = @figprep; % Function to call prior to plotting
+    opts.plot.figsave = @figsave; % Function to call for printing
+
+    opts.plot.tsplot.type = 'raw';
+    opts.plot.tsplot.title = '';
+    opts.plot.tsplot.print = 0;
+    opts.plot.tsplot.printname = 'tsplot';
+    opts.plot.tsplot.printdir = '';
+    opts.plot.tsplot.printfmt = {'pdf'};
+    % printfmt is one or more extensions allowed by export_fig()
+    % e.g. {'pdf'} or {'svg','png'}.
+
 if os == 0
     % When no noise, should get exact TF used to generate the output data
     % (within limits of numerical precision).
