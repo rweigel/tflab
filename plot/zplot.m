@@ -1,6 +1,10 @@
 function [ax1,ax2] = zplot(S,popts)
 %ZPLOT
 
+
+assert(isstruct(S) || iscell(S), ...
+    'S must be a tflab struct or cell array of tflab structs');
+
 % Default options
 opts = struct();
     opts.title = '';
@@ -49,7 +53,6 @@ PositionBottom = [0.1300 0.1100 0.7750 0.4];
 % Line options
 lnopts = {'marker','.','markersize',10,'linewidth',2};
 
-figprep();
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -80,7 +83,6 @@ if isstruct(S)
         interp_Z_exists = 1;
     end
     
-    figprep();
     S = defaultmeta(S);
     if opts.vs_period
         x = S.Options.info.timedelta./S.fe;
@@ -93,6 +95,7 @@ if isstruct(S)
             xi = S.Options.info.timedelta*S.fi;
         end
     end
+    figprep();
     ax1 = subplot('Position', PositionTop);
         switch opts.type
             case 1
@@ -104,15 +107,11 @@ if isstruct(S)
                     ls{j} = sprintf('$%s$',Zstrs{j});
                 end
             case 2
-                % See Egbert, Booker, and Schultz 1992 pg 15,116.
-                % rho_ij = (mu_o/omega)*|E_i|^2/|B_j|^2
-                % rho_ij = (mu_o/omega)*|Z_ij|^2
-                % mu_o = 4*pi*e-7 N/A^2
-                % rho_ij = |Z_ij|^2/(5*f)
-                % when f in Hz, Z in (mV/km)/nT
-                y = abs(S.Z).^2./(5*S.fe/S.Options.info.timedelta);
+                dt = S.Options.info.timedelta;
+                % TODO: Assumes Z in (mV/km)/nT and dt in seconds.
+                y = z2rho(S.fe/dt, S.Z);
                 if interp_Z_exists
-                    yi = abs(S.Zi).^2./(5*S.fi/S.Options.info.timedelta);
+                    yi = z2rho(S.fi/dt, S.Zi);
                 end
                 for j = 1:size(S.Z,2)
                     ls{j} = sprintf('$%s$',Rhostrs{j});
@@ -240,15 +239,19 @@ if isstruct(S)
                 fname = sprintf('%s.%s',opts.printname, opts.printfmt{i});
                 figsave(fullfile(opts.printdir, fname), opts);
             end
-        end        
-else
-    %TODO:
-    % assert(all(size(S1.Z) == size(S2.Z)), 'Required: size(S1.Z) == size(S2.Z)');
-    % Assumes units are the same. Check this.
+        end
+end
+
+% Multiple transfer functions
+if iscell(S)
+    
+    % TODO: Assumes units are the same for all Zs.
+    %       Check this before plotting.
     for j = 1:size(S{1}.Z,2)
         figprep();
         if j > 1
             figure();
+            figprep();
         end
         for s = 1:length(S)
             S{s} = defaultmeta(S{s});
@@ -280,13 +283,9 @@ else
                             yebu = -y+squeeze(S{s}.ZCL.Magnitude.Bootstrap.x_1sigma(:,j,2));
                         end
                     case 2
-                        % See Egbert, Booker, and Schultz 1992 pg 15,116.
-                        % rho_ij = (mu_o/omega)*|E_i|^2/|B_j|^2
-                        % rho_ij = (mu_o/omega)*|Z_ij|^2
-                        % mu_o = 4*pi*e-7 N/A^2
-                        % rho_ij = |Z_ij|^2/(5*f)
-                        % when f in Hz, Z in (mV/km)/nT
-                        y = (abs(S{s}.Z(:,j))).^2./(5*S{s}.fe/S{s}.Options.info.timedelta);
+                        dt = S{s}.Options.info.timedelta;
+                        % TODO: Assumes Z in (mV/km)/nT and dt in seconds.
+                        y = z2rho(S{s}.fe/dt, S{s}.Z(:,j));
                     case 3
                         y = real(S{s}.Z(:,j));
                         if isfield(S{s},'ZCL')

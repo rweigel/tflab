@@ -566,12 +566,14 @@ function S = main(B, E, t, opts)
                     Z(j,:) = zeros(1,size(ftB,2));
                     S.Regression.Weights{j,1} = nan*W;
                     S.Regression.Residuals{j,1} = nan*W;
-                    warning(sprintf('System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j)));
+                    logmsg('! System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j));
+                    %warning(sprintf('System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j)));
                 else
                     Z(j,:) = nan(1,size(ftB,2));
                     S.Regression.Weights{j,1} = nan*W;
                     S.Regression.Residuals{j,1} = nan*W;
-                    warning(sprintf('System if underdetermined for fe = %f. Setting Z equal to NaN(s) for this frequency.',fe(j)));
+                    logmsg('! System if underdetermined for fe = %f. Setting Z equal to NaN(s) for this frequency.',fe(j));
+                    %warning(sprintf('System if underdetermined for fe = %f. Setting Z equal to NaN(s) for this frequency.',fe(j)));
                 end
                 continue;
             end
@@ -584,7 +586,7 @@ function S = main(B, E, t, opts)
                     Z(j,:) = zeros(1,size(ftB,2)) + 1j*zeros(1,size(ftB,2));
                     S.Regression.Weights{j,1} = nan*W;
                     S.Regression.Residuals{j,1} = nan*W;
-                    logmsg('System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j));
+                    logmsg('! System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j));
                     continue;
                 end
             end

@@ -135,20 +135,22 @@ function plotqq(Residuals,comp)
         compdata = @(x) imag(x);
     end
     if iscell(Residuals)
-        colors = lines(length(Residuals));
+        colors = [0,0,0; lines(length(Residuals))];
         for i = 1:length(Residuals)
             % Hack to get correct legend symbol colors.
-            plot(NaN, NaN,'Color',colors(i,:),'LineStyle','none','Marker','.');
+            plot(NaN, NaN,'Color',colors(i,:),...
+                'LineStyle','none','Marker','.','MarkerSize', 10);
         end
         for i = 1:length(Residuals)
             %qqplot(compdata(Residuals{i}));
             [x,y] = qqdata(compdata(Residuals{i}));
-            plot(x,y,'Color',colors(i,:),'LineStyle','none','Marker','.');
+            plot(x,y,'Color',colors(i,:),...
+                'LineStyle','none','Marker','.','MarkerSize', 10);
         end
     else
         %qqplot(compdata(Residuals));
         [x,y] = qqdata(compdata(Residuals));
-        plot(x,y,'LineStyle','none','Marker','.');
+        plot(x,y,'k.','MarkerSize', 10);
     end
 end
 
