@@ -8,7 +8,12 @@ function [h,t] = z2h(Z)
 
 assert(ndims(Z) <= 2,'Required: ndims(Z) <= 2');
 
-assert(all(~isnan(Z(:))),'Z has NaN values');
+Inan1 = find(isnan(Z(1,:)));
+if ~isempty(Inan1)
+    warning('Z has NaN(s) at zero frequency. Setting to zero');
+    Z(1,Inan1) = 0;
+end
+assert(all(~isnan(Z(:))),'Z has NaN values at non-zero frequencies');
 
 h = ifft(Z);
 if numel(Z) == length(Z) && size(Z,2) > 1
