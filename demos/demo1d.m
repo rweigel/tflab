@@ -16,12 +16,12 @@ wf = 0;
 Sa_opts = struct('Nt',Nt,'Z',1j,'k',k,'dB',0,'dE',0);
 Sa = demo_signals('simple',Sa_opts);
 
-opts1 = transferfnFD_options(0);
-    opts1.transferfnFD.loglevel = 1;
+opts1 = tflab_options(0);
+    opts1.tflab.loglevel = 1;
     opts1.fd.evalfreq.functionargs = {[1,wf], 'linear'};
     opts1.td.zeropad = Nt;
     
-S1 = transferfnFD(Sa.In,Sa.Out,opts1);
+S1 = tflab(Sa.In,Sa.Out,opts1);
 
 S1.Options.description = 'Estimated';
 

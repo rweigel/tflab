@@ -95,25 +95,25 @@ end
 
 % First TF
 desc1 = sprintf('OLS; %d 1-day segments',size(B,1)/ppd);
-opts1 = transferfnFD_options(1,iopts);
-    opts1.transferfnFD.loglevel = 1;
+opts1 = tflab_options(1,iopts);
+    opts1.tflab.loglevel = 1;
     opts1.td.window.width = 86400/timedelta;
     opts1.td.window.shift = 86400/timedelta;
 
-S{1} = transferfnFD(B(:,1:2),E,opts1);
+S{1} = tflab(B(:,1:2),E,opts1);
 % Modify default descriptions of run
 S{1}.Options.description = desc1;
 
 %% Second TF
 desc2 = sprintf('OLS; One %d-day segment',size(B,1)/ppd);
-opts2 = transferfnFD_options(1,iopts);
-    opts2.transferfnFD.loglevel = 1;
+opts2 = tflab_options(1,iopts);
+    opts2.tflab.loglevel = 1;
 
-S{2} = transferfnFD(B(:,1:2),E,opts2);           
+S{2} = tflab(B(:,1:2),E,opts2);           
 S{2}.Options.description = desc2;
     
 % Test S{2}.Z on same segments as S{1}.
-S{2} = transferfnFDMetrics(S{2},opts2,S{1}.Segment.IndexRange);
+S{2} = tflabMetrics(S{2},opts2,S{1}.Segment.IndexRange);
 
 tf = length(S);
 
@@ -140,7 +140,7 @@ if strcmp(cid,'KAP03')
     S{tf}.In  = S{1}.In;
     S{tf}.Out = S{1}.Out;
     S{tf}.Time = S{1}.Time;
-    S{tf} = transferfnFDMetrics(S{tf},S{1}.Options,S{1}.Segment.IndexRange,1);
+    S{tf} = tflabMetrics(S{tf},S{1}.Options,S{1}.Segment.IndexRange,1);
 end
 
 %% Compute TF using LEMI MT
@@ -150,12 +150,12 @@ if ischar(lemimt_dir)
     % three components of B. (Bz is used to compute another TF that is
     % not used here).
     addpath(lemimt_dir);
-    S{tf} = transferfnFD_lemimt(B,E);
+    S{tf} = tflab_lemimt(B,E);
     S{tf}.In = B(:,1:2);
     S{tf}.Out = E;
     % Test S{tf}.Z on same segments as S{1}.
     S{tf}.Time = S{1}.Time;
-    S{tf} = transferfnFDMetrics(S{tf},opts2,S{1}.Segment.IndexRange);
+    S{tf} = tflabMetrics(S{tf},opts2,S{1}.Segment.IndexRange);
     S{tf}.Options.info = S{1}.Options.info;
     S{tf}.Options.description = 'LEMI; One 55-day segment';
 end

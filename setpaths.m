@@ -1,5 +1,5 @@
 function setpaths()
-%SETPATHS - Set all paths for transferfnFD
+%SETPATHS - Set all paths for tflab
 %
 %   SETPATHS() Sets all paths
 

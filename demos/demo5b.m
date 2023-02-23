@@ -11,10 +11,10 @@ H = [0,1]'; % Impulse reponse filter E(f) = H(f)*B(f)
 % Get in/out signals and exact transfer function
 S0 = demo_signals('fromH',struct('H',H,'N',N));
 
-opts = transferfnFD_options(0);         % Use default options
-opts.transferfnFD.loglevel = 1;
+opts = tflab_options(0);         % Use default options
+opts.tflab.loglevel = 1;
 
-S1 = transferfnFD(S0.In,S0.Out,opts);   % Compute transfer function
+S1 = tflab(S0.In,S0.Out,opts);   % Compute transfer function
 
 % Add variables to S0 for plotting
 %S0.Options.info = S1.Options.info; % Use same variable labels from S1 for S0

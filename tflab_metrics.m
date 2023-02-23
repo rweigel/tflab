@@ -1,4 +1,4 @@
-function S = transferfnFD_metrics(S,opts,I,update)
+function S = tflab_metrics(S,opts,I,update)
 
 if nargin < 4
     update = 0;
@@ -7,7 +7,7 @@ end
 if nargin > 2 && ~isempty(I)
     % Create segments.
     if isfield(S,'Segment')
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Segment field already exists. Will replace.\n');
         end
         % TODO: Should check if S.Segment.Intervals matches I and
@@ -39,7 +39,7 @@ end
 
 if ~isfield(S,'Metrics')
     % If no S.Metrics, compute
-    if opts.transferfnFD.loglevel
+    if opts.tflab.loglevel
         logmsg('Computing metrics for single segment.\n');
     end
     In = S.In;
@@ -47,7 +47,7 @@ if ~isfield(S,'Metrics')
 else
     % If no S.Segment.Metrics, compute
     if isfield(S,'Segment') && ~isfield(S.Segment,'Metrics')
-        if opts.transferfnFD.loglevel
+        if opts.tflab.loglevel
             logmsg('Computing metrics for %d segments.\n',size(S.Segment.Out,3));
         end
         In = S.Segment.In;
@@ -145,6 +145,6 @@ if isfield(S,'Segment') && ~isfield(S.Segment,'Metrics')
     % If no S.Metrics and no S.Segment.Metrics, then 
     % S.Metrics was computed first. This catches case where both metrics
     % need to be calculated.
-    S.Segment = transferfnFD_metrics(S,opts);
+    S.Segment = tflab_metrics(S,opts);
     return
 end

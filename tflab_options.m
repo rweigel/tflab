@@ -1,5 +1,5 @@
-function opts = transferfnFD_options(os,iopts)
-%TRANSFERFNFD_OPTIONS - Return options for transferfnFD().
+function opts = tflab_options(os,iopts)
+%TRANSFERFNFD_OPTIONS - Return options for tflab().
 %
 %  opts = TRANSFERFNFD_OPTIONS() returns default options.
 %
@@ -9,10 +9,10 @@ function opts = transferfnFD_options(os,iopts)
 
 opts = struct();
 
-opts.filestr = sprintf('transferfnFD_options-%d',os);
+opts.filestr = sprintf('tflab_options-%d',os);
 
-opts.transferfnFD = struct();
-    opts.transferfnFD.loglevel = 1;
+opts.tflab = struct();
+    opts.tflab.loglevel = 1;
 
 opts.info = struct();
     opts.info.instr = 'In'; % Cell array or string. 
@@ -47,7 +47,7 @@ opts.info = struct();
 % (pe/cc/mse/sn/coherence)
 opts.td.Ntrim = NaN;
 
-% Dimensionless start; ignored if time array passed to transferfnFD.
+% Dimensionless start; ignored if time array passed to tflab.
 opts.td.start = 1; 
 
 % Number of zeros added to the end of all time series
@@ -96,7 +96,7 @@ opts.td.prewhiten = struct();
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 opts.fd.program = struct();
-    opts.fd.program.name = 'transferfnFD';
+    opts.fd.program.name = 'tflab';
     % Use lemimt program. All fd options below are ignored.
     %opts.fd.program.name = 'lemimt';
     opts.fd.program.options = '';

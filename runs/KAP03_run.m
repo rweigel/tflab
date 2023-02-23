@@ -40,20 +40,20 @@ t = t(1:I);
 
 %% First TF
 desc1 = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
-opts1 = transferfnFD_options(1,iopts);
-    opts1.transferfnFD.loglevel = 1;
+opts1 = tflab_options(1,iopts);
+    opts1.tflab.loglevel = 1;
     opts1.td.window.width = pps;
     opts1.td.window.shift = pps;
     opts1.filestr = sprintf('%s-tf1',filestr);
 
 % Execute run
-S1 = transferfnFD(B(:,1:2),E,opts1);
+S1 = tflab(B(:,1:2),E,opts1);
 
 % Modify default description of run
 S1.Options.description = desc1;
 
 % Compute uncertainties
-S1 = transferfnFD_uncertainty(S1);
+S1 = tflab_uncertainty(S1);
 
 % Save results
 fname = fullfile(scriptdir(),'data',stationid,[S1.Options.filestr,'.mat']);
@@ -84,7 +84,7 @@ if strcmp(chainid,'KAP03')
     S2.In  = S1.In;
     S2.Out = S1.Out;
     S2.Time = S1.Time;
-    S2 = transferfnFD_metrics(S2,S1.Options,S1.Segment.IndexRange,1);
+    S2 = tflab_metrics(S2,S1.Options,S1.Segment.IndexRange,1);
 end
 
 fname = fullfile(scriptdir(),'data',stationid,[S2.Options.filestr,'.mat']);

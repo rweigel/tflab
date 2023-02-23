@@ -1,8 +1,8 @@
 closeNoPrompt(matlab.desktop.editor.getAll);
 
-edit('transferfnFD_demo1')
-edit('transferfnFD_demo2')
-edit('transferfnFD_demo3')
-edit('transferfnFD')
-edit('transferfnFD_options')
-edit('transferfnFD_test')
+edit('tflab_demo1')
+edit('tflab_demo2')
+edit('tflab_demo3')
+edit('tflab')
+edit('tflab_options')
+edit('tflab_test')

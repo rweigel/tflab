@@ -33,32 +33,32 @@ A = struct();
     
 Sx = demo_signals('powerlaw',struct('N',10*N,'n',10*n,'alpha',alpha,'A',A));
 
-opts = transferfnFD_options(1);
-    opts.transferfnFD.loglevel = 1;
+opts = tflab_options(1);
+    opts.tflab.loglevel = 1;
     %opts.fd.regression.function = @ols_analytic;    
     %opts.fd.evalfreq.functionargs = {[1,1], 'linear'};
     opts.td.window.width = n;
     opts.td.window.shift = n;
-S1 = transferfnFD(Sx.In,Sx.Out,opts);
+S1 = tflab(Sx.In,Sx.Out,opts);
 
-opts = transferfnFD_options(1);
-    opts.transferfnFD.loglevel = 1;
+opts = tflab_options(1);
+    opts.tflab.loglevel = 1;
     %opts.fd.evalfreq.functionargs = {[1,1], 'linear'};
     opts.td.window.width = 10*n;
     opts.td.window.shift = 10*n;
-S2 = transferfnFD(Sx.In,Sx.Out,opts);
+S2 = tflab(Sx.In,Sx.Out,opts);
 
 if 0
     B(:,3) = randn(size(B,1),1);
     E(:,2) = E(:,1);
-    S1 = transferfnFD_lemimt(B,E,opts);
+    S1 = tflab_lemimt(B,E,opts);
 
     S1.In = B(:,1:2);
     S1.Z = S1.Z(:,1:2);
     S1.Out = E(:,1:1);
     S1.Time = [0:size(B,1)-1]';
     S1.Options = opts;
-    S1 = transferfnFD_metrics(S1, opts);
+    S1 = tflab_metrics(S1, opts);
 end
 
 Sx.Time = S1.Time;                 % Use default computed time from S1 for S0

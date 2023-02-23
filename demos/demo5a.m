@@ -25,8 +25,8 @@ E = E/max(E);
 E = E + (mean(B)-mean(E));
 
 % Compute estimate of Z
-opts = transferfnFD_options(0);
-S1 = transferfnFD(B,E,opts);
+opts = tflab_options(0);
+S1 = tflab(B,E,opts);
 
 figure(1);clf;
     tsplot(S1,struct('type','raw'));   % Plot raw input/output data

@@ -33,7 +33,7 @@ Cxy(1,size(x,2)) = NaN;
 for j = 2:length(Ic)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Caution - code below is duplicated in transferfnFD()
+    % Caution - code below is duplicated in tflab()
     W = winfn(2*Ne(j)+1);
     W = W/sum(W);
     r = [Ic(j)-Ne(j):Ic(j)+Ne(j)];

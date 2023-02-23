@@ -24,18 +24,18 @@ A = struct();
 Sx_opts = struct('N',N,'n',n,'alpha',alpha,'A',A);
 Sx = demo_signals('powerlaw',Sx_opts);
 
-opts1 = transferfnFD_options(0);
-    opts1.transferfnFD.loglevel = 1;
+opts1 = tflab_options(0);
+    opts1.tflab.loglevel = 1;
     opts1.fd.evalfreq.functionargs = {[4,4], 'linear'};
     opts1.fd.stack.average.function = '';
     opts1.td.window.width = n/5;
     opts1.td.window.shift = n/5;
 
-S1 = transferfnFD(Sx.In,Sx.Out,opts1);
+S1 = tflab(Sx.In,Sx.Out,opts1);
 S1.Options.description = 'Stack Average/OLS';
 
-opts2 = transferfnFD_options(0);
-    opts2.transferfnFD.loglevel = 1;
+opts2 = tflab_options(0);
+    opts2.tflab.loglevel = 1;
     opts2.fd.evalfreq.functionargs = {[4,4], 'linear'};
     opts2.fd.stack.average.function = '';
     opts2.td.window.width = n/5;
@@ -45,7 +45,7 @@ opts2 = transferfnFD_options(0);
     opts2.fd.regression.functionargs = {};
     opts2.fd.regression.loglevel = 1;
 
-S2 = transferfnFD(Sx.In,Sx.Out,opts2);
+S2 = tflab(Sx.In,Sx.Out,opts2);
 S2.Options.description = 'Stack Average/TLS';
 
 % Use same variable labels from S1 for Sa

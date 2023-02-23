@@ -1,8 +1,8 @@
-function S = transferfnFD_uncertainty(S)
+function S = tflab_uncertainty(S)
 
 if iscell(S)
     for j = 1:length(S)
-        S{j} = transferfnFD_uncertainty(S{j});
+        S{j} = tflab_uncertainty(S{j});
     end
     return
 end

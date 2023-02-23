@@ -1,7 +1,7 @@
-function S = transferfnFD(B,E,t,opts)
+function S = tflab(B,E,t,opts)
 %TRANSFERFNFD Frequency domain MIMO transfer function estimate
 %
-%  S = transferfnFD(B,E) returns a structure with an estimate of the
+%  S = tflab(B,E) returns a structure with an estimate of the
 %  transfer function Z in the expression
 %
 %    Ex(f) = Zxx(f)Bx(f) + Zxy(f)By(f) + ...
@@ -32,7 +32,7 @@ function S = transferfnFD(B,E,t,opts)
 %   Ex(f) = Zxx(f)Bx(f) + Zxy(f)By(f)
 %   Ey(f) = Zyx(f)Bx(f) + Zyy(f)By(f)
 %
-%  and S = transferfnFD(B,E) returns a structure S with a field Z such that
+%  and S = tflab(B,E) returns a structure S with a field Z such that
 %
 %   Zxx = Z(:,1)   Zxy = Z(:,2)
 %   Zyx = Z(:,3)   Zyy = Z(:,4)
@@ -40,11 +40,11 @@ function S = transferfnFD(B,E,t,opts)
 %  with the rows of Z being estimates of the transfer function at the
 %  evaluation frequencies given by field fe in S.
 %
-%  S = transferfnFD(B,E,t) associates a time value with each row of B and
+%  S = tflab(B,E,t) associates a time value with each row of B and
 %  E. Use t = [] to use the default of t = [1:size(B,1)]'.
 %
-%  S = transferfnFD(B,E,t,options) uses options returned by the function
-%  transferfnFD_options.
+%  S = tflab(B,E,t,options) uses options returned by the function
+%  tflab_options.
 %
 %  See also TRANSFERFNFD_OPTIONS, TRANSFERFNFD_TEST, TRANSFERFNFD_DEMO.
 
@@ -57,14 +57,14 @@ if nargin == 2
 end
 
 if nargin == 3
-    % transferfnFD(B,E,t) or
-    % transferfnFD(B,E,opts)
+    % tflab(B,E,t) or
+    % tflab(B,E,opts)
     if isstruct(t)
-        % transferfnFD(B,E,opts)
+        % tflab(B,E,opts)
         opts = t;
         t = [];
     else
-        % transferfnFD(B,E,t)        
+        % tflab(B,E,t)        
         opts = [];
         assert(size(t,1) == size(B,1),...
                 'Required: size(t,1) == size(B,1) == size(E,1)');    
@@ -72,13 +72,13 @@ if nargin == 3
 end
 
 if nargin < 3 || isempty(opts)
-    % transferfnFD(B,E) or
-    % transferfnFD(B,E,t)
+    % tflab(B,E) or
+    % tflab(B,E,t)
     % Use default options.
-    opts = transferfnFD_options(1);
-    if opts.transferfnFD.loglevel
+    opts = tflab_options(1);
+    if opts.tflab.loglevel
         logmsg(['No options given. '...
-                 'Using options returned by transferfnFD_options(1)\n']);
+                 'Using options returned by tflab_options(1)\n']);
     end
 end
 
@@ -121,19 +121,19 @@ if iscell(B)
     S.Segment = struct();
     
     for c = 1:length(B) % Number of segments
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg(...
                 'Starting computation for disconnected segment c = %d of %d\n',...
                 c,length(B));
         end
         % Compute Z for each segment in each interval
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             fprintf('%s\n',repmat('-',1,80));
-            logmsg('Calling transferfnFD(B{%d},E{%d},...)\n',c,c);
+            logmsg('Calling tflab(B{%d},E{%d},...)\n',c,c);
         end
         
-        opts.transferfnFD.no_stack_regression = 1;
-        Sc = transferfnFD(B{c},E{c},t{c},opts);
+        opts.tflab.no_stack_regression = 1;
+        Sc = tflab(B{c},E{c},t{c},opts);
         
         if ~isfield(Sc,'Segment')
             % If an interval had only one segment
@@ -169,13 +169,13 @@ if iscell(B)
             Sc.Out = E{c};
             Sc.Time = t{c};
 
-            if opts.transferfnFD.loglevel > 0
+            if opts.tflab.loglevel > 0
                 logmsg(...
                     ['Computing metrics for B{%d} and E{%d} using stack '...
                      'regression transfer function.\n'],c,c);
             end
-            Sc = transferfnFD_metrics(Sc,opts);
-            if opts.transferfnFD.loglevel > 0
+            Sc = tflab_metrics(Sc,opts);
+            if opts.tflab.loglevel > 0
                 logmsg(...
                     ['Finished computing metrics for B{%d} and E{%d} using '...
                      'stack regression transfer function.\n'],c,c);
@@ -228,11 +228,11 @@ if size(E,2) > 1
     % Ey = ZyxBx + ZyyBy + ...
     % ...
     for j = 1:size(E,2)
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             fprintf('%s\n',repmat('-',1,80));
-            logmsg('Calling transferfnFD(B,E(:,%d),...)\n',j);
+            logmsg('Calling tflab(B,E(:,%d),...)\n',j);
         end
-        Sc = transferfnFD(B,E(:,j),t,opts);
+        Sc = tflab(B,E(:,j),t,opts);
         if j == 1
             S = Sc;
         else
@@ -246,11 +246,11 @@ end
 % Main code start. Given Nt x Nin B and Ntx1 E, compute TF, where Nt is the
 % number of timesteps and Nin is the number of inputs.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if opts.transferfnFD.loglevel > 0
+if opts.tflab.loglevel > 0
     logmsg( ['Computing transfer function for input/output '...
                     'sizes [%d,%d]/[%d,1]\n'],...
                      size(B),size(E,1));
-    if opts.transferfnFD.loglevel > 1
+    if opts.tflab.loglevel > 1
         logmsg( 'Options:\n');
         printstruct(opts);
     end
@@ -264,7 +264,7 @@ if isnan(opts.td.window.width)
     % Set default window width and shift equal to the number of time points.
     opts.td.window.width = size(B,1);
     opts.td.window.shift = size(B,1);
-    S = transferfnFD(B,E,t,opts);
+    S = tflab(B,E,t,opts);
     return
 end
 
@@ -301,16 +301,16 @@ optsx.td.window.shift = NaN;
 % Compute TF for each segment
 for s = 1:length(a)
     Iseg = a(s):b(s);
-    if opts.transferfnFD.loglevel > 0
+    if opts.tflab.loglevel > 0
         logmsg(...
                 'Starting computation for segment %d of %d\n',...
                 s,length(a));
     end
     % Ss = Segment struct.
-    %Ss = transferfnFD(B(Iseg,:),E(Iseg,:),t(Iseg),optsx);
+    %Ss = tflab(B(Iseg,:),E(Iseg,:),t(Iseg),optsx);
     Ss = main(B(Iseg,:),E(Iseg,:),t(Iseg),optsx);
     Ss.IndexRange = [a(s),b(s)]';
-    if opts.transferfnFD.loglevel > 0 ...
+    if opts.tflab.loglevel > 0 ...
                     && ~isempty(opts.fd.stack.average.function)
         % Summarize results for each column of E
         for j = 1:size(E,2)
@@ -361,10 +361,10 @@ if ~isempty(opts.fd.stack.average.function)
 else
     % TF in a given frequency band is computed by doing regression on
     % DFTs in that frequency band for all segments.
-    if isfield(opts.transferfnFD, 'no_stack_regression')
-        if opts.transferfnFD.loglevel > 0
+    if isfield(opts.tflab, 'no_stack_regression')
+        if opts.tflab.loglevel > 0
             logmsg(...
-                ['opts.transferfnFD.no_stack_regression set. '...
+                ['opts.tflab.no_stack_regression set. '...
                  'Not doing stack regression (yet).\n']);
         end
         S.Segment = S;
@@ -394,7 +394,7 @@ else
         S.Time = t;
 
         logmsg('Computing stack regression metrics.\n');
-        S = transferfnFD_metrics(S,opts);
+        S = tflab_metrics(S,opts);
     end
 end
 
@@ -419,7 +419,7 @@ function S = main(B, E, t, opts)
     % TODO?: Allow TD window and prewhiten to not be same for input and output
     % and then compute corrected Z.
     if ~isempty(opts.td.window.function)
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Windowing input and output using %s\n',opts.td.window.functionstr);
         end
         [B,~] = opts.td.window.function(B,opts.td.window.functionargs{:});
@@ -428,14 +428,14 @@ function S = main(B, E, t, opts)
         S.Window.In = B;
         S.Window.Out = E;    
     else
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg( ...
                 'No time domain window applied b/c no function given.\n');
         end
     end
 
     if ~isempty(opts.td.prewhiten.function)
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Prewhitening input and output using %s\n',opts.td.prewhiten.functionstr);
         end
         S.Prewhiten = struct();
@@ -457,7 +457,7 @@ function S = main(B, E, t, opts)
     end
 
     if ~isnan(opts.td.zeropad)
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Zero padding input and output with %d zeros\n',opts.td.zeropad);
         end
         E = [E;zeros(opts.td.zeropad,1)];
@@ -469,7 +469,7 @@ function S = main(B, E, t, opts)
 
     [~,f] = fftfreq(size(B,1)); % Unique DFT frequencies
 
-    if opts.transferfnFD.loglevel > 0
+    if opts.tflab.loglevel > 0
         logmsg(['Calling %s() using additional arguments given in \n'...
                 'opts.fd.evalfreq.functionargs\n'],...
                 func2str(opts.fd.evalfreq.function));
@@ -479,7 +479,7 @@ function S = main(B, E, t, opts)
     S.fe = fe';
 
 
-    if opts.transferfnFD.loglevel > 0
+    if opts.tflab.loglevel > 0
         logmsg( 'Computing raw DFTs of input and output.\n');
     end
 
@@ -497,8 +497,8 @@ function S = main(B, E, t, opts)
     ftB = ftB(1:Np,:);
     ftE = ftE(1:Np,:);
 
-    if opts.transferfnFD.loglevel > 0
-        if isempty(opts.fd.stack.average.function) || ~strcmp(opts.fd.program.name,'transferfnFD')
+    if opts.tflab.loglevel > 0
+        if isempty(opts.fd.stack.average.function) || ~strcmp(opts.fd.program.name,'tflab')
             logmsg(...
                 'Starting freq band calcs for %d frequencies.\n',...
                 length(Ic)-1);
@@ -516,7 +516,7 @@ function S = main(B, E, t, opts)
     end
 
     winfn = opts.fd.window.function;
-    if opts.fd.window.loglevel && strcmp(opts.fd.program.name,'transferfnFD')
+    if opts.fd.window.loglevel && strcmp(opts.fd.program.name,'tflab')
         logmsg( 'Using FD window function %s\n',func2str(winfn));
     end
 
@@ -524,7 +524,7 @@ function S = main(B, E, t, opts)
 
         if opts.fd.regression.loglevel ...
                 && ~isempty(opts.fd.stack.average.function) ...
-                && strcmp(opts.fd.program.name,'transferfnFD')
+                && strcmp(opts.fd.program.name,'tflab')
             logmsg(...
                     ['Starting freq band and regression '...
                      'calcs on frequency %d of %d\n'],...
@@ -556,7 +556,7 @@ function S = main(B, E, t, opts)
         % If not computing Z based on stack averages, don't need to do
         % regression as it is done later.
         if ~isempty(opts.fd.stack.average.function) ...
-                && strcmp(opts.fd.program.name,'transferfnFD')
+                && strcmp(opts.fd.program.name,'tflab')
             %args = opts.fd.regression.functionargs;    
             regressargs = opts.fd.regression.functionargs;
             regressfunc = opts.fd.regression.function;
@@ -614,10 +614,10 @@ function S = main(B, E, t, opts)
 
     end
 
-    if opts.transferfnFD.loglevel > 0
+    if opts.tflab.loglevel > 0
         if opts.fd.regression.loglevel ...
                 && ~isempty(opts.fd.stack.average.function) ...
-                && strcmp(opts.fd.program.name,'transferfnFD')
+                && strcmp(opts.fd.program.name,'tflab')
             logmsg(...
                 ['Finished freq band and regression '...
                  'calculations for %d eval. freqs.\n'],...
@@ -640,37 +640,37 @@ function S = main(B, E, t, opts)
 
         S.Z = Z;
 
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Computing Phi\n');
         end
         S.Phi = atan2(imag(S.Z),real(S.Z));
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Computed Phi\n');
         end
 
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Interpolating Z\n');
         end
         [Zi,~,Zir,fir] = zinterp(S.fe,S.Z,size(S.In,1));
         %S.Zi = Zir;
         %S.fi = fir;
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Interpolated Z\n');
         end
 
-        if opts.transferfnFD.loglevel > 0    
+        if opts.tflab.loglevel > 0    
             logmsg('Computing H\n');
         end
         [S.H,S.tH] = z2h(Zi);
-        if opts.transferfnFD.loglevel > 0    
+        if opts.tflab.loglevel > 0    
             logmsg('Computed H\n');
         end
 
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Computing metrics\n');
         end
-        S = transferfnFD_metrics(S,opts);
-        if opts.transferfnFD.loglevel > 0
+        S = tflab_metrics(S,opts);
+        if opts.tflab.loglevel > 0
             logmsg('Computed metrics\n');
             logmsg('PE/CC/MSE = %.2f/%.2f/%.3f\n',...
                      S.Metrics.PE,...
@@ -680,7 +680,7 @@ function S = main(B, E, t, opts)
 
     end
 end % main()
-end % transferfnFD()
+end % tflab()
 
 function S = stackAverage(S,opts)
 
@@ -695,15 +695,15 @@ function S = stackAverage(S,opts)
             tmp.Out = S.Out{i};
             tmp.Z = S.Z;
             tmp.fe = S.fe;
-            tmp = transferfnFD_metrics(tmp,opts);
+            tmp = tflab_metrics(tmp,opts);
             S.Metrics{i} = tmp.Metrics;
         end
     else
-        if opts.transferfnFD.loglevel > 0
+        if opts.tflab.loglevel > 0
             logmsg('Computing metrics using stack averaged Z.\n');
         end        
-        S = transferfnFD_metrics(S,opts);
-        if opts.transferfnFD.loglevel > 0
+        S = tflab_metrics(S,opts);
+        if opts.tflab.loglevel > 0
             logmsg('Computed metrics using stack averaged Z.\n');
         end
     end
@@ -718,7 +718,7 @@ function S = stackRegression(S,opts)
     % column of S.DFT.In(i,1,s) contains the DFTs for the respective column
     % in S.In for freq. band i and segment s.
 
-    if opts.transferfnFD.loglevel > 0
+    if opts.tflab.loglevel > 0
         logmsg('Starting stack regression.\n');
     end
 
@@ -728,7 +728,7 @@ function S = stackRegression(S,opts)
     for i = 1:size(S.Segment.DFT.In, 1) % Eval frequencies
         for c = 1:size(S.Segment.DFT.Out, 2) % Columns of E
 
-            if opts.transferfnFD.loglevel > 1
+            if opts.tflab.loglevel > 1
                 logmsg('Performing stack regression for eval freq. %d and on column %d of input.\n', i, c);
             end
             
@@ -773,57 +773,57 @@ function S = stackRegression(S,opts)
             else
                 Zc = [Zc,z.'];
             end
-            if opts.transferfnFD.loglevel > 1
+            if opts.tflab.loglevel > 1
                 logmsg('Performed stack regression for eval freq. %d and on column %d of input.\n', i, c);
             end            
         end
         Z(i,:) = Zc;
     end
 
-    if opts.transferfnFD.loglevel > 0
+    if opts.tflab.loglevel > 0
         logmsg('Finished stack regression.\n');
     end
     
     S.fe = S.Segment.fe;
     S.Z = Z;    
 
-    if opts.transferfnFD.loglevel > 1
+    if opts.tflab.loglevel > 1
         logmsg('Computing Phi\n');
     end
     S.Phi = atan2(imag(Z),real(Z));
-    if opts.transferfnFD.loglevel > 1
+    if opts.tflab.loglevel > 1
         logmsg('Finished computing Phi\n');
     end
 
-    if opts.transferfnFD.loglevel > 1
+    if opts.tflab.loglevel > 1
         logmsg('Interpolating Z\n');    
     end
     [Zi,~,Zir,fir] = zinterp(S.fe,S.Z,size(S.Segment.In,1));
     %S.Zi = Zir;
     %S.fi = fir;
-    if opts.transferfnFD.loglevel > 1
+    if opts.tflab.loglevel > 1
         logmsg('Finished interpolating Z\n');
     end
 
-    if opts.transferfnFD.loglevel > 1
+    if opts.tflab.loglevel > 1
         logmsg('Computing H\n');
     end
     [S.H,S.tH] = z2h(Zi);
-    if opts.transferfnFD.loglevel > 1
+    if opts.tflab.loglevel > 1
         logmsg('Finished computing H\n');
     end
 
-    if opts.transferfnFD.loglevel > 0
+    if opts.tflab.loglevel > 0
         logmsg(...
                 ['Computing metrics on each segment using stack regression '...
                  'transfer function.\n']);
     end
     
     S.Segment.Z = Z;
-    S.Segment = transferfnFD_metrics(S.Segment,opts);
+    S.Segment = tflab_metrics(S.Segment,opts);
     S.Segment = rmfield(S.Segment,'Z');
 
-    if opts.transferfnFD.loglevel > 0
+    if opts.tflab.loglevel > 0
         for c = 1:size(S.Segment.Metrics.PE, 2)
             for s = 1:size(S.Segment.Metrics.PE, 3)
                 logmsg(...
@@ -842,7 +842,7 @@ function S = stackRegression(S,opts)
 end
 
 function S = combineStructs(S1,S2,dim)
-%combineStructs Combine transferfnFD structures
+%combineStructs Combine tflab structures
 
     S = struct();    
     fns = fieldnames(S1);

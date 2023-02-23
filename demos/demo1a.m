@@ -12,11 +12,11 @@ wf = 0;    % 2*wf + 1 is number of points for regression.
 Sa_opts = struct('Nt',Nt,'Z',Z,'k',k,'dB',0,'dE',0);
 Sa = demo_signals('simple',Sa_opts);
 
-opts1 = transferfnFD_options(0);
-    opts1.transferfnFD.loglevel = 1;
+opts1 = tflab_options(0);
+    opts1.tflab.loglevel = 1;
     opts1.fd.evalfreq.functionargs = {[1,wf], 'linear'};
 
-S1 = transferfnFD(Sa.In,Sa.Out,opts1);
+S1 = tflab(Sa.In,Sa.Out,opts1);
 
 S1.Options.description = 'Estimated';
 Sa.Options.description = 'Actual';
@@ -55,8 +55,8 @@ if 0
     Z = S1.Z(Ikeep);
     fprintf('Nt = %f; var(Z) = %f\n\n',Nt,var(Z(2:end-1)));
     
-    opts1 = transferfnFD_options(0);
-        opts1.transferfnFD.loglevel = 0;
+    opts1 = tflab_options(0);
+        opts1.tflab.loglevel = 0;
         opts1.fd.evalfreq.functionargs = {[1,0], 'linear'};
 
     for Nt = [10^2,10^3,10^4,10^5] % [2^10,2^12,2^14]
@@ -66,7 +66,7 @@ if 0
         Sa_opts = struct('Nt',Nt,'Z',1+1j,'k',k,'dB',0,'dE',0);
         Sa = demo_signals('simple',Sa_opts);
 
-        S1 = transferfnFD(Sa.In,Sa.Out,opts1);
+        S1 = tflab(Sa.In,Sa.Out,opts1);
         Ikeep = 1:size(S1.Z,1);
         Ikeep = Ikeep(Ikeep ~= k+1);
         Z = S1.Z(Ikeep);

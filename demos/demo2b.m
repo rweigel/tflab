@@ -12,22 +12,22 @@ wf = 0;
 Sx_opts = struct('Nt',Nt,'Z',1+1j,'f',f,'dB',0.0,'dE',0.0);
 Sx = demo_signals('simple',Sx_opts);
 
-opts1 = transferfnFD_options(0);
-    opts1.transferfnFD.loglevel = 1;
+opts1 = tflab_options(0);
+    opts1.tflab.loglevel = 1;
     opts1.fd.evalfreq.functionargs = {[1,wf], 'linear'};
     opts1.td.window.function = @tdwindow;
     opts1.td.window.functionstr = 'Rectangle';
     opts1.td.window.functionargs = {@rectwin};
-S1 = transferfnFD(Sx.In,Sx.Out,opts1);
+S1 = tflab(Sx.In,Sx.Out,opts1);
 S1.Options.description = 'Rectangle';
 
-opts2 = transferfnFD_options(0);
-    opts2.transferfnFD.loglevel = 1;
+opts2 = tflab_options(0);
+    opts2.tflab.loglevel = 1;
     opts2.fd.evalfreq.functionargs = {[1,wf], 'linear'};
     opts2.td.window.function = @tdwindow;
     opts2.td.window.functionstr = 'Parzen';
     opts2.td.window.functionargs = {@dpss, 1, 1};
-S2 = transferfnFD(Sx.In,Sx.Out,opts2);
+S2 = tflab(Sx.In,Sx.Out,opts2);
 S2.Options.description = 'Parzen';
 
 % Use same variable labels from S1 for Sa

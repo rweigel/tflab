@@ -37,8 +37,8 @@ A = struct();
 Sx_opts = struct('N',N,'n',n,'alpha',alpha,'A',A);
 Sx = demo_signals('powerlaw',Sx_opts);
 
-opts = transferfnFD_options(0);
-  opts.transferfnFD.loglevel = 0;
+opts = tflab_options(0);
+  opts.tflab.loglevel = 0;
   opts.fd.program.name = 'lemimt';
   opts.fd.program.options = ''; % Command line options, e.g., '-r -c'
   opts.info.inunit= 'nT';
@@ -54,8 +54,8 @@ B(:,3) = randn(size(B,1),1);
 E(:,1) = 0.5*B(:,1) + 0.5*B(:,2);
 E(:,2) = 0.5*B(:,1) + 0.5*B(:,2);
 
-S = transferfnFD_lemimt(B,E,opts);
-S = transferfnFD_metrics(S,opts);
+S = tflab_lemimt(B,E,opts);
+S = tflab_metrics(S,opts);
 
 figure(1);clf;
     tsplot(S,struct('type','raw'));

@@ -28,10 +28,10 @@ B = B/max(B);
 E = E/max(E);
 
 % Get default options
-opts = transferfnFD_options(0); 
+opts = tflab_options(0); 
 
 % Compute estimate of Z
-S1 = transferfnFD(B,E,opts);
+S1 = tflab(B,E,opts);
 
 set(0,'DefaultFigureWindowStyle','docked')
 fn = 1;

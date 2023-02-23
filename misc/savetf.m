@@ -1,7 +1,7 @@
 function savetf(S,fname)
-%SAVETF - Save output of transferfnFD.
+%SAVETF - Save output of tflab.
 %
-%   SAVETF(S,filename) saves the output of of transferfnFD to a MATLAB
+%   SAVETF(S,filename) saves the output of of tflab to a MATLAB
 %   binary file named filename.
 %
 %   Use S = load(filename) to recover state.

@@ -22,8 +22,8 @@ for n = N
     B = randn(n,1);
     E = B;
 
-    opts = transferfnFD_options(0);
-    S = transferfnFD(B,E,opts);
+    opts = tflab_options(0);
+    S = tflab(B,E,opts);
 
     % TODO: Justify 10*eps.
     assert(1-S.Metrics.PE < 10*eps);
@@ -64,8 +64,8 @@ else
 end
 A(1) = abs(A(1));
 
-opts = transferfnFD_options(0); 
-S = transferfnFD(B,E,opts); % Estimate transfer function
+opts = tflab_options(0); 
+S = tflab(B,E,opts); % Estimate transfer function
 
 % TODO: Justify 1e-12.
 assert(max( real(S.Z) - real(A) ) < 1e-12 );
@@ -86,8 +86,8 @@ for i = 1:3
     H(1) = 1;
     S0 = demo_signals('fromH/filter()', struct('H',H,'N',100));
 
-    opts = transferfnFD_options(0);
-    S1 = transferfnFD(S0.In, S0.Out, opts);
+    opts = tflab_options(0);
+    S1 = tflab(S0.In, S0.Out, opts);
     
     % Computed H should match used H and be zero for lags longer than
     % used H.
@@ -113,14 +113,14 @@ logmsg(['Basic calculation; Test 2.1. - '...
 B = randn(n,1);
 E = B;
 
-opts = transferfnFD_options(0);
+opts = tflab_options(0);
 
 % Use default regression (uses complex matrices).
-S1 = transferfnFD(B,E,opts);
+S1 = tflab(B,E,opts);
 
 % Use regress() with only real matrices.
 opts.fd.regression.functionargs = {'regress-real'};
-S2 = transferfnFD(B,E,opts);
+S2 = tflab(B,E,opts);
 
 % TODO: Justify 4*eps.
 assert(all(abs(S1.Z(:) - S2.Z(:)) <= 4*eps),'');
@@ -138,7 +138,7 @@ for n = N
     B = randn(n,1);
     E = B;
 
-    opts = transferfnFD_options(0);
+    opts = tflab_options(0);
 
     opts.fd.evalfreq.function = @evalfreq;
     % Can't use 1 DFT point per freq. band because robust regression will
@@ -147,13 +147,13 @@ for n = N
     opts.fd.evalfreq.functionargs = {[1,1],'linear'};
 
     % Uses default regression function.
-    S1 = transferfnFD(B,E,opts);
+    S1 = tflab(B,E,opts);
 
     opts.fd.regression.function = @regress_robustfit_tflab;
     opts.fd.regression.functionargs = {};
     opts.fd.regression.functionstr = ...
                             'Robust regression using regress_robustfit_tflab() function';
-    S2 = transferfnFD(B,E,opts);
+    S2 = tflab(B,E,opts);
 
     assert(S1.Metrics.PE - S2.Metrics.PE <= 2*eps);
     assert(S1.Metrics.CC - S2.Metrics.CC <= 2*eps);
@@ -163,7 +163,7 @@ for n = N
     opts.fd.regression.functionargs = {[],[],'off'};
     opts.fd.regression.functionstr = ...
                             'Robust regression using regress_robustfit_matlab() function';
-    S3 = transferfnFD(B,E,opts);
+    S3 = tflab(B,E,opts);
 
     assert(S1.Metrics.PE - S3.Metrics.PE <= 2*eps);
     assert(S1.Metrics.CC - S3.Metrics.CC <= 2*eps);
@@ -180,14 +180,14 @@ N = 1000;
 B = randn(N,2);
 E = B;
 
-opts = transferfnFD_options(1);
+opts = tflab_options(1);
 opts.td.window.width = N;
 opts.td.window.shift = N;
 
 % 1 input, one or two outputs
-S1 = transferfnFD(B(:,1),E(:,1),opts);
+S1 = tflab(B(:,1),E(:,1),opts);
 fprintf('---\n');
-S2 = transferfnFD(B(:,1),[E(:,1),E(:,1)],opts);
+S2 = tflab(B(:,1),[E(:,1),E(:,1)],opts);
 
 assert(all(S1.Metrics.Predicted == S2.Metrics.Predicted(:,1)));
 assert(all(S1.Metrics.Predicted == S2.Metrics.Predicted(:,2)));
@@ -198,11 +198,11 @@ fprintf('\n');
 logmsg('API I/O Test; Test 3.2. - Two Outputs, Two Inputs\n');
 
 % 2 inputs, one or two outputs
-S1 = transferfnFD(B,E(:,1),opts);
+S1 = tflab(B,E(:,1),opts);
 fprintf('---\n');
-S2 = transferfnFD(B,E(:,2),opts);
+S2 = tflab(B,E(:,2),opts);
 fprintf('---\n');
-S3 = transferfnFD(B,E,opts);
+S3 = tflab(B,E,opts);
 
 assert(all(S1.Metrics.Predicted == S3.Metrics.Predicted(:,1)));
 assert(all(S2.Metrics.Predicted == S3.Metrics.Predicted(:,2)));
@@ -218,13 +218,13 @@ N = 1000;
 B = randn(N,1);
 E = B;
 
-opts = transferfnFD_options(1);
+opts = tflab_options(1);
 opts.td.window.width = N;
 opts.td.window.shift = N;
 
-S1 = transferfnFD(B,E,opts);
+S1 = tflab(B,E,opts);
 fprintf('---\n');
-S2 = transferfnFD([B;B],[E;E],opts);
+S2 = tflab([B;B],[E;E],opts);
 
 % Results for two segments in S2 should be same a single segment in S1.
 assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,1)));
@@ -242,13 +242,13 @@ N = 1000;
 B = randn(N,2);
 E = B;
 
-opts = transferfnFD_options(1);
+opts = tflab_options(1);
 opts.td.window.width = N;
 opts.td.window.shift = N;
 
-S1 = transferfnFD(B(:,1),E(:,1),opts);
+S1 = tflab(B(:,1),E(:,1),opts);
 fprintf('---\n');
-S2 = transferfnFD([B(:,1);B(:,1)],[E;E],opts);
+S2 = tflab([B(:,1);B(:,1)],[E;E],opts);
 
 assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,1)));
 assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,2)));
@@ -257,8 +257,8 @@ fprintf('\n');
 %%%
 logmsg('API Segmenting; Test 3.5.\n');
 
-S3 = transferfnFD(B,E,opts);
-S4 = transferfnFD([B;B],[E;E],opts);
+S3 = tflab(B,E,opts);
+S4 = tflab([B;B],[E;E],opts);
 assert(all(S3.Metrics.Predicted(:,1) == S4.Segment.Metrics.Predicted(:,1,1)));
 assert(all(S3.Metrics.Predicted(:,2) == S4.Segment.Metrics.Predicted(:,2,1)));
 assert(all(S3.Metrics.Predicted(:,1) == S4.Segment.Metrics.Predicted(:,1,2)));
@@ -279,13 +279,13 @@ N = 1000;
 B = randn(N,1);
 E = B;
 
-opts = transferfnFD_options(1);
+opts = tflab_options(1);
 opts.td.window.width = N;
 opts.td.window.shift = N;
 
-S1 = transferfnFD([B;B],[E;E],opts);
+S1 = tflab([B;B],[E;E],opts);
 fprintf('---\n');
-S2 = transferfnFD({B;B},{E;E},opts);
+S2 = tflab({B;B},{E;E},opts);
 assert(all(S1.Z(:) == S2.Z(:)));
 assert(all(S1.Segment.Metrics.Predicted(:) == S2.Segment.Metrics.Predicted(:)))
 
@@ -294,11 +294,11 @@ fprintf('\n');
 %%%
 logmsg('API Intervals; Test 3.7.\n');
 
-S1 = transferfnFD(B,E,opts);
+S1 = tflab(B,E,opts);
 fprintf('---\n');
-S2 = transferfnFD({B,[B;B]},{E,[E;E]},opts);
+S2 = tflab({B,[B;B]},{E,[E;E]},opts);
 fprintf('---\n');
-S3 = transferfnFD({B,[B;B]},{0.5*E,[1.0*E;1.5*E]},opts);
+S3 = tflab({B,[B;B]},{0.5*E,[1.0*E;1.5*E]},opts);
 
 assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,:,1)))
 assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,:,2)))
@@ -321,16 +321,16 @@ E = B;
 
 % 1 input/1 output. When using 1 segment, non-stack average should be same
 % as stack average result
-opts = transferfnFD_options(1);
+opts = tflab_options(1);
 % The following two lines are not needed as this is default for behavior
-% when transferfnFD_options(1)
+% when tflab_options(1)
 opts.td.window.width = N; 
 opts.td.window.shift = N; 
 
-S1 = transferfnFD(B(:,1),E(:,1),opts);
+S1 = tflab(B(:,1),E(:,1),opts);
 fprintf('---\n');
 opts.fd.stack.average.function = ''; % Don't compute stack average.
-S2 = transferfnFD(B(:,1),E(:,1),opts);
+S2 = tflab(B(:,1),E(:,1),opts);
 assert(all(S1.Z(:) == S2.Z(:)))
 
 fprintf('\n');
@@ -339,16 +339,16 @@ logmsg('API Stack Regression; Test 3.9.\n');
 
 % 2 inputs/2 outputs. When using 1 segment, stack regression should be
 % same as stack average result
-opts = transferfnFD_options(1);
+opts = tflab_options(1);
 % The following two lines are not needed as this is default for behavior 
-% when transferfnFD_options(1)
+% when tflab_options(1)
 opts.td.window.width = N;
 opts.td.window.shift = N;
 
-S1 = transferfnFD(B,E,opts);
+S1 = tflab(B,E,opts);
 fprintf('---\n');
 opts.fd.stack.average.function = ''; % Don't compute stack average.
-S2 = transferfnFD(B,E,opts);
+S2 = tflab(B,E,opts);
 assert(all(S1.Z(:) == S2.Z(:)))
 
 fprintf('\n');
@@ -366,14 +366,14 @@ N = 1000;
 B = randn(N,1);
 E = B;
 
-opts = transferfnFD_options(1);
+opts = tflab_options(1);
 opts.td.window.width = N; % Will result in two intervals.
 opts.td.window.shift = N; % Will result in two intervals.
 
-S3 = transferfnFD([B;B],[E;E],opts);
+S3 = tflab([B;B],[E;E],opts);
 fprintf('---\n');
 opts.fd.stack.average.function = '';
-S4 = transferfnFD([B;B],[E;E],opts); % window.width and window.shift ignored.
+S4 = tflab([B;B],[E;E],opts); % window.width and window.shift ignored.
 assert(all(abs(S3.Z(:) - S4.Z(:)) < 10*eps))
 
 fprintf('\n');
@@ -382,19 +382,19 @@ logmsg('API Stack Regression; Test 3.11.\n');
 
 % Verify that get same answer when continuous and discontinuous segments
 % are used. Expecet identical results.
-opts = transferfnFD_options(1);
+opts = tflab_options(1);
 opts.td.window.width = N;
 opts.td.window.shift = N;
 opts.fd.stack.average.function = '';
 
-S3 = transferfnFD([B;B],[E;E],opts);
+S3 = tflab([B;B],[E;E],opts);
 fprintf('---\n');
 
 % Each element of cell array is treated as having gap in time stamps.
-S4 = transferfnFD({B,B},{E,E},opts);
+S4 = tflab({B,B},{E,E},opts);
 assert(all(S3.Z(:) == S4.Z(:)))
 
 %assert(all(S1.Z == S2.Z));
 fprintf('\n');
 
-logmsg('transferfnFD_test.m: All tests passed.\n');
+logmsg('tflab_test.m: All tests passed.\n');
