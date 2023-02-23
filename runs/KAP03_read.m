@@ -1,7 +1,7 @@
 function [B,E,t,matfile,Header] = KAP03_read(id)
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 % Dir of data file
 datapath = fullfile(scriptdir(),'data','KAP03'); 

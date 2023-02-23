@@ -1,7 +1,7 @@
 clear
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 %% Demo 1
 % Input signal a 1-D time series that has flat spectrum and random phase.

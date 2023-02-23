@@ -2,7 +2,7 @@
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 Nt = 100;  % Number of time samples
 k  = 10;   % Freq. index of non-zero Z

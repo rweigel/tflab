@@ -8,7 +8,7 @@
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 lemimt_dir = '~/git/lemimt';
 if ~exist(lemimt_dir,'dir')

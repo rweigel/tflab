@@ -1,4 +1,4 @@
-function setpaths()
+function tflab_setpaths()
 %SETPATHS - Set all paths for tflab
 %
 %   SETPATHS() Sets all paths

@@ -1,7 +1,7 @@
 clear;
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 % Get input/output data
 [B,E,t,infile,outfile] = Middelpos_clean(); 

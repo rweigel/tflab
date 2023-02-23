@@ -49,7 +49,7 @@ function S = tflab(B,E,t,opts)
 %  See also TRANSFERFNFD_OPTIONS, TRANSFERFNFD_TEST, TRANSFERFNFD_DEMO.
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 if nargin == 2
     t = [];

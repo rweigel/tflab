@@ -10,7 +10,7 @@ function S = demo_signals(stype, opts)
 %  S = DEMO_SIGNALS('fromZ/filter()', opts)
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 assert(nargin == 2,'Two inputs are required');
 

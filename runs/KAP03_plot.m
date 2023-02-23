@@ -1,6 +1,6 @@
 %%
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 siteid = 'KAP103';
 daterange = '20031108-20031205';

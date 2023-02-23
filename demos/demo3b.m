@@ -2,7 +2,7 @@
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 N = 1000; % Number of frequencies
 n = 1000; % Number of data points

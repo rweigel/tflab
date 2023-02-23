@@ -1,7 +1,7 @@
 clear;
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 stationid = 'KAP103';
 chainid = 'KAP03';

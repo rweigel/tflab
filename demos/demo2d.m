@@ -2,7 +2,7 @@
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 Nt = 100;
 f  = 25.5/Nt;

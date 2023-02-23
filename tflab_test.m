@@ -5,7 +5,7 @@ clear;
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 close all;
 set(0,'defaultFigureWindowStyle','docked');
@@ -20,6 +20,7 @@ logmsg(['Basic calculation; Test 1.1 - '...
 N = [99,100];
 for n = N
     B = randn(n,1);
+    B = B - mean(B);
     E = B;
 
     opts = tflab_options(0);
@@ -84,7 +85,9 @@ logmsg(['Basic calculation; Test 1.3. - '...
 for i = 1:3     
     H = zeros(i+1,1);
     H(1) = 1;
-    S0 = demo_signals('fromH/filter()', struct('H',H,'N',100));
+    S0 = demo_signals('fromH/filter()', struct('H', H, 'N', 100));
+    S0.In = S0.In - mean(S0.In);
+    S0.Out = S0.Out - mean(S0.Out);
 
     opts = tflab_options(0);
     S1 = tflab(S0.In, S0.Out, opts);

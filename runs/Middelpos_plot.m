@@ -1,6 +1,6 @@
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 %% Load data if not already in memory.
 daterange = '20120712-20121031';

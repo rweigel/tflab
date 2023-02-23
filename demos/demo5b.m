@@ -3,7 +3,7 @@
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 N = 11;     % Number of input/output points
 H = [0,1]'; % Impulse reponse filter E(f) = H(f)*B(f)

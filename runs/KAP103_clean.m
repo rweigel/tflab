@@ -1,7 +1,7 @@
 function [B,E,t,infile,outfile,timedelta] = KAP103_clean()
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
-setpaths();
+tflab_setpaths();
 
 outfile = fullfile(scriptdir(),'/data/KAP03/KAP103_cleaned.mat');
 
