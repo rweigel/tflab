@@ -154,7 +154,8 @@ if strcmp(stype,'fromH/filter()')
     E = E(length(H)+1:end);
 end
 
-if tn == 1 % Low pass filter impulse responses
+if strcmp(stype,'fromlowpassH')
+    % Low pass filter impulse responses
 
     ndim = opts;
     

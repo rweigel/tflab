@@ -137,9 +137,12 @@ opts.fd.interpolation = struct();
                            'interp1args',{{'linear',0}})};
     
 opts.fd.regression = struct();
-    opts.fd.regression.function = @ols_regress;
-    opts.fd.regression.functionstr = 'OLS using regress() function';
-    opts.fd.regression.functionargs = {struct('realvalued',0,'loglevel',0)};
+    opts.fd.regression.function = @regress_ols;
+    opts.fd.regression.functionstr = 'OLS using backslash function';
+    opts.fd.regression.functionargs = {'backslash'};
+    %opts.fd.regression.function = @ols_regress;    
+    %opts.fd.regression.functionstr = 'OLS using regress() function';
+    %opts.fd.regression.functionargs = {struct('realvalued',0,'loglevel',0)};
     opts.fd.regression.loglevel = 0;
 
     %opts.fd.regression.function = @ols_analytic;

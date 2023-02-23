@@ -557,7 +557,9 @@ function S = main(B, E, t, opts)
         % regression as it is done later.
         if ~isempty(opts.fd.stack.average.function) ...
                 && strcmp(opts.fd.program.name,'transferfnFD')
-            args = opts.fd.regression.functionargs;    
+            %args = opts.fd.regression.functionargs;    
+            regressargs = opts.fd.regression.functionargs;
+            regressfunc = opts.fd.regression.function;
         
             lastwarn('');
 
@@ -591,8 +593,11 @@ function S = main(B, E, t, opts)
                 end
             end
 
-            [Z(j,:),Weights,Residuals] = opts.fd.regression.function(...
-                                    Wr.*ftB(r,:),W.*ftE(r,1),args{:});
+            %[Z(j,:),Weights,Residuals] = ...
+            %                opts.fd.regression.function(...
+            %                      Wr.*ftB(r,:),W.*ftE(r,1),args{:});
+            [Z(j,:),Residuals,Weights] = ...
+                       regressfunc(W.*ftE(r,1),Wr.*ftB(r,:),regressargs{:});
 
             if ~isempty(lastwarn)
                 logmsg('Above is for eval. freq. #%d; fe = %f; Te = %f\n', ...
@@ -716,6 +721,9 @@ function S = stackRegression(S,opts)
     if opts.transferfnFD.loglevel > 0
         logmsg('Starting stack regression.\n');
     end
+
+    regressargs = opts.fd.regression.functionargs;
+    regressfunc = opts.fd.regression.function;
     
     for i = 1:size(S.Segment.DFT.In, 1) % Eval frequencies
         for c = 1:size(S.Segment.DFT.Out, 2) % Columns of E
@@ -733,8 +741,6 @@ function S = stackRegression(S,opts)
             tmp = squeeze(S.Segment.DFT.Weights(i,c,:));
             W   = cat(1,tmp{:});
             Wr  = repmat(W,1,size(ftB,2));
-            args = opts.fd.regression.functionargs;
-
             if length(W) < size(ftB,2)
                 if S.Segment.fe(i) == 0
                     z = zeros(1,size(ftB,2));
@@ -748,8 +754,8 @@ function S = stackRegression(S,opts)
             else          
                 % https://www.mathworks.com/matlabcentral/answers/364719-detect-warning-and-take-action#answer_289064    
                 warning('');
-                [z,weights,residuals] = opts.fd.regression.function(Wr.*ftB,W.*ftE,args{:});
-                warnMsg = lastwarn;
+                %[z,weights,residuals] = opts.fd.regression.function(Wr.*ftB,W.*ftE,args{:});
+                [z,residuals,weights] = regressfunc(W.*ftE,Wr.*ftB,regressargs{:});                warnMsg = lastwarn;
                 if ~isempty(warnMsg)
                     logmsg('Warning above occured on output column %d, eval freq. = %g\n', c, S.Segment.fe(i));
                     %ftE
