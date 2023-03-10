@@ -1,2 +1,0 @@
-
-relpath([pwd,'/abc/abc/'])
