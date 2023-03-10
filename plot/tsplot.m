@@ -87,28 +87,6 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
         s1 = '';
     end
     
-    if isempty(opts.title)
-        site_str = '';
-        if isfield(S.Options.info,'stationid')
-            sta = S.Options.info.stationid;
-            if ~isempty(sta)
-                site_str = sprintf('Site: %s; ',sta);
-            end
-        end
-        if strcmp(opts.type,'raw')
-            ts = '';
-        else
-            sta = sprintf('Site: %s; ',sta);
-        end
-        ts = sprintf('%sRaw Input%s (top) and Raw Output (bottom)',site_str,s1);
-        if strcmp(opts.type,'windowed')
-            ts = sprintf('%s %s-windowed Input%s (top) and Output (bottom)',...
-                         site_str,S.Options.td.window.functionstr,s1);
-        end
-    else
-        ts = opts.title;
-    end
-
     if strcmp(opts.type,'raw')
         In = S.In;
         Out = S.Out;
@@ -119,10 +97,6 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
             logmsg('Data were not windowed. Not plotting windowed timeseries.\n');
             return
         end
-        if isempty(ts)
-            ts = sprintf('%s%s-windowed',...
-                         site_str,S.Options.td.window.functionstr);
-        end        
         In = S.Window.In;
         Out = S.Window.Out;
     end
@@ -131,10 +105,6 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
             logmsg('Data were not prewhitened. Not plotting prewhitened timeseries.\n');
             return
         end
-        if isempty(ts)
-            ts = sprintf('%s%s prewhitened',...
-                         site_str,S.Options.td.prewhiten.functionstr);
-        end        
         In = S.Prewhiten.In;
         Out = S.Prewhiten.Out;
     end
@@ -148,7 +118,7 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
             hold on;
             plot(t,S.InNoise);
         end
-        title(ts,'FontWeight','Normal');
+        tflab_title(S,opts,'ts');
         [~, lo] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_legend_lines(lo);
         adjust_exponent('y');
@@ -218,7 +188,7 @@ if ~iscell(S) && strcmp(opts.type,'error')
             adjust_ylim();
             adjust_exponent('y');
             setx(0,info,[t(1),t(end)]);
-            title(ts,'FontWeight','Normal');
+            tflab_title(S,opts,'ts');
         subplot('Position',PositionBottom);
             plot(t,S.Metrics.Predicted(:,j)-S.Out(:,j));
             grid on;box on;

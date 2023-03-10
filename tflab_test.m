@@ -4,7 +4,7 @@ clear;
 % TODO: Allow deterministic by setting random number seed.
 
 clear;
-addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+addpath(fullfile(fileparts(mfilename('fullpath'))));
 tflab_setpaths();
 
 close all;

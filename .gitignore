@@ -4,3 +4,4 @@
 runs/data/
 runs/hapi-data/
 deps/export_fig/
+*.asv

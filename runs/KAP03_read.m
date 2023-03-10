@@ -4,7 +4,7 @@ addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
 
 % Dir of data file
-datapath = fullfile(scriptdir(),'data','KAP03'); 
+datapath = fullfile(scriptdir(),'data','KAP03',id); 
 
 % Content of data file
 matfile = fullfile(datapath,'/',[id,'_raw.mat']);

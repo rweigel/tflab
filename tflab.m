@@ -48,7 +48,7 @@ function S = tflab(B,E,t,opts)
 %
 %  See also TRANSFERFNFD_OPTIONS, TRANSFERFNFD_TEST, TRANSFERFNFD_DEMO.
 
-addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+addpath(fullfile(fileparts(mfilename('fullpath'))));
 tflab_setpaths();
 
 if nargin == 2
@@ -568,13 +568,13 @@ function S = main(B, E, t, opts)
                     Z(j,:) = zeros(1,size(ftB,2));
                     S.Regression.Weights{j,1} = nan*W;
                     S.Regression.Residuals{j,1} = nan*W;
-                    logmsg('! System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j));
+                    logmsg('!!! System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j));
                     %warning(sprintf('System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j)));
                 else
                     Z(j,:) = nan(1,size(ftB,2));
                     S.Regression.Weights{j,1} = nan*W;
                     S.Regression.Residuals{j,1} = nan*W;
-                    logmsg('! System if underdetermined for fe = %f. Setting Z equal to NaN(s) for this frequency.',fe(j));
+                    logmsg('!!! System if underdetermined for fe = %f. Setting Z equal to NaN(s) for this frequency.',fe(j));
                     %warning(sprintf('System if underdetermined for fe = %f. Setting Z equal to NaN(s) for this frequency.',fe(j)));
                 end
                 continue;
@@ -588,14 +588,11 @@ function S = main(B, E, t, opts)
                     Z(j,:) = zeros(1,size(ftB,2)) + 1j*zeros(1,size(ftB,2));
                     S.Regression.Weights{j,1} = nan*W;
                     S.Regression.Residuals{j,1} = nan*W;
-                    logmsg('! System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j));
+                    logmsg('!!! System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j));
                     continue;
                 end
             end
-
-            %[Z(j,:),Weights,Residuals] = ...
-            %                opts.fd.regression.function(...
-            %                      Wr.*ftB(r,:),W.*ftE(r,1),args{:});
+            
             [Z(j,:),Residuals,Weights] = ...
                        regressfunc(W.*ftE(r,1),Wr.*ftB(r,:),regressargs{:});
 

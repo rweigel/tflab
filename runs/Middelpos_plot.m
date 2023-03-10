@@ -1,21 +1,23 @@
 
-addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 %% Load data if not already in memory.
-daterange = '20120712-20121031';
+daterange = '20120712-20120717';
 %daterange = '20120712-20120717';
-if ~exist('S1','var')
-    fname = fullfile(scriptdir(),'data','Middelpos',...
-                sprintf('Middelpos-%s-tf1.mat',daterange));
+if ~exist('TF1','var')
+    fname = fullfile('data','Middelpos',...
+            sprintf('Middelpos-%s-tf1.mat',daterange));
+    fnamefull = fullfile(scriptdir(),fname);
     logmsg(sprintf('Reading %s',fname));
-    S1 = load(fname);
+    TF1 = load(fnamefull);
 end
-if ~exist('S2','var')
-    fname = fullfile(scriptdir(),'data','Middelpos',...
-                sprintf('Middelpos-%s-tf2.mat',daterange));
+if ~exist('TF2','var')
+    fname = fullfile('data','Middelpos',...
+            sprintf('Middelpos-%s-tf2.mat',daterange));
+    fnamefull = fullfile(scriptdir(),fname);
     logmsg(sprintf('Reading %s',fname));
-    S2 = load(fname);
+    TF2 = load(fnamefull);
 end
 
 %% Set common print options
@@ -25,23 +27,23 @@ copts.printfmt = {'pdf'};
 
 
 %% Time series plots
-% Plot raw time series data used for S1 (will be same as that for S2)
+% Plot raw time series data used for TF1 (will be same as that for TF2)
 figure();
     tsopts = copts;
     tsopts.type = 'raw';
-    tsplot(S1,tsopts);
+    tsplot(TF1,tsopts);
 
 % Plot error for S1 only
 figure();
     tsopts = copts;
     tsopts.type = 'error';
-    tsplot(S1,tsopts);
+    tsplot(TF1,tsopts);
 
 % Compare S1 and S2 error
 figure();
     tsopts = copts;
     tsopts.type  = 'error';
-    tsplot({S1,S2},tsopts);
+    tsplot({TF1,TF2},tsopts);
 
 
 
@@ -50,19 +52,19 @@ figure();
 figure();
     snopts = copts;
     snopts.period_range = [1, 86400];
-    snplot(S1,snopts);
+    snplot(TF1,snopts);
 
 % Plot SN for S2 only
 figure();
     snopts = copts;
     snopts.period_range = [1, 86400];
-    snplot(S2,snopts);
+    snplot(TF2,snopts);
  
 % Compare SN between S1 and S2
 figure();
     snopts = copts;
     snopts.period_range = [1, 86400];
-    snplot({S1,S2},snopts);
+    snplot({TF1,TF2},snopts);
 
 
 %% PSD plots
@@ -70,13 +72,13 @@ figure();
 figure();
     psdopts = copts;
     psdopts.period_range = [1, 86400];
-    psdplot(S1,psdopts);
+    psdplot(TF1,psdopts);
 
 % Compare SN between S1 and S2
 figure();
     psdopts = copts;
     psdopts.period_range = [1, 86400];
-    psdplot({S1,S2},psdopts);
+    psdplot({TF1,TF2},psdopts);
 
 
 %% Z plots
@@ -84,7 +86,7 @@ figure();
 figure();
     zopts = copts;
     zopts.period_range = [1, 86400];
-    zplot({S1,S2},zopts);
+    zplot({TF1,TF2},zopts);
 
 
 %% Regression plots
@@ -97,5 +99,5 @@ comp = 1;  % component (Zxx=1, Zxy=2, Zyx=3, Zyy=4).
 sidx = 1;  % segment number
 
 figure();
-    qqplot_(S1,fidx,comp,sidx);
+    qqplot_(TF1,fidx,comp,sidx);
     

@@ -3,6 +3,11 @@ function adjust_ylim(pos)
 %
 %   Expand axis limits so horizontal legend or vertical line labels are
 %   less likely to overlap data.
+%
+%   ADJUST_YLIM() Adjust upper and lower limits
+%   ADJUST_YLIM('both) Adjust upper and lower limits
+%   ADJUST_YLIM('lower') Only adjust lower limit
+%   ADJUST_YLIM('upper) Only adjust upper limit
 
 if nargin == 0
     pos = 'upper';

@@ -63,7 +63,7 @@ else
 end
 
 % Line options
-lnopts = {'marker','.','markersize',10,'linewidth',2};
+lnopts = {'marker','.','markersize',10,'linewidth',1};
 % Legend options
 lgopts = {'Location','NorthWest','Orientation','Horizontal'};
 
@@ -214,7 +214,7 @@ else
 end
 
 if any(strcmp(opts.type,{'raw','raw-phase','windowed','prewhitened','zeropadded','smoothed'}))
-
+    
     if iscell(S)
         j = 1; % Only plots first component (need to generalize).
         for s = 1:length(S)
@@ -245,7 +245,7 @@ if any(strcmp(opts.type,{'raw','raw-phase','windowed','prewhitened','zeropadded'
         end
         lg1 = lg1(~cellfun('isempty',lg1));
         lg2 = lg2(~cellfun('isempty',lg2));
-    else
+    else        
         info = S.Options.info;
         inunit = '';
         if ~isempty(info.inunit)
@@ -274,6 +274,7 @@ if any(strcmp(opts.type,{'raw','raw-phase','windowed','prewhitened','zeropadded'
             end
         end
     end
+    
     subplot('Position',PositionTop);
         plot_(x,y1,lnopts)
         if endsWith(opts.type,'phase')
@@ -291,8 +292,9 @@ if any(strcmp(opts.type,{'raw','raw-phase','windowed','prewhitened','zeropadded'
         end
         if iscell(S)
             ylabel(sprintf('In PSD %s', inunit));
+        else
+            tflab_title(S,opts,'psd');
         end
-        title(ts,'FontWeight','Normal');
         grid on;box on;
         legend(lg1,lgopts{:});
         setx(opts,0);
@@ -363,9 +365,9 @@ else
         if opts.vs_period
             set(gca,'XScale','log');
         end
-        title(ts,'FontWeight','Normal');
         grid on;box on;
         legend(ls,lgopts{:});
+        tflab_title(S,opts,'psd');
         if iscell(S)
             if size(S{s}.Metrics.PSD.Raw.Error,2) > 1
                 ylabel('PSD of Error(:,1)');

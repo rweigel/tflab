@@ -14,48 +14,53 @@ opts.filestr = sprintf('tflab_options-%d',os);
 opts.tflab = struct();
     opts.tflab.loglevel = 1;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Plot label options
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 opts.info = struct();
+
     opts.info.instr = 'In'; % Cell array or string. 
     % Or {'$B_x$', ...} (1 cell element per column in In)
     
     opts.info.outstr = 'Out'; % Cell array or string. 
     % Or {'$E_x$', ...} (1 cell element per column in Out)
     
-    opts.info.timestart = ''; 
-    opts.info.timedelta = 1; % Measurement cadence
-
     % Timestart is a time string of the form
     % 'yyyy-mm-ddTHH:MM:SS.FFF'.
     % Example: 
     %   opts.td.timestart = '2001-01-01T00:00:00.000';
+    opts.info.timestart = ''; 
+    
+    % Measurement cadence. Specify units using opt.info.timeunit.  
+    opts.info.timedelta = 1; 
     
     %opts.info.inunit= 'nT';
     %opts.info.outunit= 'mV/km';
     %opts.info.timeunit = 's';
 
-    opts.info.inunit= '';
-    opts.info.outunit= '';
-    opts.info.timeunit = '';
-    opts.info.stationid = '';
-    opts.info.chainid = '';
-    
+    opts.info.inunit    = '';
+    opts.info.outunit   = '';
+    opts.info.timeunit  = '';   % Unit for timedelta
+    opts.info.chainid   = '';   % Usualy over-arching project name
+    opts.info.stationid = '';   % Usually an abbreviation, e.g., VAQ58
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Time domain options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
 % # of points at start and end to trim before computing metrics
-% (pe/cc/mse/sn/coherence)
+% (pe/cc/mse/sn/coherence). NaN => no trim.
 opts.td.Ntrim = NaN;
 
-% Dimensionless start; ignored if time array passed to tflab.
+% Dimensionless start time; ignored if time array passed to tflab.
 opts.td.start = 1; 
 
-% Number of zeros added to the end of all time series
+% Number of zeros added to the end of all time series. NaN => no pad.
 opts.td.zeropad = NaN;
 
 opts.td.detrend.function = struct();
-    opts.td.detrend.function = @removemean;
-    %opts.td.detrend.function = '';
+    %opts.td.detrend.function = @removemean;
+    opts.td.detrend.function = '';
     opts.td.detrend.functionstr = '';  % Optional descriptive name
     opts.td.detrend.functionargs = {}; % Arguments after first argument to fn.
 
@@ -183,9 +188,10 @@ opts.plot = struct();
 if os == 0
     % When no noise, should get exact TF used to generate the output data
     % (within limits of numerical precision).
-    opts.description = 'OLS and $\Delta {f_e} = 1$, $\Delta w = 0$.';
+    fstr = '1 point per freq. band.';
+    opts.description = ['OLS with ', fstr];
     opts.fd.evalfreq.functionargs = {[1,0], 'linear'};
-    opts.fd.evalfreq.functionstr  = '1 DFT point per freq. band';
+    opts.fd.evalfreq.functionstr  = fstr;
 elseif os == 1 || nargs == 0
     opts.description = 'OLS and $\sim$7 pts/decade';
 elseif os == 2

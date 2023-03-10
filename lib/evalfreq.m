@@ -1,7 +1,7 @@
 function [fe,Ic,Ne] = evalfreq(N,Npd,scale)
 %EVALFREQ Linear or logarithmicaly spaced center frequencies and bands
 %
-%  [fe,Ic,Ne] = evalfreq(N) returns approximately 7 evaluation frequencies
+%  [fe,Ic,Ne] = EVALFREQ(N) returns approximately 7 evaluation frequencies
 %  per decade in frequency range [2/N,1/4]. Ic are the center indices and
 %  Ne is the number of points to left and right of center frequency to use
 %  as a inclusion band. For fe = 0, Ne = 0. 
@@ -14,13 +14,13 @@ function [fe,Ic,Ne] = evalfreq(N,Npd,scale)
 %  compute the window width. See EVALFREQ_DEMO for a visualization of the
 %  frequencies and windows.
 % 
-%  [fe,Ic,Ne] = evalfreq(N,Npd) returns approximately Npd frequencies per
+%  [fe,Ic,Ne] = EVALFREQ(N, Npd) returns approximately Npd frequencies per
 %  decade.
 %
-%  [fe,Ic,Ne] = evalfreq(N,w,'linear') returns evaluation frequencies
-%  separated by dN points and windows of size 2*w+1. For fe = 0, Ne = 0.
+%  [fe,Ic,Ne] = EVALFREQ(N,w,'linear') returns evaluation frequencies
+%  separated by w points and windows of size 2*w+1. For fe = 0, Ne = 0.
 %
-%  [fe,Ic,Ne] = evalfreq(N,[dN,w],'linear') returns evaluation frequencies
+%  [fe,Ic,Ne] = EVALFREQ(N,[dN,w],'linear') returns evaluation frequencies
 %  separated by dN points and windows of size 2*w+1.
 %
 %  See also FFTFREQ, FFTFREQP, EVALFREQ_DEMO.

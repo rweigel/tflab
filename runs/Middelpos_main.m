@@ -1,6 +1,6 @@
 clear;
 
-addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
+addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 % Get input/output data
@@ -34,7 +34,6 @@ t = t(1:I);
 filestr = sprintf('Middelpos-%s-%s',...
                 datestr(t(1),'yyyymmdd'),datestr(t(end),'yyyymmdd'));
 
-
 %% Set variable name information
 iopts = struct('info',struct(),'td',struct());
 iopts.info.instr     = {'$B_x$','$B_y$'};
@@ -56,13 +55,13 @@ opts1 = tflab_options(1,iopts);
     opts1.td.window.shift = pps;
     opts1.filestr = sprintf('%s-tf1',filestr);
 
-S1 = tflab(B(:,1:2),E,opts1);
+TF1 = tflab(B(:,1:2),E,opts1);
 % Modify default description of run
-S1.Options.description = desc1;
-S1 = tflab_uncertainty(S1);
+TF1.Options.description = desc1;
+TF1 = tflab_uncertainty(TF1);
 
 fname1 = fullfile(scriptdir(),'data','Middelpos',[opts1.filestr,'.mat']);
-savetf(S1, fname1);
+savetf(TF1, fname1);
 
 
 %% Compute second TF
@@ -71,17 +70,18 @@ opts2 = tflab_options(1,iopts);
     opts2.tflab.loglevel = 1;
     opts2.filestr = sprintf('%s-tf2',filestr);
 
-S2 = tflab(B(:,1:2),E,opts2);           
+TF2 = tflab(B(:,1:2),E,opts2);           
 % Modify default description of run
-S2.Options.description = desc2;
+TF2.Options.description = desc2;
 
 % Test S2.Z on same segments as S1.
-S2 = tflab_metrics(S2,opts2,S1.Segment.IndexRange);
-S2 = tflab_uncertainty(S2);
+TF2 = tflab_metrics(TF2,opts2,TF1.Segment.IndexRange);
+TF2 = tflab_uncertainty(TF2);
 
 fname = fullfile(scriptdir(),'data','Middelpos',[opts2.filestr,'.mat']);
-savetf(S2, fname);
+savetf(TF2, fname);
 
+Middelpos_plot;
 
 %% Third TF
 if (0)

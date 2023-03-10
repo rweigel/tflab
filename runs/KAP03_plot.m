@@ -1,77 +1,78 @@
-%%
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
 
 siteid = 'KAP103';
+chainid = 'KAP03';
+
 daterange = '20031108-20031205';
-if ~exist('S1','var')
-    fname = fullfile(scriptdir(),'data',siteid,...
+if ~exist('TF1','var')
+    fname = fullfile(scriptdir(),'data',chainid,siteid,...
                 sprintf('%s-%s-tf1.mat',siteid, daterange));
     logmsg('Reading %s\n',fname);
-    S1 = load(fname);
+    TF1 = load(fname);
 end
 if ~exist('S2','var')
-    fname = fullfile(scriptdir(),'data',siteid,...
-                sprintf('%s-%s-tf1.mat',siteid, daterange));
+    fname = fullfile(scriptdir(),'data',chainid,siteid,...
+                sprintf('%s-%s-tf2.mat',siteid, daterange));
     logmsg('Reading %s\n',fname);
-    S2 = load(fname);
+    TF2 = load(fname);
 end
 
 %% Common plot options
 copts.printdir = fullfile(scriptdir(),'data',siteid,'figures');
-copts.print = 0;
+copts.print = 0;  % Set to 1 to print pdf of each figure created.
 copts.printfmt = {'pdf'};
 
 %% Time series plots
 figure();
     topts = copts;
     topts.type = 'raw';
-    tsplot(S1,topts);
+    tsplot(TF1,topts);
 
 %%
 figure();
     topts = copts;
     topts.type  = 'error';
-    tsplot(S1,topts);
+    tsplot(TF1,topts);
 
 %% Compare
 figure();
     topts = copts;
     topts.type  = 'error';
-    tsplot({S1,S2},topts);
+    tsplot({TF1,TF2},topts);
 
 
 %% SN plots
 figure();
     snopts = copts;
     snopts.period_range = [1, 86400];
-    snplot(S1,snopts);
+    snplot(TF1,snopts);
 
 %%
 figure();
     snopts = copts;
     snopts.period_range = [1, 86400];
-    snplot(S2,snopts);
+    snplot(TF2,snopts);
  
 %%
 % Compare
 figure();
     snopts = copts;
     snopts.period_range = [1, 86400];
-    snplot({S1,S2},snopts);
+    snplot({TF1,TF2},snopts);
 
 
 %% PSD plots
 figure();
     psdopts = copts;
     psdopts.period_range = [1, 86400];
-    psdplot(S1,psdopts);
+    psdplot(TF1,psdopts);
 
 %%
 figure();
     psdopts = copts;
     psdopts.period_range = [1, 86400];
-    psdplot({S1,S2},psdopts);
+    psdplot({TF1,TF2},psdopts);
 
 
 %% Z plots
@@ -79,7 +80,7 @@ figure();
 figure();
     zopts = copts;
     zopts.period_range = [1, 86400];
-    zplot({S1,S2},zopts);
+    zplot({TF1,TF2},zopts);
     
 figure()
-    qqplot_(S1,10,1,1);
+    qqplot_(TF1,10,1,1);

@@ -1,7 +1,6 @@
 function [ax1,ax2] = zplot(S,popts)
 %ZPLOT
 
-
 assert(isstruct(S) || iscell(S), ...
     'S must be a tflab struct or cell array of tflab structs');
 
@@ -51,8 +50,7 @@ end
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 % Line options
-lnopts = {'marker','.','markersize',10,'linewidth',2};
-
+lnopts = {'marker','.','markersize',10,'linewidth',1};
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -70,14 +68,7 @@ end
 
 % Single transfer function
 if isstruct(S)
-    ts = opts.title;
-    if isempty(ts)
-        sta = '';
-        if isfield(S.Options.info,'stationid')
-            sta = S.Options.info.stationid;
-        end
-        ts = sprintf('Site: %s',sta);
-    end
+
     interp_Z_exists = 0;
     if isfield(S,'Zi')
         interp_Z_exists = 1;
@@ -95,6 +86,7 @@ if isstruct(S)
             xi = S.Options.info.timedelta*S.fi;
         end
     end
+    
     figprep();
     ax1 = subplot('Position', PositionTop);
         switch opts.type
@@ -137,10 +129,10 @@ if isstruct(S)
                 yi(idx) = NaN;
             end
         end
-        plot(x, y, '.','markersize',20);
+        plot(x, y, lnopts{:}, 'markersize', 20);
         hold on;grid on;
         if interp_Z_exists
-            plot(xi, yi, '.','markersize',15);
+            plot(xi, yi, lnopts{:}, 'markersize', 15);
         end
         if opts.type < 3
             set(gca,'YScale','log');
@@ -161,8 +153,13 @@ if isstruct(S)
             end
         end
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        tflab_title(S,opts,'z');
         set(gca,'XTickLabel',[]);
-        adjust_ylim('both');
+        if opts.type == 3
+            adjust_ylim('both');
+        else
+            adjust_ylim('upper');
+        end
         adjust_yticks(1e-4);
         adjust_exponent('y');
     ax2 = subplot('Position', PositionBottom);
@@ -179,7 +176,7 @@ if isstruct(S)
                 end
             end
             for j = 1:size(S.Z,2)
-                ls{j} = sprintf('Re$(%s)$',Phistrs{j});
+                ls{j} = sprintf('$%s$',Phistrs{j});
             end
             ylabel('[$^\circ$]');
         else
@@ -204,10 +201,10 @@ if isstruct(S)
                 yi(idx) = NaN;
             end
         end
-        plot(x, y, '.','markersize',20);
+        plot(x, y, lnopts{:}, 'markersize', 20);
         hold on;grid on;
         if interp_Z_exists
-            plot(xi, yi, '.','markersize',15);
+            plot(xi, yi, lnopts{:}, 'markersize', 15);
         end
         if ~opts.unwrap && opts.type ~= 3
             set(gca,'YLim',[-185,185])
@@ -262,7 +259,7 @@ if iscell(S)
                 ms = max(30-8*s,1);
                 if size(S{s}.Z,1) == 1
                     ms = 30;
-                    lineopts = {'.','markersize',ms};
+                    lineopts = {'.','markersize', ms};
                 else
                     lineopts = {'linewidth',max(4-s,1),'marker','.','markersize',ms};
                 end
@@ -339,6 +336,7 @@ if iscell(S)
             end
             ylabel(yl);
             legend(h,ls,'Location','NorthEast','Orientation','Horizontal');
+            %tflab_title(S,opts,'z');        
             set(gca,'XTickLabel',[]);
             adjust_ylim('both');
             adjust_yticks(1e-4);

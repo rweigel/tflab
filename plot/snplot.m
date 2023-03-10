@@ -1,6 +1,9 @@
 function [ax1,ax2] = snplot(S,popts)
 %SNPLOT
 
+assert(isstruct(S) || iscell(S), ...
+    'S must be a tflab struct or cell array of tflab structs');
+
 % Default options
 opts = struct();
     opts.title = '';
@@ -28,18 +31,10 @@ PositionBottom = [0.1300 0.1100 0.7750 0.4];
 if iscell(S) && length(S) == 1
     S = S{1};
 end
-
 % TODO: Above code is copy of code in zplot().
 
-if isstruct(S) % Single transfer function
-    ts = opts.title;
-    if isempty(ts)
-        sta = '';
-        if isfield(S.Options.info,'stationid')
-            sta = S.Options.info.stationid;
-        end
-        ts = sprintf('Site: %s',sta);
-    end
+if isstruct(S)
+    % Single transfer function
     figprep();
     fe = S.Metrics.PSD.Smoothed.fe;
     if opts.period
@@ -59,12 +54,9 @@ if isstruct(S) % Single transfer function
                  'marker','.','markersize',10,'linewidth',2);
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         set(gca,'XTickLabel',[]);
-        title(ts,'FontWeight','Normal');        
+        tflab_title(S,opts,'sn');
         ylabel('Signal to Error');
         grid on;box on;hold on;
-        if isfield(opts,'title') && ~isempty(opts.title)
-            title(opts.title,'FontWeight','normal');
-        end
         if ~isempty(opts.period_range)
             set(gca,'XLim',opts.period_range);
         end
@@ -107,9 +99,11 @@ if isstruct(S) % Single transfer function
             figsave(fullfile(opts.printdir, fname), opts);
         end
     end
-else % Multiple TFs
-    segment_aves = 1;
-     
+end
+
+if iscell(S)
+    % Multiple TFs
+    segment_aves = 1;     
     % j = columns of SN (components of output)
     for j = 1:size(S{1}.Metrics.SN.Smoothed,2) 
         if j > 1
@@ -165,7 +159,7 @@ else % Multiple TFs
                 if ~isempty(opts.period_range)
                     set(gca,'XLim',opts.period_range);
                 end
-            end            
+            end
             if isfield(opts,'title') && ~isempty(opts.title)
                 title(opts.title,'FontWeight','normal');
             end            
