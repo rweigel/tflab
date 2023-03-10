@@ -1,0 +1,2 @@
+
+relpath([pwd,'/abc/abc/'])
