@@ -27,6 +27,7 @@ pkgdir = fileparts(mfilename('fullpath'));
 
 addpath(fullfile(pkgdir,'data'));
 addpath(fullfile(pkgdir,'demos'));
+addpath(fullfile(pkgdir,'deps'));
 addpath(fullfile(pkgdir,'deps/printstruct'));
 addpath(fullfile(pkgdir,'deps/export_fig'));
 addpath(fullfile(pkgdir,'lib'));

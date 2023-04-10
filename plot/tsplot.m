@@ -110,8 +110,7 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
     end
     
     subplot('Position',PositionTop);
-    
-        plot(t,In);
+        plot(t,10000*In);
         grid on;box on;
         ls = legendlabels('In');
         if isfield(S,'InNoise') && ~strcmp(opts.type,'windowed')
@@ -121,9 +120,10 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
         tflab_title(S,opts,'ts');
         [~, lo] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_legend_lines(lo);
-        adjust_exponent('y');
         adjust_ylim();
-        setx(0,info,[t(1),t(end)]);        
+        adjust_exponent('y');
+        setx(0,info,[t(1),t(end)]);
+        
     subplot('Position',PositionBottom);
         plot(t,Out);
         grid on;box on;    
@@ -134,8 +134,8 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
         end
         [~, lo] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_legend_lines(lo);
-        adjust_exponent('y');
         adjust_ylim();
+        adjust_exponent('y');
         setx(1,info,[t(1),t(end)]);  
     
     if opts.print
@@ -237,7 +237,6 @@ if iscell(S)
         adjust_ylim();
         adjust_exponent('y');
         setx(0,info,[t(1),t(end)]);
-        %title(ts);
     subplot('Position',PositionBottom);
         plot(t,S{1}.Out(:,2),c{1});
         grid on;box on;hold on;
@@ -261,7 +260,8 @@ if iscell(S)
     
     if opts.print
         for i = 1:length(opts.printfmt)
-            fname = sprintf('%s_compare_%s.%s', opts.printname, opts.type, opts.printfmt{i});
+            fname = sprintf('%s_compare_%s.%s',...
+                        opts.printname, opts.type, opts.printfmt{i});
             figsave(fullfile(opts.printdir, fname));
         end
     end
@@ -310,8 +310,8 @@ function ls = legendlabels(comp)
     end
 end
 
-function setx(last,info,tl)
 
+function setx(last,info,tl)
     if ~isempty(info.timestart)
         % Set tick positions
         set(gca,'XLim',tl);

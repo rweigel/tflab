@@ -8,15 +8,24 @@ function adjust_ylim(pos)
 %   ADJUST_YLIM('both) Adjust upper and lower limits
 %   ADJUST_YLIM('lower') Only adjust lower limit
 %   ADJUST_YLIM('upper) Only adjust upper limit
+%
+
+% TODO: One should be able to compute exact adjustment needed.
 
 if nargin == 0
     pos = 'upper';
 end
 
+debug = 1;
+
 drawnow;
 yt = get(gca,'YTick');
 yl = get(gca,'YLim');
 
+if debug
+    yt
+    yl
+end
 if strcmp(pos, 'upper') || strcmp(pos, 'both')
     if strcmp(get(gca(),'YScale'),'log')
         if length(yt) > 1
@@ -47,3 +56,6 @@ end
 set(gca,'YLim',yl);
 set(gca,'YTick',yt);
 drawnow;
+set(gca,['YLimMode'],'auto');
+set(gca,['YTickMode'],'auto');
+

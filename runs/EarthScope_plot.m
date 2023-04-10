@@ -5,7 +5,7 @@ id = 'VAQ58';
 
 %% Load data if not already in memory.
 daterange = '20160610-20160624';
-%daterange = '20120712-20120717';
+daterange = '20160610-20160620';
 if ~exist('TF1','var')
     fname = fullfile('data','EarthScope',id,...
             sprintf('%s-%s-tf1.mat',id,daterange));
@@ -13,6 +13,7 @@ if ~exist('TF1','var')
     logmsg(sprintf('Reading %s',fname));
     TF1 = load(fnamefull);
 end
+
 
 %% Set common print options
 copts.print    = 0; % Set to 1 to print pdf of each figure created.
@@ -69,22 +70,23 @@ figure();
     psdopts.period_range = [1, 86400];
     psdplot(TF1,psdopts);
 
-% 
-figure();
-    zopts = copts;
-    zopts.period_range = [1, 86400];
-    zplot(TF1,zopts);
-    
 if 0    
 % Compare SN between S1 and S2
 figure();
     psdopts = copts;
     psdopts.period_range = [1, 86400];
     psdplot({TF1,TF2},psdopts);
-
+end
 
 %% Z plots
 % Compare Z between S1 and S2
+figure();
+    zopts = copts;
+    %zopts.period_range = [1, 86400];
+    zopts.type = 2;
+    zplot(TF1,zopts);
+
+if 0
 figure();
     zopts = copts;
     zopts.period_range = [1, 86400];

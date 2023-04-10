@@ -17,7 +17,7 @@ opts = struct();
             case 1
                 opts.printname = [opts.printname,'_magnitude_phase'];
             case 2
-                opts.printname = [opts.printname,'_rhoa_ohase'];            
+                opts.printname = [opts.printname,'_rhoa_phase'];            
             case 3
                 opts.printname = [opts.printname,'_real_imaginary'];            
         end
@@ -50,7 +50,7 @@ end
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 % Line options
-lnopts = {'marker','.','markersize',10,'linewidth',1};
+lnopts = {'marker','.','markersize',10,'linestyle','none'};
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -129,8 +129,11 @@ if isstruct(S)
                 yi(idx) = NaN;
             end
         end
+        
         plot(x, y, lnopts{:}, 'markersize', 20);
         hold on;grid on;
+        ylabel(unitstr(S.Options.info));
+
         if interp_Z_exists
             plot(xi, yi, lnopts{:}, 'markersize', 15);
         end
@@ -140,21 +143,16 @@ if isstruct(S)
         if opts.vs_period
             set(gca,'XScale','log');
         end
-        unitstr = '';
-        if ~isempty(S.Options.info.outunit)
-            unitstr = sprintf('[(%s)/%s]',...
-                        S.Options.info.outunit,S.Options.info.inunit);
-        end
-        ylabel(unitstr);
-        
         if opts.vs_period
             if ~isempty(opts.period_range)
                 set(gca,'XLim',opts.period_range);
             end
         end
+        
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         tflab_title(S,opts,'z');
         set(gca,'XTickLabel',[]);
+
         if opts.type == 3
             adjust_ylim('both');
         else
@@ -162,6 +160,7 @@ if isstruct(S)
         end
         adjust_yticks(1e-4);
         adjust_exponent('y');
+
     ax2 = subplot('Position', PositionBottom);
         if opts.type ~= 3
             if opts.unwrap
@@ -181,7 +180,7 @@ if isstruct(S)
             ylabel('[$^\circ$]');
         else
             y = imag(S.Z);
-            ylabel(unitstr);
+            ylabel(unitstr(S.Options.info));
             for j = 1:size(S.Z,2)
                 ls{j} = sprintf('Im$(%s)$ Estimated',Zstrs{j});
             end
@@ -201,8 +200,9 @@ if isstruct(S)
                 yi(idx) = NaN;
             end
         end
-        plot(x, y, lnopts{:}, 'markersize', 20);
         hold on;grid on;
+        plot(x, y, lnopts{:}, 'markersize', 20);
+
         if interp_Z_exists
             plot(xi, yi, lnopts{:}, 'markersize', 15);
         end
@@ -210,34 +210,36 @@ if isstruct(S)
             set(gca,'YLim',[-185,185])
             set(gca,'YTick',[-180:60:180]);
         end
-        unitstr = '';
+        
+        xunitstr = '';
         if opts.vs_period
             set(gca,'XScale','log');
             if ~isempty(S.Options.info.timeunit)
-                unitstr = sprintf(' [%s]', S.Options.info.timeunit);
+                xunitstr = sprintf(' [%s]', S.Options.info.timeunit);
             end
-            xlabel(sprintf('$T$%s', unitstr));
+            xlabel(sprintf('$T$%s', xunitstr));
             if ~isempty(opts.period_range)
                 set(gca,'XLim',opts.period_range);
             end
         else
             if ~isempty(S.Options.info.timeunit)
-                unitstr = sprintf(' [1/%s]', S.Options.info.timeunit);
+                xunitstr = sprintf(' [1/%s]', S.Options.info.timeunit);
             end
-            xlabel(sprintf('$f$%s',unitstr));
+            xlabel(sprintf('$f$%s',xunitstr));
         end
+        
         legend(ls,'Location','NorthEast','Orientation','Horizontal');
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
 
-        if opts.print
-            for i = 1:length(opts.printfmt)
-                fname = sprintf('%s.%s',opts.printname, opts.printfmt{i});
-                figsave(fullfile(opts.printdir, fname), opts);
-            end
+    if opts.print
+        for i = 1:length(opts.printfmt)
+            fname = sprintf('%s.%s',opts.printname, opts.printfmt{i});
+            figsave(fullfile(opts.printdir, fname), opts);
         end
-end
+    end
+end % if isstruct(S)
 
 % Multiple transfer functions
 if iscell(S)
@@ -312,13 +314,7 @@ if iscell(S)
                 end
             end
 
-            yunitstr = '';
-            if ~isempty(S{1}.Options.info.outunit) ...
-                    && ~isempty(S{1}.Options.info.inunit)
-                yunitstr = sprintf(' [(%s)/%s]',...
-                                S{1}.Options.info.outunit,...
-                                S{1}.Options.info.inunit);
-            end
+            yunitstr = unitstr(S{1}.Options.info);
             if opts.type == 1
                 yl = sprintf('$|%s|$%s',Zstrs{j},yunitstr);
             end
@@ -362,13 +358,7 @@ if iscell(S)
                 yebu = [];
                 if opts.type == 3
                     y = imag(S{s}.Z(:,j));
-                    yl = sprintf('Im$(%s)$',Zstrs{j});
-                    if ~isempty(S{1}.Options.info.outunit) ...
-                            && ~isempty(S{1}.Options.info.inunit)
-                        yl = sprintf('%s [(%s)/%s]',yl,...
-                                     S{1}.Options.info.outunit,...
-                                     S{1}.Options.info.inunit);
-                    end
+                    yl = sprintf('Im$(%s)$ %s',Zstrs{j},unitstr(S{1}.Options.info));
                     ls{s} = sprintf('%s',S{s}.Options.description);
                     if isfield(S{s},'ZCL')
                         yebl = squeeze(imag(S{s}.ZCL.Z.Normal.x_1sigma(:,j,1)));
@@ -397,7 +387,7 @@ if iscell(S)
                 end
                 if ~isempty(yebl)
                     errorbars(x,y,yebl,yebu);
-                end                
+                end    
             end
             ylabel(yl);
             if opts.type ~= 3 && ~opts.unwrap
@@ -431,6 +421,7 @@ if iscell(S)
             if ~isempty(S{1}.Options.info.timeunit) && opts.vs_period
                 period_lines();
             end
+
         if opts.print
             comp = regexprep(Zstrs{j},'\{|\}','');
             for i = 1:length(opts.printfmt)
@@ -439,10 +430,26 @@ if iscell(S)
             end
         end    
     end % j
-end
+end % if iscell(S)
 
 end % function
 
+function str = unitstr(info)
+
+    str = '';
+    if isempty(info.inunit) || isempty(info.outunit)
+        return
+    end
+    inunit = sprintf('%s',info.inunit);
+    if contains(inunit,'/')
+        inunit = sprintf('(%s)',inunit);
+    end
+    outunit = sprintf('%s',info.outunit);
+    if contains(outunit,'/')
+        outunit = sprintf('(%s)',outunit);
+    end
+    str = sprintf('[%s/%s]',outunit,inunit);
+end
 
 function S = setsubfield(S,varargin)
 
@@ -462,7 +469,6 @@ function S = setsubfield(S,varargin)
     S.(varargin{1}) = setsubfield(S.(varargin{1}),varargin{2:end});
     
 end
-
 
 function S = defaultmeta(S)
     S = setsubfield(S,'Options','description','');

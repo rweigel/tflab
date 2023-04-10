@@ -1,19 +1,26 @@
 function [B,E,t,infile,outfile] = EarthScope_clean(id,plot_,print_)
 
+% List of sites for which cleaning conditions have been created.
+prepared = {'VAQ58'};
+
+if all(strcmp(id,prepared) == 0)
+    error('Data for %s is not available',id);
+end
+
 if nargin < 2
-    plot_ = 1;
+    plot_ = 0;
 end
 if nargin < 3
-    print_ = 1;
+    print_ = 0;
 end
 
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-infile  = fullfile(scriptdir(),'data',id,[id,'_raw.mat']); 
+infile  = fullfile(scriptdir(),'data','EarthScope',id,[id,'_raw.mat']); 
 outfile = strrep(infile,'_raw','_clean');
 
-if exist(outfile,'file')
+if exist(outfile,'file') && plot_ == 0 && print_ == 0
     logmsg('Loading: %s\n',relpath(outfile));
     load(outfile);
     logmsg('Loaded:  %s\n',relpath(outfile));
@@ -24,34 +31,63 @@ logmsg('Cleaning data for %s\n',id);
 
 [B,E,t,infile] = EarthScope_read(id);
 
-Ir = (1123950:size(B,1))'; % Points to remove
+if all(strcmp(id,prepared) == 0)
+    error('Data for %s is not available',id);
+end
 
-% TODO: Creating extra matrices not needed if plot_ and print_ = 0.
-E1 = E;
-E2(Ir,:) = NaN;
-E3 = despike(E2, 1e7, [5, 5]);
-E4 = naninterp1(E3);
+if strcmp(id,'VAQ58')
+    Ir = (1123950:size(B,1))'; % Points to remove
+    despike_E = {1e7,[5,5]};
+    despike_B = {1e4,[5,5]};
+    sfE = 1;
+    sfB = 1;
+    yunits_E = 'counts';
+    yunits_B = 'counts';
+end
 
-B1 = B;
-B2(Ir,:) = NaN;
-B2 = removemean(B2);
-B3 = despike(B2, 1e4, [5, 5]);
-B4 = naninterp1(B3);
+if print_ ~= 0 || plot_ ~= 0
+    E1 = E*sfE;
+    E2 = E1;
+    E2(Ir,:) = NaN;
+    E2 = removemean(E2);
+    E3 = despike(E2, despike_E{:});
+    E4 = naninterp1(E3);
 
-E = E4;
-B = B4;
+    B1 = B*sfB;
+    B2 = B1;
+    B2(Ir,:) = NaN;
+    B2 = removemean(B2);
+    B3 = despike(B2, despike_B{:});
+    B4 = naninterp1(B3);
 
+    % For save
+    E = E4; 
+    B = B4;
+else
+    Ik = 1:Ir(1)-1;
+    E = removemean(sfE*E(Ik,:));
+    E = despike(E, despike_E{:});
+    E = naninterp1(E);
+    B = removemean(sfB*B(Ik,:));
+    B = despike(B, despike_B{:});
+    B = naninterp1(B);
+end
+
+infile = relpath(infile);
+outfileo = outfile;
+outfile = relpath(outfile);
 logmsg('Saving: %s\n',relpath(outfile));
-save(outfile,'B','E','t','infile','outfile');
+save(outfileo,'B','E','t','infile','outfile');
 logmsg('Saved:  %s\n',relpath(outfile));
 
-if plot_
+if plot_ || print_
     figure(1);figprep();clf;
 
     subplot(4,1,1)
         plot(E1)
         title('Raw $\mathbf{E}$');
-        grid on
+        grid on;
+        ylabel(yunits_E);
         axis tight;
         xlim = get(gca,'XLim');
         legend('$E_x$','$E_y$');
@@ -59,8 +95,9 @@ if plot_
 
     subplot(4,1,2)
         plot(E2)
-        title('Chunk removed');
-        grid on
+        title('Chunk removed then mean removed');
+        grid on;
+        ylabel(yunits_E);
         axis tight;
         set(gca,'XLim',xlim);        
         legend('$E_x$','$E_y$');
@@ -70,7 +107,8 @@ if plot_
         logmsg('Despiking E\n')
         plot(E3);
         title('Despiked');
-        grid on
+        grid on;
+        ylabel(yunits_E);
         axis tight;
         set(gca,'XLim',xlim);
         legend('$E_x$','$E_y$');
@@ -80,7 +118,8 @@ if plot_
         logmsg('Interpolating over spike windows in E\n')
         plot(E4)
         title('Interpolated');
-        grid on
+        grid on;
+        ylabel(yunits_E);
         axis tight;
         set(gca,'XLim',xlim);
         legend('$E_x$','$E_y$');
@@ -102,7 +141,8 @@ if plot_
     subplot(4,1,1)
         plot(B1(:,1:2))
         title('Raw $\mathbf{B}$');
-        grid on
+        grid on;
+        ylabel(yunits_B);
         axis tight;
         legend('$B_x$','$B_y$');
         zoominfo('B');
@@ -110,8 +150,9 @@ if plot_
 
     subplot(4,1,2)
         plot(B2(:,1:2))
-        title('Chunk and then mean removed');
-        grid on
+        title('Chunk removed then mean removed');
+        grid on;
+        ylabel(yunits_B);
         axis tight;
         set(gca,'XLim',xlim);
         legend('$B_x$','$B_y$');
@@ -121,7 +162,8 @@ if plot_
         logmsg('Despiking B\n'); 
         plot(B3(:,1:2));
         title('Despiked');
-        grid on
+        ylabel(yunits_B);
+        grid on;
         axis tight;
         set(gca,'XLim',xlim);
         legend('$B_x$','$B_y$');
@@ -130,7 +172,8 @@ if plot_
         logmsg('Interpolating over spike windows in B\n')
         plot(B4(:,1:2))
         title('Interpolated');
-        grid on
+        grid on;
+        ylabel(yunits_B);
         axis tight;
         set(gca,'XLim',xlim);
         legend('$B_x$','$B_y$');

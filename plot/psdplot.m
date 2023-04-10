@@ -63,7 +63,7 @@ else
 end
 
 % Line options
-lnopts = {'marker','.','markersize',10,'linewidth',1};
+lnopts = {'marker','.','markersize',10,'linestyle','none'};
 % Legend options
 lgopts = {'Location','NorthWest','Orientation','Horizontal'};
 

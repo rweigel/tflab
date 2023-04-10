@@ -1,4 +1,4 @@
-function adjust_yticks(t,ax, no_lead_number)
+function adjust_yticks(t,ax,no_lead_number)
 
 if nargin == 0
     t = 1e-4; % Threshold to apply adjustment.
@@ -35,6 +35,11 @@ end
 
 drawnow;
 yl = get(ax,'YTickLabels');
+
+% Prevent number of ticks from changing if vertical window size changes.
+% There is no callback for this, and if it happens, labels may become
+% incorrect.
+yticks('manual'); 
 
 if strcmp(yl{1}(1),'$')
     % Already modified
@@ -80,11 +85,8 @@ for i = 1:length(yl)
 end
 set(gca,'TickLabelInterpreter','latex');
 set(gca,'YTickLabels',yl);
-
-% Prevent number of ticks from changing if vertical window size changes.
-% There is no call back for this, and if it happens, labels may become
-% incorrect.
-yticks('manual'); 
+set(gca,['YLimMode'],'auto');
+set(gca,['YTickLabelMode'],'auto');
 
 if nargin < 2
     %fprintf('Listening\n')

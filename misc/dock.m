@@ -8,6 +8,7 @@ function dock(state)
 %    DOCK('on') sets the default state for all new figures to 'docked'.
 %
 %    DOCK('off') sets the default state for all new figures to 'normal'.
+%
 
 if nargin == 0
     state = 'all';

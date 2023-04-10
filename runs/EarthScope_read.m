@@ -1,18 +1,24 @@
-function [B,E,t,matfile] = EarthScope_read(id)
+function [B,E,t,outfile,infiles] = EarthScope_read(id)
+
+% List of sites where data are available at baseurl.
+prepared = {'VAQ58'};
+
+if all(strcmp(id,prepared) == 0)
+    error('Data for %s is not available',id);
+end
 
 baseurl = 'http://mag.gmu.edu/git-data/IRIS-EM-download';
 
-% Dir of data file
-outdir = fullfile(scriptdir(),'data',id);
+outdir  = fullfile(scriptdir(),'data','EarthScope',id);
+outfile = sprintf('%s_raw.mat',id);
+outfile = fullfile(outdir,outfile);
 
 if strcmp(id,'VAQ58')
 
-    matfile = sprintf('%s_raw.mat',id);
-    matfile = fullfile(outdir,matfile);
-    if exist(matfile,'file')
-        logmsg('Reading: %s\n',relpath(matfile));
-        load(matfile);
-        logmsg('Read:    %s\n',relpath(matfile));
+    if exist(outfile,'file')
+        logmsg('Reading: %s\n',relpath(outfile));
+        load(outfile);
+        logmsg('Read:    %s\n',relpath(outfile));
         return;
     end
 
@@ -24,24 +30,28 @@ if strcmp(id,'VAQ58')
     channels = {'LFE','LFN','LFZ','LQE','LQN'};
     for c = 1:length(channels)
         fname = sprintf('%s-%s-%s',id,channels{c},suffix);
-        outfile = fullfile(outdir,'measurements',fname);
-        if ~exist(fileparts(outfile),'dir')
-            mkdir(fileparts(outfile));
+        infile = fullfile(outdir,'measurements',fname);
+        infiles{c} = relpath(infile);
+        if ~exist(fileparts(infile),'dir')
+            mkdir(fileparts(infile));
         end
         url = sprintf('%s/%s/%s',baseurl,id,fname);
-        if ~exist(outfile,'file')
-            websave(outfile,url);
-        else
-            data{c} = load(outfile);
+        if ~exist(infile,'file')
+            logmsg(sprintf('Requesting: %s\n',url));
+            websave(infile,url);
+            logmsg(sprintf('Wrote: %s\n',relpath(infile)));
         end
+        data{c} = load(infile);
     end
     
     B = [data{1}.data,data{2}.data,data{3}.data];
     E = [data{4}.data,data{5}.data];
     t = data{1}.time;
 
-    logmsg('Saving: %s\n',matfile);
-    save(matfile,'E','B','t','matfile');
-    logmsg('Saved: %s\n',matfile);
+    outfileo = outfile;
+    outfile = relpath(outfile);
+    logmsg('Saving: %s\n',outfile);
+    save(outfileo,'E','B','t','outfile','infiles');
+    logmsg('Saved: %s\n',outfile);
 
 end

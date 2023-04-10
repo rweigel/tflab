@@ -56,6 +56,13 @@ if nargin == 2
     opts = [];
 end
 
+if all(isnan(E)) ~= 0
+    error('E has NaNs');
+end
+if all(isnan(B)) ~= 0
+    error('B has NaNs');
+end
+
 if nargin == 3
     % tflab(B,E,t) or
     % tflab(B,E,opts)
