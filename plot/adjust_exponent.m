@@ -18,7 +18,7 @@ function adjust_exponent(direction, force, listen)
 %  Call adjust exponent after limits are set because MATLAB does not update
 %  labels when the limits change if the labels have been modified.
 
-debug = 1;
+debug = 0;
 
 if nargin < 3
     listen = 1;
@@ -38,7 +38,7 @@ end
 
 assert(any(strcmp(direction,{'x','y'})), 'dir must be x or y');
 
-pause(0.1)
+%pause(0.1)
 drawnow;
 
 % Relabel 10^{-1} to 0.1, 10^{0} to 1, 10^{1} to 10, and 10^{2} to 100.

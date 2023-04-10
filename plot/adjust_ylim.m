@@ -16,7 +16,7 @@ if nargin == 0
     pos = 'upper';
 end
 
-debug = 1;
+debug = 0;
 
 drawnow;
 yt = get(gca,'YTick');
