@@ -2,6 +2,4 @@
 .DS_Store
 *.mat
 runs/data/
-runs/hapi-data/
-deps/export_fig/
 *.asv
