@@ -21,7 +21,7 @@ t = t(1:10*pps);
 
 %% Set output file base name using start/stop times of input data
 filestr = sprintf('%s-%s-%s',id,...
-                datestr(t(1),'yyyymmdd'),datestr(t(end),'yyyymmdd'));
+                    datestr(t(1),'yyyymmdd'),datestr(t(end),'yyyymmdd'));
 
 %% Set variable name information
 iopts = struct('info',struct());
