@@ -1,3 +1,6 @@
 [submodule "deps/printstruct"]
 	path = deps/printstruct
 	url = https://github.com/rweigel/printstruct
+[submodule "deps/export_fig"]
+	path = deps/export_fig
+	url = https://github.com/altmany/export_fig.git
