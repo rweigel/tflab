@@ -1,0 +1,3 @@
+[submodule "deps/printstruct"]
+	path = deps/printstruct
+	url = https://github.com/rweigel/printstruct
