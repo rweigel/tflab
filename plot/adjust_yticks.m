@@ -1,5 +1,9 @@
 function adjust_yticks(t,ax,no_lead_number)
 
+direction = 'y';
+
+debug = 0;
+
 if nargin == 0
     t = 1e-4; % Threshold to apply adjustment.
 end
@@ -22,9 +26,9 @@ if min(dy) > t
 end
 if strcmp(get(gca,'YScale'),'log')
     %set(gca,'YScale','linear');
-    return
+    return;
     if ~all(dy < t)
-        return
+        %return
     end
 end
 
@@ -39,7 +43,7 @@ yl = get(ax,'YTickLabels');
 % Prevent number of ticks from changing if vertical window size changes.
 % There is no callback for this, and if it happens, labels may become
 % incorrect.
-yticks('manual'); 
+yticks('manual');
 
 if strcmp(yl{1}(1),'$')
     % Already modified
@@ -68,7 +72,9 @@ for i = 1:length(yl)
         dy = floor((yt(idx)-yt(i))/dym);  
     end
     dy = dy*dym/10^ed;
-    %fprintf('Original: %s\n',yl{i});
+    if debug
+        fprintf('Original: %s\n',yl{i});
+    end
     if dy == 1
         yl{i} = sprintf('$%s%s10^{%d}$',yl{idx},sign,ed);
     else
@@ -81,16 +87,28 @@ for i = 1:length(yl)
                             yl{idx},sign,dy,hspace,hspace,ed);
         end                        
     end
-    %fprintf('New:      %s\n',replace(replace(yl{i},hspace,''),'\cdot',''))
+    if debug
+        fprintf('New:      %s\n',replace(replace(yl{i},hspace,''),'\cdot',''));
+    end
 end
+
 set(gca,'TickLabelInterpreter','latex');
 set(gca,'YTickLabels',yl);
-set(gca,['YLimMode'],'auto');
-set(gca,['YTickLabelMode'],'auto');
 
-if nargin < 2
-    %fprintf('Listening\n')
-    addlistener(ax, {'YLim', 'YLimMode'}, 'PostSet', @(~,~)adjust_yticks(t,ax));
+if isprop(ax.YAxis,'LimitsChangedFcn')
+    ax.YAxis.LimitsChangedFcn = @(src,evt) reset(src,evt,debug);
+else
+    addlistener(gca(), [upper(direction),'Lim'], 'PostSet', @(obj,evt) reset(obj,evt,debug));
+end
+
+function reset(obj,evt,debug)
+    if debug
+        fprintf(['Reset called. Setting TickLabelMode to auto '...
+                 'and deleting listener for %sLim change.\n'],direction);
+    end
+    set(gca,[upper(direction), 'TickLabelMode'],'auto');
+    delete(obj);
+    adjust_yticks(t,ax,no_lead_number);
 end
 end
 

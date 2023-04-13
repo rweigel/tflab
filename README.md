@@ -11,6 +11,14 @@ No additional MATLAB toolboxes are required.
 1. The MATLAB Signal Processing Toolbox is needed for time domain taper windows other than `rectangualar` and `parzen`.
 2. MATLAB Statistics and Machine Learning Toolbox is needed to use the `regress` and `robustfit` regression functions; `tflab` has its own version of robust regression that is used by default.
 
+# Installation
+
+```
+git clone https://github.com/rweigel/tflab
+git submodule init
+git pull --recurse-submodules  && git submodule update --recursive
+```
+
 # Getting Started
 
 The main function is `tflab.m`.
@@ -20,8 +28,6 @@ See [`tflab_demo.m`](tflab_demo.m) for example usage and [`demos/`](demos) for e
 Unit tests can be run by executing `tflab_test`.
 
 **Example Usage**
-
-
 
 # Options
 

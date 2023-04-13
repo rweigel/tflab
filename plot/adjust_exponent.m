@@ -113,7 +113,9 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
         labels
     end
     if isempty(labels)
-        fprintf('No labels. Returning.\n');
+        if debug
+            fprintf('No labels. Returning.\n');
+        end
         return;
     end
     ticks = get(gca, [direction,'Tick']);
@@ -183,9 +185,8 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
         if debug
             labels_new
         end
-        %fprintf('Setting labels_new in 5 s\n');
-        %pause(5)
         set(gca, [direction,'TickLabel'], labels_new);
+        set(gca,'TickLabelInterpreter','latex');
         if direction == 'x'
             set(get(gca,'XLabel'),'HorizontalAlignment','center')
         end
@@ -197,32 +198,45 @@ end
 
 drawnow
 
-if listen
-    % On zoom, compute default tick labels.
-    % Based on
-    % https://blogs.mathworks.com/loren/2015/12/14/axes-limits-scream-louder-i-cant-hear-you/
-    if debug
-        fprintf('Setting Listener for %sLim change.\n',direction);
-    end
-    ax = gca();
-    if isprop(ax.YAxis,'LimitsChangedFcn')
-        ax.YAxis.LimitsChangedFcn = @(src,evt)reset(src,evt);
-    else
-        % For before 2021a when LimitsChangedFcn introduced.
-        % When "Restore View" is clicked, ticks will be wrong due to bug:
-        % https://www.mathworks.com/matlabcentral/discussions/highlights/134586-new-in-r2021a-limitschangedfcn
-        % Uncomment to use.
-        %addlistener(gca, [upper(direction),'Lim'], 'PostSet', @(src,evt)reset(src,evt));
-    end
+% On zoom, compute default tick labels.
+% Based on
+% https://blogs.mathworks.com/loren/2015/12/14/axes-limits-scream-louder-i-cant-hear-you/
+if debug
+    fprintf('Setting Listener for %sLim change.\n',direction);
 end
 
-function reset(obj,src,evt)
+ax = gca();
+if listen == 0
+    return;
+end
+
+if 0 && isprop(ax.YAxis,'LimitsChangedFcn')
+    ax.YAxis.LimitsChangedFcn = @(src,evt) reset2(src,evt);
+else
+    % LimitsChangedFcn introduced in 2021a.
+    % When "Restore View" is clicked, ticks will be wrong due to bug:
+    % https://www.mathworks.com/matlabcentral/discussions/highlights/134586-new-in-r2021a-limitschangedfcn
+    h = gcf();
+    set(h, 'SizeChangedFcn', {@reset2, h});
+    addlistener(ax, [upper(direction),'Lim'], 'PostSet', @(obj,evt) reset1(obj,evt,debug));
+end
+
+function reset2(obj,evt,obj2)
+    debug = 0;
     if debug
-        fprintf('Reset called. Setting TickLabelMode to auto and deleting listener for %sLim change.\n',direction);
+        fprintf('reset2() called. Setting TickMode to auto and deleting listener for SizeChangedFcn.\n');
+    end
+    set(gca,[upper(direction), 'TickMode'],'auto');
+    set(gca,[upper(direction), 'TickLabelMode'],'auto');
+    adjust_exponent(direction, force, 0);
+end
+
+function reset1(obj,evt,debug)
+    debug = 0;
+    if debug
+        fprintf('reset1() called. Setting TickLabelMode to auto and deleting listener for %sLim change.\n',direction);
     end
     set(gca,[upper(direction), 'TickLabelMode'],'auto');
-    delete(obj);
-    %fprintf('Calling adjust_exponent in 5 s\n');
     adjust_exponent(direction, force, 0);
 end
 end
