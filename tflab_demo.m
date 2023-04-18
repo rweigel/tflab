@@ -32,7 +32,7 @@ E = E - mean(E);
 B = B/max(B);
 E = E/max(E);
 
-% Set means
+% Set non-zero means
 E = E + 2.0;
 B = B + 1.0;
 

@@ -1,11 +1,6 @@
 function adjust_exponent(direction, force, listen)
 %ADJUST_EXPONENT - Relabel axes number with exponents
 %
-%  ADJUST_EXPONENT() Relabels x, y, and z labels
-%
-%  ADJUST_EXPONENT(s) Relabels s labels only, where s = 'x',
-%  'y', or 'z'.
-%
 %  On log axes, relabels
 %     10^{-1} to 0.1
 %     10^{0} to 1
@@ -15,8 +10,11 @@ function adjust_exponent(direction, force, listen)
 %  On linear axes, removes an offsetted x10^{N} if it appears near last
 %  axis label and appends $\cdot 10^{N}$ to the last axis label.
 %
-%  Call adjust exponent after limits are set because MATLAB does not update
-%  labels when the limits change if the labels have been modified.
+%  ADJUST_EXPONENT() Relabels x, y, and z labels
+%
+%  ADJUST_EXPONENT(s) Relabels s labels only, where s = 'x',
+%  'y', or 'z'.
+%
 
 debug = 0;
 
