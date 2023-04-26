@@ -47,10 +47,21 @@ if nargin > 1
     end
 end
 
-PositionTop = [0.1300 0.5400 0.7750 0.4];
-PositionBottom = [0.1300 0.1100 0.7750 0.4];
 % Line options
 lnopts = {'marker','.','markersize',10,'linestyle','none'};
+
+% Legend options
+lgopts = {'Location','NorthWest','Orientation','Horizontal'};
+
+if iscell(S)
+    % TODO: Check all same.
+    timeunit = S{1}.Options.info.timeunit;
+else
+    timeunit = S.Options.info.timeunit;
+end
+
+PositionTop = [0.1300 0.5400 0.7750 0.4];
+PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -131,7 +142,7 @@ if isstruct(S)
         end
         
         plot(x, y, lnopts{:}, 'markersize', 20);
-        hold on;grid on;
+        hold on;grid on;box on;
         ylabel(unitstr(S.Options.info));
 
         if interp_Z_exists
@@ -142,17 +153,9 @@ if isstruct(S)
         end
         if opts.vs_period
             set(gca,'XScale','log');
-        end
-        if opts.vs_period
-            if ~isempty(opts.period_range)
-                set(gca,'XLim',opts.period_range);
-            end
-        end
-        
-        legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        end        
+        legend(ls,lgopts{:});
         tflab_title(S,opts,'z');
-        set(gca,'XTickLabel',[]);
-
         if opts.type == 3
             adjust_ylim('both');
         else
@@ -160,6 +163,7 @@ if isstruct(S)
         end
         adjust_yticks(1e-4);
         adjust_exponent('y');
+        setx(opts,0,timeunit);
 
     ax2 = subplot('Position', PositionBottom);
         if opts.type ~= 3
@@ -200,7 +204,7 @@ if isstruct(S)
                 yi(idx) = NaN;
             end
         end
-        hold on;grid on;
+        hold on;grid on;box on;
         plot(x, y, lnopts{:}, 'markersize', 20);
 
         if interp_Z_exists
@@ -208,30 +212,17 @@ if isstruct(S)
         end
         if ~opts.unwrap && opts.type ~= 3
             set(gca,'YLim',[-185,185])
-            set(gca,'YTick',[-180:60:180]);
-        end
-        
-        xunitstr = '';
+            set(gca,'YTick',-180:60:180);
+        end        
         if opts.vs_period
             set(gca,'XScale','log');
-            if ~isempty(S.Options.info.timeunit)
-                xunitstr = sprintf(' [%s]', S.Options.info.timeunit);
-            end
-            xlabel(sprintf('$T$%s', xunitstr));
-            if ~isempty(opts.period_range)
-                set(gca,'XLim',opts.period_range);
-            end
-        else
-            if ~isempty(S.Options.info.timeunit)
-                xunitstr = sprintf(' [1/%s]', S.Options.info.timeunit);
-            end
-            xlabel(sprintf('$f$%s',xunitstr));
         end
         
-        legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        legend(ls,lgopts{:});
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
+        setx(opts,1,timeunit);
 
     if opts.print
         for i = 1:length(opts.printfmt)
@@ -302,7 +293,7 @@ if iscell(S)
                     h(s) = plot(x, y, lineopts{:});
                 end
                 if s == 1
-                    grid on;box on;hold on;
+                    grid on;hold on;box on;
                 end
                 if ~isempty(yebl)
                     errorbars(x,y,yebl,yebu);
@@ -333,13 +324,13 @@ if iscell(S)
             ylabel(yl);
             legend(h,ls,'Location','NorthEast','Orientation','Horizontal');
             %tflab_title(S,opts,'z');        
-            set(gca,'XTickLabel',[]);
             adjust_ylim('both');
             adjust_yticks(1e-4);
             if ~isempty(S{1}.Options.info.timeunit) && opts.vs_period
                 period_lines();
             end
             adjust_exponent('y');
+            setx(opts,0,timeunit);        
         ax2(j) = subplot('Position', PositionBottom);
             for s = 1:length(S)
                 ms = max(30-8*s,1);
@@ -418,9 +409,7 @@ if iscell(S)
             adjust_yticks(1e-4);
             adjust_exponent();
             adjust_ylim('upper');
-            if ~isempty(S{1}.Options.info.timeunit) && opts.vs_period
-                period_lines();
-            end
+            setx(opts,0,timeunit);
 
         if opts.print
             comp = regexprep(Zstrs{j},'\{|\}','');

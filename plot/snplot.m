@@ -80,7 +80,7 @@ if isstruct(S)
         else
             xlabel(sprintf('$f$ [1/%s]', S.Options.info.timeunit));
         end
-        ylabel('Coherence');
+        ylabel('Measured to Predicted Coherence');
         grid on;box on;hold on;
         set(gca,'YLim',[0,1]);
         adjust_exponent('x');
@@ -219,7 +219,7 @@ if iscell(S)
             else
                 pre = sprintf('%s(:,%d)',S{1}.Options.info.outstr{j},j);
             end            
-            ylabel(sprintf('%s Coherence',pre));
+            ylabel(sprintf('%s Measured to Predicted Coherence',pre));
             set(gca,'YLim',[0,1]);
             adjust_ylim('both');
             adjust_exponent('x');            

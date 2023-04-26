@@ -1,4 +1,4 @@
-function [B,E,t,outfile,infiles] = EarthScope_read(id)
+function [data,outfile,infiles] = EarthScope_read(id)
 
 % List of sites where data are available at baseurl.
 prepared = {'VAQ58'};
@@ -13,21 +13,33 @@ outdir  = fullfile(scriptdir(),'data','EarthScope',id);
 outfile = sprintf('%s_raw.mat',id);
 outfile = fullfile(outdir,outfile);
 
+if exist(outfile,'file')
+    logmsg('Reading: %s\n',relpath(outfile));
+    load(outfile);
+    logmsg('Read:    %s\n',relpath(outfile));
+    return;
+end
+
+if ~exist(outdir,'dir')
+    mkdir(outdir);
+end
+
 if strcmp(id,'VAQ58')
-
-    if exist(outfile,'file')
-        logmsg('Reading: %s\n',relpath(outfile));
-        load(outfile);
-        logmsg('Read:    %s\n',relpath(outfile));
-        return;
-    end
-
-    if ~exist(outdir,'dir')
-        mkdir(outdir);
-    end
-    
+    % TODO: Get this from a JSON file posted at 
+    % http://mag.gmu.edu/git-data/IRIS-EM-download
+    % (need to create JSON file with list of sites where data has been
+    % downloaded along with their start/stop and channels).
     suffix = '2016-06-10_through_2016-06-25.mat';
-    channels = {'LFE','LFN','LFZ','LQE','LQN'};
+    channels = {'LFE','LFN','LFZ','LQE','LQN'};    
+end
+
+[data,infiles] = readFiles(id, channels, suffix);
+
+logmsg('Saving: %s\n',relpath(outfile));
+save(outfile,'data','outfile','infiles');
+logmsg('Saved: %s\n',relpath(outfile));
+
+function [data,infiles] = readFiles(id, channels, suffix)
     for c = 1:length(channels)
         fname = sprintf('%s-%s-%s',id,channels{c},suffix);
         infile = fullfile(outdir,'measurements',fname);
@@ -41,17 +53,8 @@ if strcmp(id,'VAQ58')
             websave(infile,url);
             logmsg(sprintf('Wrote: %s\n',relpath(infile)));
         end
+        logmsg('Reading: %s\n',relpath(infile));
         data{c} = load(infile);
     end
-    
-    B = [data{1}.data,data{2}.data,data{3}.data];
-    E = [data{4}.data,data{5}.data];
-    t = data{1}.time;
-
-    outfileo = outfile;
-    outfile = relpath(outfile);
-    logmsg('Saving: %s\n',outfile);
-    save(outfileo,'E','B','t','outfile','infiles');
-    logmsg('Saved: %s\n',outfile);
-
+end
 end

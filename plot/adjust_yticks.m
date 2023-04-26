@@ -1,4 +1,5 @@
 function adjust_yticks(t,ax,no_lead_number)
+% ADJUST_YTICKS - Change labels of yticks when increment is small
 
 direction = 'y';
 
@@ -94,6 +95,8 @@ end
 
 set(gca,'TickLabelInterpreter','latex');
 set(gca,'YTickLabels',yl);
+
+ax = gca();
 
 if isprop(ax.YAxis,'LimitsChangedFcn')
     ax.YAxis.LimitsChangedFcn = @(src,evt) reset(src,evt,debug);

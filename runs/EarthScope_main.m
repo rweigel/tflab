@@ -26,11 +26,9 @@ filestr = sprintf('%s-%s-%s',id,...
 %% Set variable name information
 iopts = struct('info',struct());
     iopts.info.instr     = {'$B_x$','$B_y$'};
-    %iopts.info.inunit    = 'nT';
-    iopts.info.inunit   = 'counts';
+    iopts.info.inunit    = 'nT';
     iopts.info.outstr    = {'$E_x$','$E_y$'};
-    %iopts.info.outunit   = 'mV/km';
-    iopts.info.outunit   = 'counts';
+    iopts.info.outunit   = 'mV/km';
     iopts.info.timeunit  = 's';
     iopts.info.timedelta = 1;
     iopts.info.timestart = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');

@@ -33,37 +33,16 @@ PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 figprep();
 
-% Title string
-if ~isempty(opts.title)
-    ts = opts.title;
+if iscell(S)
+    % TODO: Check all same.
+    timeunit = S{1}.Options.info.timeunit;
 else
-    ts = '';
-    if strcmp(opts.type,'raw')
-        ts = '';
-    end
-    if strcmp(opts.type,'smoothed')
-        ts = '';
-    end
-    if strcmp(opts.type,'error')
-        ts = '';
-    end
-    if strcmp(opts.type,'error-smoothed')
-        ts = '';
-    end
-    if strcmp(opts.type,'zeropadded')
-        if isfield(S,'Zeropad')
-            ts = sprintf('Padded with %d zeros',S.Options.td.zeropad);
-        end
-    end    
-    if strcmp(opts.type,'windowed')
-        if isfield(S,'Window')
-            ts = [S.Options.td.window.functionstr, '-windowed (in TD)'];
-        end
-    end
+    timeunit = S.Options.info.timeunit;
 end
 
 % Line options
-lnopts = {'marker','.','markersize',10,'linestyle','none'};
+lnopts = {'marker','.','markersize',20,'linestyle','none'};
+
 % Legend options
 lgopts = {'Location','NorthWest','Orientation','Horizontal'};
 
@@ -71,15 +50,13 @@ if strcmp(opts.type,'error')
     if iscell(S)
         for s = 1:length(S)
             fe{s} = S{s}.Metrics.PSD.Raw.fe;
-            y1{s} = S{s}.Metrics.PSD.Raw.Error;
-            y2a{s} = S{s}.Metrics.SN.Raw;
-            y2b{s} = S{s}.Metrics.Coherence.Raw;
+            y1{s} = sqrt(S{s}.Metrics.PSD.Raw.Error);
+            y2{s} = S{s}.Metrics.SN.Raw;
         end
     else
         fe = S.Metrics.PSD.Raw.fe;
-        y1 = S.Metrics.PSD.Raw.Error;
-        y2a = S.Metrics.SN.Raw;
-        y2b = S.Metrics.Coherence.Raw;
+        y1 = sqrt(S.Metrics.PSD.Raw.Error);
+        y2 = S.Metrics.SN.Raw;
     end
 end
 if strcmp(opts.type,'error-smoothed')
@@ -90,9 +67,8 @@ if strcmp(opts.type,'error-smoothed')
         end                
         for s = 1:length(S)
             fe{s} = S{s}.Metrics.PSD.Smoothed.fe;
-            y1{s} = S{s}.Metrics.PSD.Smoothed.Error;
-            y2a{s} = S{s}.Metrics.SN.Smoothed;
-            y2b{s} = S{s}.Metrics.Coherence.Smoothed;
+            y1{s} = sqrt(S{s}.Metrics.PSD.Smoothed.Error);
+            y2{s} = S{s}.Metrics.SN.Smoothed;
         end
     else
         if ~isfield(S.Metrics.PSD,'Smoothed')
@@ -100,35 +76,34 @@ if strcmp(opts.type,'error-smoothed')
             return
         end        
         fe = S.Metrics.PSD.Smoothed.fe;
-        y1 = S.Metrics.PSD.Smoothed.Error;
-        y2a = S.Metrics.SN.Smoothed;
-        y2b = S.Metrics.Coherence.Smoothed;
+        y1 = sqrt(S.Metrics.PSD.Smoothed.Error);
+        y2 = S.Metrics.SN.Smoothed;
     end
 end
 if strcmp(opts.type,'raw')
     if iscell(S)
         for s = 1:length(S)
             fe{s} = S{s}.Metrics.PSD.Raw.fe;
-            y1{s} = S{s}.Metrics.PSD.Raw.In;
-            y2{s} = S{s}.Metrics.PSD.Raw.Out;
+            y1{s} = sqrt(S{s}.Metrics.PSD.Raw.In);
+            y2{s} = sqrt(S{s}.Metrics.PSD.Raw.Out);
         end
     else
         fe = S.Metrics.PSD.Raw.fe;
-        y1 = S.Metrics.PSD.Raw.In;
-        y2 = S.Metrics.PSD.Raw.Out;
+        y1 = sqrt(S.Metrics.PSD.Raw.In);
+        y2 = sqrt(S.Metrics.PSD.Raw.Out);
     end
 end
 if strcmp(opts.type,'smoothed')
     if iscell(S)
         for s = 1:length(S)
             fe{s} = S{s}.Metrics.PSD.Smoothed.fe;
-            y1{s} = S{s}.Metrics.PSD.Smoothed.In;
-            y2{s} = S{s}.Metrics.PSD.Smoothed.Out;
+            y1{s} = sqrt(S{s}.Metrics.PSD.Smoothed.In);
+            y2{s} = sqrt(S{s}.Metrics.PSD.Smoothed.Out);
         end
     else
         fe = S.Metrics.PSD.Smoothed.fe;
-        y1 = S.Metrics.PSD.Smoothed.In;
-        y2 = S.Metrics.PSD.Smoothed.Out;
+        y1 = sqrt(S.Metrics.PSD.Smoothed.In);
+        y2 = sqrt(S.Metrics.PSD.Smoothed.Out);
     end
 end
 if strcmp(opts.type,'raw-phase')
@@ -163,15 +138,15 @@ if any(strcmp(opts.type,{'windowed','prewhitened','zeropadded','smoothed'}))
         cnt = 0;
         for s = 1:length(S)
             if ~isfield(S{s},el1) || ~isfield(S{s}.(el1).PSD,el2)
-                logmsg(sprintf('Time series %d was not %s. Plotting raw PSD.\n',s,opts.type));
+                logmsg(sprintf('Time series %d was not %s. Plotting raw Fourier amplitudes.\n',s,opts.type));
                 fe{s} = S{s}.Metrics.PSD.Raw.fe;
-                y1{s} = S{s}.Metrics.PSD.Raw.In;
-                y2{s} = S{s}.Metrics.PSD.Raw.Out;
+                y1{s} = sqrt(S{s}.Metrics.PSD.Raw.In);
+                y2{s} = sqrt(S{s}.Metrics.PSD.Raw.Out);
             else
                 cnt = cnt + 1;
                 fe{s} = S{s}.(el1).PSD.(el2).fe;
-                y1{s} = S{s}.(el1).PSD.(el2).In;
-                y2{s} = S{s}.(el1).PSD.(el2).Out;
+                y1{s} = sqrt(S{s}.(el1).PSD.(el2).In);
+                y2{s} = sqrt(S{s}.(el1).PSD.(el2).Out);
             end
         end
         if cnt == 0
@@ -179,19 +154,18 @@ if any(strcmp(opts.type,{'windowed','prewhitened','zeropadded','smoothed'}))
         end
     else
         if ~isfield(S,el1) || ~isfield(S.(el1).PSD,el2)
-            logmsg(sprintf('Time series was not %s. Not plotting %s PSDs.\n',opts.type,opts.type));
+            logmsg(sprintf('Time series was not %s. Not plotting %s Fourier amplitudes.\n',opts.type,opts.type));
             return
         end
         fe = S.(el1).PSD.(el2).fe;
-        y1 = S.(el1).PSD.(el2).In;
-        y2 = S.(el1).PSD.(el2).Out;
+        y1 = sqrt(S.(el1).PSD.(el2).In);
+        y2 = sqrt(S.(el1).PSD.(el2).Out);
     end
 end
 
 if startsWith(opts.type,'error')
     y1 = ftrim(fe,y1);
-    y2a = ftrim(fe,y2a);
-    y2b = ftrim(fe,y2b);
+    y2 = ftrim(fe,y2);
 else
     y1 = ftrim(fe,y1);
     y2 = ftrim(fe,y2);
@@ -213,67 +187,10 @@ else
     end
 end
 
-if any(strcmp(opts.type,{'raw','raw-phase','windowed','prewhitened','zeropadded','smoothed'}))
+if any(strcmp(opts.type,...
+      {'raw','raw-phase','windowed','prewhitened','zeropadded','smoothed'}))
     
-    if iscell(S)
-        j = 1; % Only plots first component (need to generalize).
-        for s = 1:length(S)
-            if isempty(x{s})
-                continue;
-            end
-            info = S{s}.Options.info;
-            inunit = '';
-            if ~isempty(info.inunit)
-                inunit = sprintf(' [%s]', info.inunit);
-            end
-            lg1{s} = S{s}.Options.description;
-            if iscell(info.instr)
-                %lg1{s} = sprintf('%s(:,%d) PSD%s%s',info.instr{j},j,inunit);
-            else
-                %lg1{s} = sprintf('%s PSD%s',info.instr,inunit);
-            end
-            outunit = '';
-            if ~isempty(info.outunit)
-                outunit = sprintf(' [%s]', info.outunit);
-            end
-            lg2{s} = S{s}.Options.description;
-            if iscell(info.outstr)
-                %lg2{s} = sprintf('%s(:,%d) PSD%s',info.outstr{j},j,outunit);
-            else
-                %lg2{s} = sprintf('%s PSD%s',info.outstr,outunit);
-            end
-        end
-        lg1 = lg1(~cellfun('isempty',lg1));
-        lg2 = lg2(~cellfun('isempty',lg2));
-    else        
-        info = S.Options.info;
-        inunit = '';
-        if ~isempty(info.inunit)
-            inunit = sprintf(' [%s]', info.inunit);
-        end
-        lab = 'PSD';
-        if endsWith(opts.type,'phase')
-            lab = 'Phase';
-        end
-        for j = 1:size(y1,2)
-            if iscell(info.instr)
-                lg1{j} = sprintf('%s %s%s',info.instr{j},lab,inunit);
-            else
-                lg1{j} = sprintf('%s(:,%d) %s%s',info.instr,j,lab,inunit);
-            end
-        end
-        outunit = '';
-        if ~isempty(info.outunit)
-            outunit = sprintf(' [%s]', info.outunit);
-        end
-        for j = 1:size(y2,2)
-            if iscell(info.outstr)
-                lg2{j} = sprintf('%s %s%s',info.outstr{j},lab,outunit);
-            else
-                lg2{j} = sprintf('%s(:,%d) %s%s',info.outstr,j,lab,outunit);
-            end
-        end
-    end
+    [lg1, lg2] = legend_(S);
     
     subplot('Position',PositionTop);
         plot_(x,y1,lnopts)
@@ -282,26 +199,24 @@ if any(strcmp(opts.type,{'raw','raw-phase','windowed','prewhitened','zeropadded'
             set(gca,'YTick',-180:45:180);
             ylabel('$[^\circ]$');            
         else
+            ylabel('Fourier Amplitude');
             set(gca,'YScale','log');
         end
         if opts.vs_period
             set(gca,'XScale','log');
         end
-        if ~iscell(S)
-            lg1 = plotnoise(lg1,'InNoisePSD', inunit);
-        end
         if iscell(S)
-            ylabel(sprintf('In PSD %s', inunit));
+            ylabel(sprintf('In %s', S{1}.Options.info.inunit));
         else
+            lg1 = plotnoise(lg1,'InNoisePSD', S.Options.info.inunit);
             tflab_title(S,opts,'psd');
         end
         grid on;box on;
         legend(lg1,lgopts{:});
-        setx(opts,0);
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        period_lines_(S);
+        setx(opts,0,timeunit);
 
     subplot('Position',PositionBottom);
         plot_(x,y2,lnopts)
@@ -311,120 +226,60 @@ if any(strcmp(opts.type,{'raw','raw-phase','windowed','prewhitened','zeropadded'
             set(gca,'YTick',-180:45:180);
             ylabel('$[^\circ]$');
         else
+            ylabel('Fourier Amplitude');
             set(gca,'YScale','log');
         end
         if opts.vs_period
             set(gca,'XScale','log');
         end
-        if ~iscell(S)
-            lg2 = plotnoise(lg2,'OutNoisePSD', outunit);
-        end        
         if iscell(S)
-            ylabel(sprintf('Out PSD %s', outunit));
+            ylabel(sprintf('Out %s', S{1}.Options.info.inunit));
+        else
+            lg2 = plotnoise(lg2,'OutNoisePSD', S.Options.info.inunit);
         end
         grid on;box on;
         legend(lg2,lgopts{:});
-        setx(opts, 1);
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        period_lines_(S);
+        setx(opts, 1,timeunit);        
 else
     subplot('Position',PositionTop)
-        if iscell(S)
-            j = 1; % Only plots first component (need to generalize).
-            for s = 1:length(S)
-                info = S{s}.Options.info;
-                outunit = '';
-                if ~isempty(info.inunit)
-                    outunit = sprintf(' [%s]', info.outunit);
-                end
-                ls{s} = S{s}.Options.description;
-                if ~iscell(info.instr) && size(S{s}.Metrics.PSD.Raw.Error,2) > 1
-                    %ls{s} = sprintf('Error(:,%d) PSD%s%s',j,outunit);
-                else
-                    %ls{s} = sprintf('Error PSD%s',outunit);
-                end
-            end            
-        else
-            info = S.Options.info;
-            outunit = '';
-            if ~isempty(info.inunit)
-                outunit = sprintf(' [%s]', info.outunit);
-            end
-            for j = 1:size(S.Metrics.PSD.Raw.Error,2)
-                if ~iscell(info.instr) && size(S.Metrics.PSD.Raw.Error,2) > 1
-                    ls{j} = sprintf('Error(:,%d) PSD%s%s',j,outunit);
-                else
-                    ls{j} = sprintf('Error PSD%s',outunit);
-                end
-            end
-        end
+        [lg1,lg2] = legend_(S);
         plot_(x,y1,lnopts)
         set(gca,'YScale','log');
         if opts.vs_period
             set(gca,'XScale','log');
         end
         grid on;box on;
-        legend(ls,lgopts{:});
+        ylabel('Fourier Amplitudes')
+        legend(lg1,lgopts{:});
         tflab_title(S,opts,'psd');
         if iscell(S)
             if size(S{s}.Metrics.PSD.Raw.Error,2) > 1
-                ylabel('PSD of Error(:,1)');
+                ylabel('Fourier Amplitude of Error(:,1)');
             else
-                ylabel('PSD of Error');                
+                ylabel('Fourier Amplitude of Error');                
             end
         end
-        setx(opts,0);
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        period_lines_(S);
+        setx(opts,0,timeunit);
         
     subplot('Position',PositionBottom)
-        if iscell(S)
-            q = 1;
-            for k = 1:2
-                for s = 1:length(S)
-                    ls2{q} = S{s}.Options.description;
-                    q = q + 1;
-                end
-            end
-        end
-        yyaxis left
-        plot_(x,y2a,lnopts);
+        plot_(x,y2,lnopts);
         set(gca,'YScale','log');
         if opts.vs_period
             set(gca,'XScale','log');
-        end
-        if opts.vs_period
             set(gca,'YScale','log');
         end
-        if iscell(S)
-            ylabel('[PSD Out]/[PSD Error]');
-        else
-            ls2{1} = '[PSD Out]/[PSD Error]';
-        end
+        ylabel('SNR');
+        grid on;
+        legend(lg2,lgopts{:});
         adjust_ylim();
         adjust_exponent('y');
-        
-        yyaxis right
-        set(gca,'YScale','linear');
-        plot_(x,y2b,lnopts);
-        if opts.vs_period
-            %set(gca,'YScale','log');
-        end
-        set(gca,'YLim',[-0.01,1.21]);
-        set(gca,'YTick',[0:0.2:1.0]);
-        if iscell(S)
-            ylabel('Coherence');
-        else
-            ls2{2} = 'Coherence';
-        end
-        legend(ls2,lgopts{:});
-        grid on;box on;
-        setx(opts,1);
-        period_lines_(S);
+        setx(opts,1,timeunit);
 
 end
 
@@ -435,7 +290,48 @@ if opts.print
     end
 end
 
-function period_lines_(S)
+function [lg1, lg2] = legend_(S)
+
+    if iscell(S)
+        for s = 1:length(S)
+            if isempty(x{s})
+                continue;
+            end
+            info = S{s}.Options.info;
+            inunit = '';
+            if ~isempty(info.inunit)
+                inunit = sprintf(' [%s]', info.inunit);
+            end
+            lg1{s} = S{s}.Options.description;
+            lg2{s} = S{s}.Options.description;
+        end
+        lg1 = lg1(~cellfun('isempty',lg1));
+        lg2 = lg2(~cellfun('isempty',lg2));
+    else        
+        info = S.Options.info;
+        inunit = '';
+        if ~isempty(info.inunit)
+            inunit = sprintf(' [%s]', info.inunit);
+        end
+        for j = 1:size(S.In,2)
+            if iscell(info.instr)
+                lg1{j} = sprintf('%s %s',info.instr{j},inunit);
+            else
+                lg1{j} = sprintf('%s(:,%d) %s',info.instr,j,inunit);
+            end
+        end
+        outunit = '';
+        if ~isempty(info.outunit)
+            outunit = sprintf(' [%s]', info.outunit);
+        end
+        for j = 1:size(S.Out,2)
+            if iscell(info.outstr)
+                lg2{j} = sprintf('%s %s',info.outstr{j},outunit);
+            else
+                lg2{j} = sprintf('%s(:,%d) %s',info.outstr,j,outunit);
+            end
+        end
+    end
 end
 
 function plot_(x,y,lnopts)
@@ -466,38 +362,13 @@ function ls1 = plotnoise(ls1,comp,unit)
         end
         for j = 1:jl
             if iscell(info.instr)
-                ls1{j+jl} = sprintf('%s(:,%d) Noise PSD%s',compstrs{j},j,unit);
+                ls1{j+jl} = sprintf('%s(:,%d) Noise Amplitudes%s',compstrs{j},j,unit);
             else
-                ls1{j+jl} = sprintf('%s Noise PSD%s',compstrs,unit);
+                ls1{j+jl} = sprintf('%s Noise Amplitudes%s',compstrs,unit);
             end
         end
     end
     
-end
-
-function setx(opts,last)
-    if opts.vs_period && ~isempty(opts.period_range)
-        set(gca,'XLim',opts.period_range);
-    end
-    if ~opts.vs_period && ~isempty(opts.frequency_range)
-        set(gca,'XLim',opts.frequency_range);
-    end
-    if last == 0
-        set(gca,'XTickLabel',[]);
-        return
-    end
-    timeunit = '';
-    if opts.vs_period 
-        if ~isempty(info.timeunit)
-            timeunit = sprintf(' [%s]', info.timeunit);
-        end
-        xlabel(sprintf('$T$%s',timeunit));
-    else
-        if ~isempty(info.timeunit)
-            timeunit = sprintf(' [1/%s]', info.timeunit);
-        end
-        xlabel(sprintf('$f$%s',timeunit));
-    end
 end
 
 function y = ftrim(fe,y)

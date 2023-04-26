@@ -110,8 +110,8 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
     end
     
     subplot('Position',PositionTop);
-        plot(t,10000*In);
-        grid on;box on;
+        plot(t,In);
+        grid on;grid minor;box on;
         ls = legendlabels('In');
         if isfield(S,'InNoise') && ~strcmp(opts.type,'windowed')
             hold on;
@@ -126,7 +126,7 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
         
     subplot('Position',PositionBottom);
         plot(t,Out);
-        grid on;box on;    
+        grid on;grid minor;box on;    
         ls = legendlabels('Out');
         if isfield(S,'OutNoise') && ~strcmp(opts.type,'windowed')
             hold on;
@@ -181,7 +181,7 @@ if ~iscell(S) && strcmp(opts.type,'error')
 
         subplot('Position',PositionTop);
             plot(t,S.Out(:,j));
-            grid on;box on;hold on;
+            grid on;grid minor;box on;hold on;
             plot(t,S.Metrics.Predicted(:,j));
             [~, lo] = legend(ls1(:),'Location','NorthEast','Orientation','Vertical');
             adjust_legend_lines(lo);
@@ -191,7 +191,7 @@ if ~iscell(S) && strcmp(opts.type,'error')
             tflab_title(S,opts,'ts');
         subplot('Position',PositionBottom);
             plot(t,S.Metrics.Predicted(:,j)-S.Out(:,j));
-            grid on;box on;
+            grid on;grid minor;box on;
             [~, lo] = legend(ls2,'Location','NorthEast','Orientation','Vertical');
             adjust_legend_lines(lo);
             adjust_ylim();
@@ -218,7 +218,7 @@ if iscell(S)
     
     subplot('Position',PositionTop);
         plot(t,S{1}.Out(:,1),c{1});
-        grid on;box on;hold on;
+        grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     S{1}.Options.info.outstr{1},S{1}.Options.info.outunit));
         ls0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
@@ -239,7 +239,7 @@ if iscell(S)
         setx(0,info,[t(1),t(end)]);
     subplot('Position',PositionBottom);
         plot(t,S{1}.Out(:,2),c{1});
-        grid on;box on;hold on;
+        grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     S{1}.Options.info.outstr{2},S{1}.Options.info.outunit));
         ls0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);

@@ -253,6 +253,13 @@ end
 % Main code start. Given Nt x Nin B and Ntx1 E, compute TF, where Nt is the
 % number of timesteps and Nin is the number of inputs.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if any(isnan(E))
+    error('E has NaNs');
+end
+if any(isnan(B))
+    error('B has NaNs');
+end
+
 if opts.tflab.loglevel > 0
     logmsg( ['Computing transfer function for input/output '...
                     'sizes [%d,%d]/[%d,1]\n'],...
@@ -665,6 +672,7 @@ function S = main(B, E, t, opts)
         if opts.tflab.loglevel > 0    
             logmsg('Computing H\n');
         end
+        
         [S.H,S.tH] = z2h(Zi);
         if opts.tflab.loglevel > 0    
             logmsg('Computed H\n');

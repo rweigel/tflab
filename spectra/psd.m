@@ -1,9 +1,22 @@
 function [S,D,f] = psd(x,opts,n)
+%PSD
+%
+%  [S,D,f] = psd(x,opts,n). 
+%
+%  Computes the power spectra (not density) S and Fourier coefficients
+%  of signal x with N rows for positive frequencies according to
+%
+%    S = fft(x).*conj(fft(x))/(N/2)^2
+%  
+%  At a given frequency, a sinusoid with amplitude A and arbitrary phase
+%  will have S = A^2 at that frequency.
+%  
 
-if nargin < 3
-    % If time series x was trimmed, we can pass untrimmed length of x
-    % so that the frequency grid is the same as that for the untrimmed x.
-    n = size(x,1); 
+% Note that n is not used.
+
+if size(x,1) == 1
+    flip = 1;
+    x = transpose(x);
 end
 
 N = size(x,1);
@@ -20,7 +33,8 @@ if nargin == 1 % Compute raw psd and fft
     S = ftx.*conj(ftx)/(N/2)^2;
     D = ftx;
     [~,f] = fftfreq(N);
-    return
+    [S,D,f] = unflip(S,D,f,flip);
+    return;
 end
 
 if nargin > 2
@@ -46,3 +60,13 @@ for j = 1:length(Ic)
 end
 
 S = S/(N/2)^2;
+[S,D,f] = unflip(S,D,f,flip);
+
+function [S,D,f] = unflip(S,D,f,flip)
+    if flip == 1
+        S = S';
+        D = transpose(D);
+        f = f';
+    end
+end
+end

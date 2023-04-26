@@ -20,6 +20,7 @@ copts.print    = 0; % Set to 1 to print pdf of each figure created.
 copts.printdir = fullfile(scriptdir(),'data','Middelpos','figures');
 copts.printfmt = {'pdf'};
 
+figure(1);close all;
 
 %% Time series plots
 % Plot raw time series data used for TF1 (will be same as that for TF2)
@@ -28,14 +29,14 @@ figure();
     tsopts.type = 'raw';
     tsplot(TF1,tsopts);
 
-% Plot error for S1 only
+% Plot error for TF1 only
 figure();
     tsopts = copts;
     tsopts.type = 'error';
     tsplot(TF1,tsopts);
 
-if 0    
-% Compare S1 and S2 error
+if 0
+% Compare TF1 and TF2 error
 figure();
     tsopts = copts;
     tsopts.type  = 'error';
@@ -43,53 +44,54 @@ figure();
 end    
 
 %% SN plots
-% Plot SN for S1 only
+% Plot SN for TF1 only
 figure();
     snopts = copts;
-    snopts.period_range = [1, 86400];
+    snopts.period_range = [3, 86400];
     snplot(TF1,snopts);
 
 if 0    
-% Plot SN for S2 only
+% Plot SN for TF2 only
 figure();
     snopts = copts;
-    snopts.period_range = [1, 86400];
+    snopts.period_range = [3, 86400];
     snplot(TF2,snopts);
  
-% Compare SN between S1 and S2
+% Compare SN between TF1 and TF2
 figure();
     snopts = copts;
-    snopts.period_range = [1, 86400];
+    snopts.period_range = [3, 86400];
     snplot({TF1,TF2},snopts);
 end
 
 %% PSD plots
-% Plot PSDs for S1 only
+% Plot PSDs for TF1 only
 figure();
     psdopts = copts;
-    psdopts.period_range = [1, 86400];
+    psdopts.period_range = [3, 86400];
+    psdopts.type = 'smoothed';
     psdplot(TF1,psdopts);
 
 if 0    
-% Compare SN between S1 and S2
+% Compare SN between TF1 and TF2
 figure();
     psdopts = copts;
-    psdopts.period_range = [1, 86400];
+    psdopts.period_range = [3, 86400];
     psdplot({TF1,TF2},psdopts);
 end
 
 %% Z plots
-% Compare Z between S1 and S2
 figure();
     zopts = copts;
-    %zopts.period_range = [1, 86400];
+    zopts.period_range = [3, 86400];
     zopts.type = 2;
     zplot(TF1,zopts);
 
 if 0
+% Compare Z between TF1 and TF2    
 figure();
     zopts = copts;
-    zopts.period_range = [1, 86400];
+    zopts.period_range = [3, 86400];
     zplot({TF1,TF2},zopts);
 end
 

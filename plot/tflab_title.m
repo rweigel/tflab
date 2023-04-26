@@ -27,6 +27,16 @@ if strcmp(plottype, 'ts')
 end
 
 if strcmp(plottype, 'psd')
+    if strcmp(opts.type,'zeropadded')
+        if isfield(tf,'Zeropad')
+            ts = sprintf('Padded with %d zeros',tf.Options.td.zeropad);
+        end
+    end    
+    if strcmp(opts.type,'windowed')
+        if isfield(tf,'Window')
+            ts = [tf.Options.td.window.functionstr, '-windowed (in TD)'];
+        end
+    end
     if isstruct(tf)
         if strcmp(opts.type,'error')
             ts = tfo.description;
