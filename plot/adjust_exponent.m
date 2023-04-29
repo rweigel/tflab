@@ -38,22 +38,42 @@ assert(any(strcmp(direction,{'x','y'})), 'dir must be x or y');
 
 %pause(0.1)
 drawnow;
+ax = gca();
+
+labels = get(gca(), [direction,'TickLabel']);
+
+if isempty(labels)
+    if debug
+        fprintf('No labels. Returning.\n');
+    end
+    return;
+else
+    if debug
+        labels    
+    end    
+end
+
+if ~isempty(ax.UserData) && isfield(ax.UserData,'YTickLabelsLast')
+    if length(ax.UserData.YTickLabelsLast) == length(labels)
+        tf = strcmp(ax.UserData.YTickLabelsLast, labels);
+        if all(tf)
+            if debug
+                fprintf('adjust_exponent(): Previous labels are same as current.\n');
+            end
+            return;
+        end
+    end    
+end
+
 
 % Relabel 10^{-1} to 0.1, 10^{0} to 1, 10^{1} to 10, and 10^{2} to 100.
-if strcmp(get(gca, [direction,'Scale']), 'log')
+if strcmp(get(ax, [direction,'Scale']), 'log')
     if debug
         fprintf('Log scale\n');
     end
-    labels = get(gca, [direction,'TickLabel']);
     if debug
         fprintf('Current %s labels:\n',direction);
         labels
-    end
-    if isempty(labels)
-        if debug
-            fprintf('No labels. Returning.\n');
-        end
-        return;
     end
     found = 0;
     for i = 1:length(labels)
@@ -96,19 +116,15 @@ if strcmp(get(gca, [direction,'Scale']), 'log')
             fprintf('Setting modified labels:\n');
             labels
         end
-        set(gca,[direction,'TickLabel'], labels);
+        set(ax,[direction,'TickLabel'], labels);
     end
 end
 
 % Remove the offsetted x10^{N} notation that appears on last axis label
 % and add it to the last (top) label.
-if strcmp(get(gca, [direction,'Scale']),'linear')
+if strcmp(get(ax, [direction,'Scale']),'linear')
     if debug
         fprintf('Linear scale for %s\n',direction);
-    end
-    labels = get(gca, [direction,'TickLabel']);
-    if debug
-        labels
     end
     if isempty(labels)
         if debug
@@ -116,8 +132,8 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
         end
         return;
     end
-    ticks = get(gca, [direction,'Tick']);
-    ax = get(gca,[direction,'Axis']);
+    ticks = get(ax, [direction,'Tick']);
+    ax = get(ax,[direction,'Axis']);
     if length(ax) > 1
         % If yyaxis used, ax will have two elements.
         % This will only adjust left axis.
@@ -183,18 +199,21 @@ if strcmp(get(gca, [direction,'Scale']),'linear')
         if debug
             labels_new
         end
-        set(gca, [direction,'TickLabel'], labels_new);
-        set(gca,'TickLabelInterpreter','latex');
+        set(gca(), [direction,'TickLabel'], labels_new);
+        set(gca(),'TickLabelInterpreter','latex');
         if direction == 'x'
-            set(get(gca,'XLabel'),'HorizontalAlignment','center')
+            set(get(gca(),'XLabel'),'HorizontalAlignment','center')
         end
         if direction == 'y'
-            set(get(gca,'YLabel'),'VerticalAlignment','top')
+            set(get(gca(),'YLabel'),'VerticalAlignment','top')
         end
     end
 end
 
 drawnow
+
+ax = gca();
+ax.UserData.YTickLabelsLast = labels;
 
 % On zoom, compute default tick labels.
 % Based on
@@ -203,7 +222,6 @@ if debug
     fprintf('Setting Listener for %sLim change.\n',direction);
 end
 
-ax = gca();
 if listen == 0
     return;
 end
@@ -224,17 +242,17 @@ function reset2(obj,evt,obj2)
     if debug
         fprintf('reset2() called. Setting TickMode to auto and deleting listener for SizeChangedFcn.\n');
     end
-    set(gca,[upper(direction), 'TickMode'],'auto');
-    set(gca,[upper(direction), 'TickLabelMode'],'auto');
+    set(ax,[upper(direction), 'TickMode'],'auto');
+    set(ax,[upper(direction), 'TickLabelMode'],'auto');
     adjust_exponent(direction, force, 0);
 end
 
 function reset1(obj,evt,debug)
     debug = 0;
     if debug
-        fprintf('reset1() called. Setting TickLabelMode to auto and deleting listener for %sLim change.\n',direction);
+        fprintf('adjust_exponent(): reset1() called. Setting TickLabelMode to auto and deleting listener for %sLim change.\n',direction);
     end
-    set(gca,[upper(direction), 'TickLabelMode'],'auto');
+    set(ax,[upper(direction), 'TickLabelMode'],'auto');
     adjust_exponent(direction, force, 0);
 end
 end

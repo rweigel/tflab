@@ -9,15 +9,16 @@ id = 'VAQ58';
 [B,E,t,infile,outfile] = EarthScope_clean(id);
 
 %% Make length an integer number of segments.
-pps = 86400;
-I = pps*floor(size(B,1)/pps);
+pps = 86400;                % Points per segment
+Ns  = floor(size(B,1)/pps); % Number of segments
+I = pps*Ns;
 B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-B = B(1:10*pps,:);
-E = E(1:10*pps,:);
-t = t(1:10*pps);
+B = B(1:6*86400,:);
+E = E(1:6*86400,:);
+t = t(1:6*86400);
 
 %% Set output file base name using start/stop times of input data
 filestr = sprintf('%s-%s-%s',id,...
@@ -41,8 +42,6 @@ opts1 = tflab_options(1,iopts);
     opts1.tflab.loglevel = 1;
     opts1.td.window.width = pps;
     opts1.td.window.shift = pps;
-    %opts1.td.window.width = size(E,1);
-    %opts1.td.window.shift = size(E,1);
     opts1.filestr = sprintf('%s-tf1',filestr);
 
 TF1 = tflab(B(:,1:2),E,opts1);

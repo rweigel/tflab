@@ -84,7 +84,7 @@ end
 figure();
     zopts = copts;
     zopts.period_range = [3, 86400];
-    zopts.type = 2;
+    zopts.type = 1;
     zplot(TF1,zopts);
 
 if 0

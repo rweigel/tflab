@@ -1,5 +1,5 @@
+if 0
 figure(1)
-
 subplot(2,1,1)
     y = [1,1.000001,1.000002];
     plot([0,1,2],y,'*');
@@ -9,7 +9,6 @@ subplot(2,1,2)
     adjust_yticks()
     grid on;
 
-    
 figure(2)
 subplot(2,1,1)
     y = [-1,-1.000001,-1.000002];
@@ -51,5 +50,16 @@ subplot(2,1,2)
     grid on;
     adjust_yticks()
     set(gca,'YLim',[1,1+40e-7])
-    
+end
+
+figure(6)
+subplot(2,1,1)
+    y = [1,1.000001,1.000002];
+    semilogy([0,1,2],y,'*');
+    grid on;
+subplot(2,1,2)
+    semilogy([0,1,2],y,'*')
+    grid on;
+    adjust_yticks(1e-4);
+    set(gca,'YLim',[1,1+40e-7])
     

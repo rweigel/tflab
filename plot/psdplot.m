@@ -1,5 +1,8 @@
-function axes_handles = psdplot(S,popts)
+function psdplot(S,popts)
 %PSDPLOT
+
+assert(isstruct(S) || iscell(S), ...
+    'S must be a tflab struct or cell array of tflab structs');
 
 % Default options
 opts = struct();
@@ -29,6 +32,12 @@ if nargin > 1
     end
 end
 
+% Line options
+lnopts = {'marker','.','markersize',20,'linestyle','none'};
+
+% Legend options
+lgopts = {'Location','NorthWest','Orientation','Horizontal'};
+
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
 figprep();
@@ -39,12 +48,6 @@ if iscell(S)
 else
     timeunit = S.Options.info.timeunit;
 end
-
-% Line options
-lnopts = {'marker','.','markersize',20,'linestyle','none'};
-
-% Legend options
-lgopts = {'Location','NorthWest','Orientation','Horizontal'};
 
 if strcmp(opts.type,'error')
     if iscell(S)
@@ -199,7 +202,7 @@ if any(strcmp(opts.type,...
             set(gca,'YTick',-180:45:180);
             ylabel('$[^\circ]$');            
         else
-            ylabel('Fourier Amplitude');
+            ylabel('$|$Fourier Amplitude$|$');
             set(gca,'YScale','log');
         end
         if opts.vs_period
@@ -216,7 +219,7 @@ if any(strcmp(opts.type,...
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(opts,0,timeunit);
+        setx(opts, 0, timeunit);
 
     subplot('Position',PositionBottom);
         plot_(x,y2,lnopts)
@@ -226,7 +229,7 @@ if any(strcmp(opts.type,...
             set(gca,'YTick',-180:45:180);
             ylabel('$[^\circ]$');
         else
-            ylabel('Fourier Amplitude');
+            ylabel('$|$Fourier Amplitude$|$');
             set(gca,'YScale','log');
         end
         if opts.vs_period
@@ -242,26 +245,19 @@ if any(strcmp(opts.type,...
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(opts, 1,timeunit);        
+        setx(opts, 1, timeunit);        
 else
     subplot('Position',PositionTop)
-        [lg1,lg2] = legend_(S);
+        [~,lg2] = legend_(S);
         plot_(x,y1,lnopts)
         set(gca,'YScale','log');
         if opts.vs_period
             set(gca,'XScale','log');
         end
         grid on;box on;
-        ylabel('Fourier Amplitudes')
-        legend(lg1,lgopts{:});
+        ylabel('$|$Fourier Amp of Error$|$')
+        legend(lg2,lgopts{:});
         tflab_title(S,opts,'psd');
-        if iscell(S)
-            if size(S{s}.Metrics.PSD.Raw.Error,2) > 1
-                ylabel('Fourier Amplitude of Error(:,1)');
-            else
-                ylabel('Fourier Amplitude of Error');                
-            end
-        end
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();

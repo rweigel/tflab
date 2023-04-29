@@ -53,19 +53,25 @@ lnopts = {'marker','.','markersize',10,'linestyle','none'};
 % Legend options
 lgopts = {'Location','NorthWest','Orientation','Horizontal'};
 
+if iscell(S) && length(S) == 1
+    S = S{1};
+end
+
 if iscell(S)
+    for s = 1:length(S)
+        S{s} = defaultinfo(S{s});
+    end
     % TODO: Check all same.
     timeunit = S{1}.Options.info.timeunit;
+    timedelta = S{1}.Options.info.timedelta;
 else
+    S = defaultinfo(S);
     timeunit = S.Options.info.timeunit;
+    timedelta = S.Options.info.timedelta;
 end
 
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
-
-if iscell(S) && length(S) == 1
-    S = S{1};
-end
 
 if (iscell(S) && size(S{1}.Z,2) > 1) || (isstruct(S) && size(S.Z,2) > 1)
     Zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
@@ -85,16 +91,15 @@ if isstruct(S)
         interp_Z_exists = 1;
     end
     
-    S = defaultmeta(S);
     if opts.vs_period
-        x = S.Options.info.timedelta./S.fe;
+        x = timedelta./S.fe;
         if interp_Z_exists
-            xi = S.Options.info.timedelta./S.fi;
+            xi = timedelta./S.fi;
         end
     else
-        x = S.Options.info.timedelta*S.fe;
+        x = timedelta*S.fe;
         if interp_Z_exists
-            xi = S.Options.info.timedelta*S.fi;
+            xi = timedelta*S.fi;
         end
     end
     
@@ -133,33 +138,32 @@ if isstruct(S)
                 end
         end
         if opts.vs_period && ~isempty(opts.period_range)
-            idx = find(x <= opts.period_range(1) | x >= opts.period_range(2));
+            idx = x <= opts.period_range(1) | x >= opts.period_range(2);
             y(idx) = NaN;
             if interp_Z_exists
-                idx = find(xi <= opts.period_range(1) | xi >= opts.period_range(2));
+                idx = xi <= opts.period_range(1) | xi >= opts.period_range(2);
                 yi(idx) = NaN;
             end
         end
         
         plot(x, y, lnopts{:}, 'markersize', 20);
         hold on;grid on;box on;
-        ylabel(unitstr(S.Options.info));
-
         if interp_Z_exists
             plot(xi, yi, lnopts{:}, 'markersize', 15);
         end
+        if length(ls) > 1
+            ylabel(unitstr(S.Options.info));
+            legend(ls,lgopts{:});
+        else
+            ylabel(sprintf('%s %s',ls{1},unitstr(S.Options.info)));
+        end
+        tflab_title(S,opts,'z');
+        
         if opts.type < 3
             set(gca,'YScale','log');
-        end
-        if opts.vs_period
-            set(gca,'XScale','log');
-        end        
-        legend(ls,lgopts{:});
-        tflab_title(S,opts,'z');
-        if opts.type == 3
-            adjust_ylim('both');
-        else
             adjust_ylim('upper');
+        else
+            adjust_ylim('both');
         end
         adjust_yticks(1e-4);
         adjust_exponent('y');
@@ -181,10 +185,10 @@ if isstruct(S)
             for j = 1:size(S.Z,2)
                 ls{j} = sprintf('$%s$',Phistrs{j});
             end
-            ylabel('[$^\circ$]');
+            yl = '[$^\circ$]';
         else
             y = imag(S.Z);
-            ylabel(unitstr(S.Options.info));
+            yl = unitstr(S.Options.info);
             for j = 1:size(S.Z,2)
                 ls{j} = sprintf('Im$(%s)$ Estimated',Zstrs{j});
             end
@@ -197,18 +201,23 @@ if isstruct(S)
             end
         end
         if opts.vs_period && ~isempty(opts.period_range)
-            idx = find(x <= opts.period_range(1) | x >= opts.period_range(2));
+            idx = x <= opts.period_range(1) | x >= opts.period_range(2);
             y(idx) = NaN;
             if interp_Z_exists
-                idx = find(xi <= opts.period_range(1) | xi >= opts.period_range(2));
+                idx = xi <= opts.period_range(1) | xi >= opts.period_range(2);
                 yi(idx) = NaN;
             end
         end
         hold on;grid on;box on;
         plot(x, y, lnopts{:}, 'markersize', 20);
-
         if interp_Z_exists
             plot(xi, yi, lnopts{:}, 'markersize', 15);
+        end
+        if length(ls) > 1
+            ylabel(yl);
+            legend(ls,lgopts{:});
+        else
+            ylabel(sprintf('%s %s',ls{1},yl));
         end
         if ~opts.unwrap && opts.type ~= 3
             set(gca,'YLim',[-185,185])
@@ -243,24 +252,16 @@ if iscell(S)
             figure();
             figprep();
         end
-        for s = 1:length(S)
-            S{s} = defaultmeta(S{s});
-        end                
         ax1(j) = subplot('Position', PositionTop);
             for s = 1:length(S)
-                ls{s} = sprintf('%s',S{s}.Options.description);
-                ms = max(30-8*s,1);
-                if size(S{s}.Z,1) == 1
-                    ms = 30;
-                    lineopts = {'.','markersize', ms};
-                else
-                    lineopts = {'linewidth',max(4-s,1),'marker','.','markersize',ms};
-                end
                 if opts.vs_period
-                    x = S{s}.Options.info.timedelta./S{s}.fe;
+                    x = timedelta./S{s}.fe;
                 else
-                    x = S{s}.fe/S{s}.Options.info.timedelta;
+                    x = S{s}.fe/timedelta;
                 end
+                
+                ls{s} = sprintf('%s',S{s}.Options.description);
+        
                 yebl = [];
                 yebu = [];
                 switch opts.type
@@ -284,13 +285,15 @@ if iscell(S)
                         end
                 end
                 if opts.vs_period && ~isempty(opts.period_range)
-                    idx = find(x <= opts.period_range(1) | x >= opts.period_range(2));
+                    idx = x <= opts.period_range(1) | x >= opts.period_range(2);
                     y(idx) = NaN;
-                end                
+                end
+                
+                lnopts = lineopts(size(S{s}.Z,1), s);
                 if opts.vs_period
-                    h(s) = semilogx(x, y, lineopts{:});
+                    h(s) = semilogx(x, y, lnopts{:});
                 else
-                    h(s) = plot(x, y, lineopts{:});
+                    h(s) = plot(x, y, lnopts{:});
                 end
                 if s == 1
                     grid on;hold on;box on;
@@ -326,25 +329,14 @@ if iscell(S)
             %tflab_title(S,opts,'z');        
             adjust_ylim('both');
             adjust_yticks(1e-4);
-            if ~isempty(S{1}.Options.info.timeunit) && opts.vs_period
+            if ~isempty(timeunit) && opts.vs_period
                 period_lines();
             end
             adjust_exponent('y');
-            setx(opts,0,timeunit);        
+            setx(opts,0,timeunit);
+
         ax2(j) = subplot('Position', PositionBottom);
             for s = 1:length(S)
-                ms = max(30-8*s,1);
-                if size(S{s}.Z,1) == 1
-                    ms = 30;
-                    lineopts = {'.','markersize',ms};
-                else
-                    lineopts = {'linewidth',max(4-s,1),'marker','.','markersize',ms};
-                end
-                if opts.vs_period
-                    x = S{s}.Options.info.timedelta./S{s}.fe;
-                else
-                    x = S{s}.fe/S{s}.Options.info.timedelta;
-                end
                 yebl = [];
                 yebu = [];
                 if opts.type == 3
@@ -364,52 +356,45 @@ if iscell(S)
                     yl = sprintf('$%s$ [$^\\circ]$',Phistrs{j});
                     ls{s} = sprintf('%s',S{s}.Options.description);
                 end
+                
+                if opts.vs_period
+                    x = timedelta./S{s}.fe;
+                else
+                    x = S{s}.fe/timedelta;
+                end
                 if opts.vs_period && ~isempty(opts.period_range)
-                    idx = find(x <= opts.period_range(1) | x >= opts.period_range(2));
+                    idx = x <= opts.period_range(1) | x >= opts.period_range(2);
                     y(idx) = NaN;
                 end
+                
+                lnopts = lineopts(size(S{s}.Z,1), s);
                 if opts.vs_period
-                    semilogx(x, y, lineopts{:});
+                    semilogx(x, y, lnopts{:});
                 else
-                    plot(x, y, lineopts{:});
+                    plot(x, y, lnopts{:});
                 end
+                
                 if s == 1
                     grid on;box on;hold on;
                 end
+                
                 if ~isempty(yebl)
                     errorbars(x,y,yebl,yebu);
-                end    
+                end
+                
             end
+
             ylabel(yl);
             if opts.type ~= 3 && ~opts.unwrap
                 set(gca,'YLim',[-185,185]);
                 set(gca,'YTick',[-180:60:180]);
-            end
-            if opts.vs_period
-                unit = '';
-                if S{1}.Options.info.timeunit
-                    unit = sprintf(' [%s]',S{1}.Options.info.timeunit);
-                end
-                xlabel(sprintf('$T$%s', unit));
-                if ~isempty(opts.period_range)
-                    set(gca,'XLim',opts.period_range);
-                end
-            else
-                if opts.vs_period && ~isempty(opts.period_range)
-                    set(gca,'XLim',[1/opts.period_range(2),1/opts.period_range(1)]);
-                end
-                unit = '';
-                if S{1}.Options.info.timeunit
-                    unit = sprintf(' [1/%s]',S{1}.Options.info.timeunit);
-                end
-                xlabel(sprintf('$f$%s', unit));
             end
             legend(ls,'Location','NorthEast','Orientation','Horizontal');
             adjust_ylim('upper');
             adjust_yticks(1e-4);
             adjust_exponent();
             adjust_ylim('upper');
-            setx(opts,0,timeunit);
+            setx(opts,1,timeunit);
 
         if opts.print
             comp = regexprep(Zstrs{j},'\{|\}','');
@@ -422,6 +407,16 @@ if iscell(S)
 end % if iscell(S)
 
 end % function
+
+function lnopts = lineopts(Nz, s)
+    ms = max(30-8*s,1);
+    if Nz == 1
+        ms = 30;
+        lnopts = {'.','markersize', ms};
+    else
+        lnopts = {'linewidth',max(4-s,1),'marker','.','markersize',ms};
+    end
+end
 
 function str = unitstr(info)
 
@@ -440,29 +435,3 @@ function str = unitstr(info)
     str = sprintf('[%s/%s]',outunit,inunit);
 end
 
-function S = setsubfield(S,varargin)
-
-    if length(varargin) == 1
-        error('At least three arguments needed.');
-    end
-    if length(varargin) == 2
-        if ~isfield(S,varargin{1})
-            S.(varargin{1}) = varargin{2};
-        end
-        return
-    end
-    if ~isfield(S,varargin{1})
-        S.(varargin{1}) = struct(varargin{2},varargin{3});        
-    end
-
-    S.(varargin{1}) = setsubfield(S.(varargin{1}),varargin{2:end});
-    
-end
-
-function S = defaultmeta(S)
-    S = setsubfield(S,'Options','description','');
-    S = setsubfield(S,'Options','info','timedelta',1);
-    S = setsubfield(S,'Options','info','outunit','');
-    S = setsubfield(S,'Options','info','inunit','');
-    S = setsubfield(S,'Options','info','timeunit','');
-end

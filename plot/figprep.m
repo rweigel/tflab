@@ -1,6 +1,7 @@
 function figprep()
 
-set(groot, 'DefaultLegendAutoUpdate', 'off');
+set(gcf,'DefaultAxesXTickLabelRotationMode','manual')
+set(gcf,'DefaultLegendAutoUpdate', 'off');
 set(gcf,'DefaultTextInterpreter','latex');
 set(gcf,'DefaultLegendInterpreter','latex');
 set(gcf,'DefaultAxesTickLabelInterpreter','latex');

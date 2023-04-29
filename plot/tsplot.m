@@ -4,6 +4,9 @@ function tsplot(S,popts)
 %  TSPLOT(S), where S is the output of TRANSFERFNFD.
 %  TSPLOT(S, opts)
 
+assert(isstruct(S) || iscell(S), ...
+    'S must be a tflab struct or cell array of tflab structs');
+
 % Default options
 opts = struct();
     opts.type = 'raw';
@@ -22,6 +25,12 @@ if nargin > 1
         opts.(fns{i}) = popts.(fns{i});
     end
 end
+
+% Line options
+lnopts = {'marker','.','markersize',20,'linestyle','none'};
+
+% Legend options
+lgopts = {'Location','NorthWest','Orientation','Horizontal'};
 
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
@@ -81,12 +90,6 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
 
     figprep();
 
-    if size(S.In,2) > 1
-        s1 = 's';
-    else
-        s1 = '';
-    end
-    
     if strcmp(opts.type,'raw')
         In = S.In;
         Out = S.Out;
@@ -112,13 +115,13 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
     subplot('Position',PositionTop);
         plot(t,In);
         grid on;grid minor;box on;
-        ls = legendlabels('In');
+        lg = legendlabels('In');
         if isfield(S,'InNoise') && ~strcmp(opts.type,'windowed')
             hold on;
             plot(t,S.InNoise);
         end
         tflab_title(S,opts,'ts');
-        [~, lo] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        [~, lo] = legend(lg,lgopts{:});
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
@@ -127,12 +130,12 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
     subplot('Position',PositionBottom);
         plot(t,Out);
         grid on;grid minor;box on;    
-        ls = legendlabels('Out');
+        lg = legendlabels('Out');
         if isfield(S,'OutNoise') && ~strcmp(opts.type,'windowed')
             hold on;
             plot(t,S.OutNoise);
         end
-        [~, lo] = legend(ls,'Location','NorthEast','Orientation','Horizontal');
+        [~, lo] = legend(lg,lgopts{:});
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
@@ -147,11 +150,6 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
 end
 
 if ~iscell(S) && strcmp(opts.type,'error')
-
-    ts = '';
-    if ~isempty(opts.title)
-        ts = opts.title;
-    end
     
     for j = 1:size(S.Out,2)
         if j > 1
@@ -175,15 +173,15 @@ if ~iscell(S) && strcmp(opts.type,'error')
                         S.Metrics.CC(j),...
                         S.Metrics.MSE(j));
         desc = S.Options.description;
-        ls1{1} = sprintf('%s Measured%s',outstr,outunit);
-        ls1{2} = sprintf('%s Predicted%s',outstr,outunit);
-        ls2 = sprintf('%s Error%s; %s',outstr,outunit,metrics);
+        lg1{1} = sprintf('%s Measured%s',outstr,outunit);
+        lg1{2} = sprintf('%s Predicted%s',outstr,outunit);
+        lg2 = sprintf('%s Error%s; %s',outstr,outunit,metrics);
 
         subplot('Position',PositionTop);
             plot(t,S.Out(:,j));
             grid on;grid minor;box on;hold on;
             plot(t,S.Metrics.Predicted(:,j));
-            [~, lo] = legend(ls1(:),'Location','NorthEast','Orientation','Vertical');
+            [~, lo] = legend(lg1(:),'Location','NorthEast','Orientation','Vertical');
             adjust_legend_lines(lo);
             adjust_ylim();
             adjust_exponent('y');
@@ -192,10 +190,10 @@ if ~iscell(S) && strcmp(opts.type,'error')
         subplot('Position',PositionBottom);
             plot(t,S.Metrics.Predicted(:,j)-S.Out(:,j));
             grid on;grid minor;box on;
-            [~, lo] = legend(ls2,'Location','NorthEast','Orientation','Vertical');
-            adjust_legend_lines(lo);
             adjust_ylim();
             adjust_exponent('y')            
+            [~, lo] = legend(lg2,'Location','NorthEast','Orientation','Vertical');
+            adjust_legend_lines(lo);
             setx(1,info,[t(1),t(end)]);
 
         if opts.print
@@ -221,17 +219,17 @@ if iscell(S)
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     S{1}.Options.info.outstr{1},S{1}.Options.info.outunit));
-        ls0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
+        lg0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
 
         for j = 1:length(S)
             plot(t,S{j}.Metrics.Predicted(:,1),c{j+1});
-            ls{j} = sprintf('Predicted %s\n',...
+            lg{j} = sprintf('Predicted %s\n',...
                         S{j}.Options.description);
         end
         if ~isempty(opts.title)
             title(opts.title,'FontWeight','Normal');
         end
-        [lh, lo] = legend({ls0,ls{:}},...
+        [~, lo] = legend({lg0,lg{:}},...
                         'Location','NorthEast','Orientation','Vertical');
         adjust_legend_lines(lo);
         adjust_ylim();
@@ -242,16 +240,16 @@ if iscell(S)
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     S{1}.Options.info.outstr{2},S{1}.Options.info.outunit));
-        ls0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
+        lg0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
 
         for j = 1:length(S)
             for j = 1:length(S)
                 plot(t,S{j}.Metrics.Predicted(:,2),c{j+1});
-                ls{j} = sprintf('Predicted %s\n',...
+                lg{j} = sprintf('Predicted %s\n',...
                             S{j}.Options.description);
             end
         end
-        [lh, lo] = legend({ls0,ls{:}},...
+        [lh, lo] = legend({lg0,lg{:}},...
                         'Location','NorthEast','Orientation','Vertical');
         adjust_legend_lines(lo);
         adjust_ylim();
@@ -323,8 +321,9 @@ function setx(last,info,tl)
             io = 2; 
         end
         xtl = cellstr(get(gca,'XTickLabel'));
-        xtl{io} = sprintf('%s/%s',xtl{io},datestr(tl(1),'yyyy'));
-        set(gca,'XTickLabel',xtl);
+        xtl{io} = sprintf('$$\\begin{array}{c}%s \\\\ %s\\end{array}$$',...
+                            xtl{io},datestr(tl(1),'yyyy'));
+        set(gca,'XTickLabel',xtl, 'TickLabelInterpreter', 'latex');
     end
     if ~last
         % Hide tick labels

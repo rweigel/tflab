@@ -20,9 +20,21 @@ end
 
 debug = 0;
 
+ax = gca();
+
 drawnow;
-yt = get(gca,'YTick');
-yl = get(gca,'YLim');
+yt = get(ax,'YTick');
+yl = get(ax,'YLim');
+
+if ~isempty(ax.UserData)
+    tf = strcmp(ax.UserData.YTickTickLast, yt);
+    if all(tf)
+        if debug
+            fprintf('adjust_ylim(): Previous labels are same as current.\n');
+        end
+        return;
+    end
+end
 
 if debug
     yt
@@ -30,7 +42,7 @@ if debug
 end
 
 if strcmp(pos, 'upper') || strcmp(pos, 'both')
-    if strcmp(get(gca(),'YScale'),'log')
+    if strcmp(get(ax,'YScale'),'log')
         if length(yt) > 1
             yl(end) = 0.5*10^(log10(yl(end)) + 0.5*(log10(yt(end))-log10(yt(end-1))));
         end
@@ -44,7 +56,7 @@ if strcmp(pos, 'upper') || strcmp(pos, 'both')
 end
 
 if strcmp(pos,'lower') || strcmp(pos, 'both')
-    if strcmp(get(gca(),'YScale'),'log')
+    if strcmp(get(ax,'YScale'),'log')
         if length(yt) > 1
             yl(1) = 0.5*10^(log10(yl(1)) - 0.5*(log10(yt(2))-log10(yt(1))));
         end
@@ -56,11 +68,14 @@ if strcmp(pos,'lower') || strcmp(pos, 'both')
         yl(1) = yl(1) - (yt(2)-yt(1));
     end
 end
-set(gca,'YLim',yl);
-set(gca,'YTick',yt);
-drawnow;
 
-ax = gca();
+if yl(1) > yl(2)
+    return;
+end
+
+set(ax,'YLim',yl);
+drawnow;
+ax.UserData.YTickTickLast = yl;
 
 if isprop(ax.YAxis,'LimitsChangedFcn')
     ax.YAxis.LimitsChangedFcn = @(src,evt) reset(src,evt,debug);

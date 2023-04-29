@@ -1,11 +1,19 @@
 function opts = tflab_options(os,iopts)
-%TRANSFERFNFD_OPTIONS - Return options for tflab().
+%TFLAB_OPTIONS - Return options for tflab().
 %
-%  opts = TRANSFERFNFD_OPTIONS() returns default options.
+%  opts = TFLAB_OPTIONS() returns default options.
 %
-%  opts = TRANSFERFNFD_OPTIONS(os), where os is an option set.
+%  opts = TFLAB_OPTIONS(os), where os is an option set.
 %
-%  See also TRANSFERFNFD, TRANSFERFNFD_DEMO.
+%  opts = TFLAB_OPTIONS(os, opts1) returns opts with values in opts1 by
+%  calling updatedefaults. opts1 does not need to contain all options
+%  returned by TFLAB_OPTIONS.
+% 
+%  See also TFLAB, TFLAB_OPTIONS, UPDATEDEFAULTS.
+
+if nargin == 0
+    os = 0;
+end
 
 opts = struct();
 
@@ -20,13 +28,13 @@ opts.tflab = struct();
 opts.info = struct();
 
     opts.info.instr = 'In'; % Cell array or string. 
-    % Or {'$B_x$', ...} (1 cell element per column in In)
+    % Or ,{'$B_x$', ...} (1 cell element per column in In)
     
     opts.info.outstr = 'Out'; % Cell array or string. 
-    % Or {'$E_x$', ...} (1 cell element per column in Out)
+    % Or, {'$E_x$', ...} (1 cell element per column in Out)
     
     % Timestart is a time string of the form
-    % 'yyyy-mm-ddTHH:MM:SS.FFF'.
+    %   'yyyy-mm-ddTHH:MM:SS.FFF'.
     % Example: 
     %   opts.td.timestart = '2001-01-01T00:00:00.000';
     opts.info.timestart = ''; 
@@ -50,12 +58,13 @@ opts.info = struct();
         
 % # of points at start and end to trim before computing metrics
 % (pe/cc/mse/sn/coherence). NaN => no trim.
-opts.td.Ntrim = NaN;
+opts.td.Ntrim = 60*30;
 
 % Dimensionless start time; ignored if time array passed to tflab.
-opts.td.start = 1; 
+opts.td.start = 1;
 
-% Number of zeros added to the end of all time series. NaN => no pad.
+% Number of zeros added to the end of all time series prior to computing
+% DFT. NaN => no pad.
 opts.td.zeropad = NaN;
 
 opts.td.detrend.function = struct();
@@ -220,23 +229,5 @@ else
 end
 
 if nargin > 1
-    opts = options(opts,iopts);
-end
-
-function opts = options(opts,iopts)
-    % Overwrite default options if options given
-    fns = fieldnames(iopts);
-    for i = 1:length(fns)
-        if isfield(opts,fns{i})
-            if isstruct(iopts.(fns{i}))
-                opts.(fns{i}) = options(opts.(fns{i}),iopts.(fns{i}));
-            else
-                opts.(fns{i}) = iopts.(fns{i});
-            end
-        else
-            warning(sprintf('Option %s is not a valid option',fns{i}));
-        end
-    end
-end
-
+    opts = updatedefaults(opts,iopts);
 end

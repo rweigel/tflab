@@ -11,7 +11,7 @@ if nargin > 2 && ~isempty(I)
             logmsg('Segment field already exists. Will replace.\n');
         end
         % TODO: Should check if S.Segment.Intervals matches I and
-        % only re-do calculation if they are not equal.s
+        % only re-do calculation if they are not equal.
         S = rmfield(S,'Segment');
     end
     S.Segment = struct();

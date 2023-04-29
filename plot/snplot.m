@@ -25,8 +25,21 @@ if nargin > 1
     end
 end
 
+% Line options
+lnopts = {'marker','.','markersize',20,'linestyle','none'};
+
+% Legend options
+lgopts = {'Location','NorthWest','Orientation','Horizontal'};
+
 PositionTop = [0.1300 0.5400 0.7750 0.4];
 PositionBottom = [0.1300 0.1100 0.7750 0.4];
+
+if iscell(S)
+    % TODO: Check all same.
+    timeunit = S{1}.Options.info.timeunit;
+else
+    timeunit = S.Options.info.timeunit;
+end
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -42,56 +55,32 @@ if isstruct(S)
     else
         x = fe/S.Options.info.timedelta;
     end
-    ax1 = subplot('Position', PositionTop);
-        for j = 1:size(S.Out,2)
-            if iscell(S.Options.info.outstr)
-                ls{j} = sprintf('%s\n', S.Options.info.outstr{j});
-            else
-                ls{j} = sprintf('%s(:,%d)\n',S.Options.info.outstr,j);
-            end
+    
+    for j = 1:size(S.Out,2)
+        if iscell(S.Options.info.outstr)
+            lg{j} = sprintf('%s\n', S.Options.info.outstr{j});
+        else
+            lg{j} = sprintf('%s(:,%d)\n',S.Options.info.outstr,j);
         end
-        semilogx(x,S.Metrics.SN.Smoothed,...
-                 'marker','.','markersize',10,'linewidth',2);
-        legend(ls,'Location','NorthEast','Orientation','Horizontal');
+    end
+    
+    ax1 = subplot('Position', PositionTop);
+        semilogx(x,S.Metrics.SN.Smoothed,lnopts{:});
+        legend(lg,lgopts{:});
         set(gca,'XTickLabel',[]);
         tflab_title(S,opts,'sn');
         ylabel('Signal to Error');
         grid on;box on;hold on;
-        if ~isempty(opts.period_range)
-            set(gca,'XLim',opts.period_range);
-        end
+        setx(opts,0,timeunit);
+
     ax2 = subplot('Position', PositionBottom);
-    
-        for j = 1:size(S.In,2)
-            if iscell(S.Options.info.outstr)
-                ls{j} = sprintf('%s\n', S.Options.info.outstr{j});
-            else
-                ls{j} = sprintf('%s(:,%d)\n', S.Options.info.outstr,j);
-            end
-        end
-        semilogx(x,S.Metrics.Coherence.Smoothed,...
-                 'marker','.','markersize',10,'linewidth',2);
-        legend(ls,'Location','NorthEast','Orientation','Horizontal');
-        if opts.period
-            xlabel(sprintf('$T$ [%s]', S.Options.info.timeunit));
-            if ~isempty(opts.period_range)
-                set(gca,'XLim',opts.period_range);
-            end
-        else
-            xlabel(sprintf('$f$ [1/%s]', S.Options.info.timeunit));
-        end
-        ylabel('Measured to Predicted Coherence');
+        semilogx(x,S.Metrics.Coherence.Smoothed,lnopts{:});
+        legend(lg,lgopts{:});
+        ylabel('Meas. to Pred. Coherence');
         grid on;box on;hold on;
         set(gca,'YLim',[0,1]);
         adjust_exponent('x');
-        if ~isempty(opts.period_range)
-            set(gca,'XLim',opts.period_range);
-        end
-
-	if ~isempty(S.Options.info.timeunit) && opts.vs_period
-        axes(ax1); period_lines();
-        axes(ax2); period_lines();
-    end
+        setx(opts,1,timeunit);
         
     if opts.print
         for i = 1:length(opts.printfmt)
@@ -110,7 +99,6 @@ if iscell(S)
             figure();
         end
         figprep();
-        set(gcf,'DefaultLegendAutoUpdate','off')
         ax1 = subplot('Position', PositionTop);
             max_T = 0;
             for s = 1:length(S)
@@ -134,8 +122,7 @@ if iscell(S)
                 else
                     x = fe;
                 end
-                h(s) = semilogx(x,SN,...
-                         'marker','.','markersize',10,'linewidth',2);
+                h(s) = semilogx(x,SN,lnopts{:});
                 grid on;box on;hold on;                 
                 ls{s} = sprintf('%s %s',...
                     S{s}.Options.info.stationid,...
@@ -147,19 +134,13 @@ if iscell(S)
                 end
 
             end                
-            legend(h,ls,'Location','NorthEast','Orientation','Horizontal');
-            set(gca,'XTickLabel',[]);
+            legend(h,ls,lgopts{:});
             if iscell(S{1}.Options.info.outstr)
                 pre = S{1}.Options.info.outstr{j};
             else
                 pre = sprintf('%s(:,%d)',S{1}.Options.info.outstr,j);
             end
             ylabel(sprintf('%s Signal to Error',pre));
-            if opts.period
-                if ~isempty(opts.period_range)
-                    set(gca,'XLim',opts.period_range);
-                end
-            end
             if isfield(opts,'title') && ~isempty(opts.title)
                 title(opts.title,'FontWeight','normal');
             end            
@@ -170,14 +151,15 @@ if iscell(S)
                 % export_fig can't handle transparent patches
                 patch([limx(1), limx(2), limx(2), limx(1)],...
                       [0, 0, 1, 1],[0.1,0.1,0.1],...
-                      'FaceAlpha',0.1,...
-                        'LineStyle','none');
+                      'FaceAlpha',0.1,'LineStyle','none');
             end
             yt = get(gca,'YTick');
             if (yt(1) < 0)
                 ytl = get(gca,'YTickLabel');
                 ytl{1} = '';
             end
+            setx(opts,0,timeunit);
+            
         ax2 = subplot('Position', PositionBottom);
             for s = 1:length(S)
                 % TODO: Repeated code
@@ -201,19 +183,10 @@ if iscell(S)
                 else
                     x = fe;
                 end
-                semilogx(x,Coh,...
-                         'marker','.','markersize',10,'linewidth',2);
+                semilogx(x,Coh,lnopts{:});
                 grid on;box on;hold on;
             end
-            legend(ls,'Location','NorthEast','Orientation','Horizontal');
-            if opts.period
-                xlabel(sprintf('$T$ [%s]', S{1}.Options.info.timeunit));
-                if ~isempty(opts.period_range)
-                    set(gca,'XLim',opts.period_range);
-                end
-            else
-                xlabel(sprintf('$f$ [1/%s]', S{1}.Options.info.timeunit));
-            end
+            legend(ls,lgopts{:});
             if iscell(S{1}.Options.info.outstr)
                 pre = S{1}.Options.info.outstr{j};
             else
@@ -228,13 +201,10 @@ if iscell(S)
                 ytl = get(gca,'YTickLabel');
                 ytl{1} = '';
             end
+            setx(opts,1,timeunit);
             
-        if ~isempty(S{1}.Options.info.timeunit) && opts.vs_period
-            axes(ax1); period_lines();
-            axes(ax2); period_lines();
-        end
-        ext = regexprep(S{1}.Options.info.outstr{j},'\$','');
         if opts.print
+            ext = regexprep(S{1}.Options.info.outstr{j},'\$','');        
             for i = 1:length(opts.printfmt)
                 fname = sprintf('%s-%s.%s',opts.printname, ext, opts.printfmt{i});
                 figsave(fullfile(opts.printdir, fname), opts);

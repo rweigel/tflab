@@ -14,6 +14,7 @@ function [S,D,f] = psd(x,opts,n)
 
 % Note that n is not used.
 
+flip = 0;
 if size(x,1) == 1
     flip = 1;
     x = transpose(x);

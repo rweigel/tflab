@@ -13,7 +13,7 @@ else
     if ~isempty(opts.frequency_range)
         set(gca,'XLim',opts.frequency_range);
     end    
-    if ~isempty(info.timeunit)
+    if ~isempty(timeunit)
         timeunit = sprintf(' [1/%s]', timeunit);
     end
     xlabel(sprintf('$f$%s',timeunit));

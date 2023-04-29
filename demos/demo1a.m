@@ -21,7 +21,7 @@ S1 = tflab(Sa.In,Sa.Out,opts1);
 S1.Options.description = 'Estimated';
 Sa.Options.description = 'Actual';
 
-set(0,'DefaultFigureWindowStyle','docked');
+dock on;figure(1);
 fn = 1;
 figure(fn);clf;fn = fn+1;
     tsplot(S1,struct('type','raw'));
