@@ -11,7 +11,7 @@ if nargin > 2 && ~isempty(I)
             logmsg('Segment field already exists. Will replace.\n');
         end
         % TODO: Should check if S.Segment.Intervals matches I and
-        % only re-do calculation if they are not equal.
+        % only re-do calculation if they are not equal.s
         S = rmfield(S,'Segment');
     end
     S.Segment = struct();
@@ -105,16 +105,16 @@ for k = 1:size(Out,3) % Loop over segments
     Metrics.Coherence.Raw(:,:,k) = coherence(Out(:,:,k),Metrics.Predicted(:,:,k));
 
     if smoothed
-        [Metrics.PSD.Smoothed.In(:,:,k),Metrics.DFT.Smoothed.In(:,:,k),fe] = psd(In(:,:,k),opts,N);
-        [Metrics.PSD.Smoothed.Out(:,:,k),Metrics.DFT.Smoothed.Out(:,:,k)] = psd(Out(:,:,k),opts,N);
-        [Metrics.PSD.Smoothed.Error(:,:,k),Metrics.DFT.Smoothed.Error(:,:,k)] = psd(Out(:,:,k) - Metrics.Predicted(:,:,k),opts,N);
-        [Metrics.PSD.Smoothed.Predicted(:,:,k),Metrics.DFT.Smoothed.Predicted(:,:,k)] = psd(Metrics.Predicted(:,:,k),opts,N);
+        [Metrics.PSD.Smoothed.In(:,:,k),Metrics.DFT.Smoothed.In(:,:,k),fe] = psd(In(:,:,k),opts);
+        [Metrics.PSD.Smoothed.Out(:,:,k),Metrics.DFT.Smoothed.Out(:,:,k)] = psd(Out(:,:,k),opts);
+        [Metrics.PSD.Smoothed.Error(:,:,k),Metrics.DFT.Smoothed.Error(:,:,k)] = psd(Out(:,:,k) - Metrics.Predicted(:,:,k),opts);
+        [Metrics.PSD.Smoothed.Predicted(:,:,k),Metrics.DFT.Smoothed.Predicted(:,:,k)] = psd(Metrics.Predicted(:,:,k),opts);
 
         Metrics.PSD.Smoothed.fe = fe;
         Metrics.DFT.Smoothed.fe = fe;
 
         Metrics.SN.Smoothed(:,:,k)  = Metrics.PSD.Smoothed.Out(:,:,k)./Metrics.PSD.Smoothed.Error(:,:,k);
-        Metrics.Coherence.Smoothed(:,:,k) = coherence(Out(:,:,k),Metrics.Predicted(:,:,k),opts,N);
+        Metrics.Coherence.Smoothed(:,:,k) = coherence(Out(:,:,k),Metrics.Predicted(:,:,k),opts);
     end
 
     filts = {'Window','Prewhiten','Zeropad'};
@@ -126,8 +126,8 @@ for k = 1:size(Out,3) % Loop over segments
                 [S.(filt).PSD.Raw.Out,S.(filt).DFT.Raw.Out] = psd(S.(filt).Out);
                 S.(filt).PSD.Raw.fe = fe;
                 S.(filt).DFT.Raw.fe = fe;
-                [S.(filt).PSD.Smoothed.In,S.(filt).DFT.In,fe] = psd(S.(filt).In,opts,N);
-                [S.(filt).PSD.Smoothed.Out,S.(filt).DFT.Smoothed.Out] = psd(S.(filt).Out,opts,N);
+                [S.(filt).PSD.Smoothed.In,S.(filt).DFT.In,fe] = psd(S.(filt).In,opts);
+                [S.(filt).PSD.Smoothed.Out,S.(filt).DFT.Smoothed.Out] = psd(S.(filt).Out,opts);
                 S.(filt).PSD.Smoothed.fe = fe;
                 S.(filt).DFT.Smoothed.fe = fe;
         end

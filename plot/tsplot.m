@@ -1,4 +1,4 @@
-function tsplot(S,popts)
+function ax = tsplot(S,popts)
 %TSPLOT - Plot timeseries in output of TRANSFERFNFD.
 %
 %  TSPLOT(S), where S is the output of TRANSFERFNFD.
@@ -7,34 +7,18 @@ function tsplot(S,popts)
 assert(isstruct(S) || iscell(S), ...
     'S must be a tflab struct or cell array of tflab structs');
 
-% Default options
-opts = struct();
-    opts.type = 'raw';
-    opts.title = '';
-    opts.print = 0;
-    opts.printname = 'tsplot';
-    opts.printdir = '';
-    opts.printfmt = {'pdf'};
-    % printfmt is one or more extensions allowed by export_fig()
-    % e.g. {'pdf'} or {'svg','png'}.
+assert(isstruct(S) || iscell(S), ...
+    'S must be a tflab struct or cell array of tflab structs');
 
-% Use default options if options not given
-if nargin > 1
-    fns = fieldnames(popts);
-    for i = 1:length(fns)
-        opts.(fns{i}) = popts.(fns{i});
-    end
+if nargin < 2
+    popts = struct();
 end
 
-% Line options
-lnopts = {'marker','.','markersize',20,'linestyle','none'};
+opts = tflabplot_options(S, popts, 'raw', 'tsplot');
 
-% Legend options
-lgopts = {'Location','NorthWest','Orientation','Horizontal'};
-
-PositionTop = [0.1300 0.5400 0.7750 0.4];
-PositionBottom = [0.1300 0.1100 0.7750 0.4];
-figprep();
+if iscell(S) && length(S) == 1
+    S = S{1};
+end
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -86,9 +70,9 @@ if ~isempty(info.timestart)
     t = to + t/ppd;
 end
 
-if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
+figprep();
 
-    figprep();
+if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
 
     if strcmp(opts.type,'raw')
         In = S.In;
@@ -112,30 +96,36 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
         Out = S.Prewhiten.Out;
     end
     
-    subplot('Position',PositionTop);
+    ax(1) = subplot('Position',opts.PositionTop);
         plot(t,In);
         grid on;grid minor;box on;
-        lg = legendlabels('In');
+        lg = legend_('In');
+        if ~isempty(info.inunit)
+           ylabel(sprintf('[%s]', info.inunit));
+        end
         if isfield(S,'InNoise') && ~strcmp(opts.type,'windowed')
             hold on;
             plot(t,S.InNoise);
         end
         tflab_title(S,opts,'ts');
-        [~, lo] = legend(lg,lgopts{:});
+        [~, lo] = legend(lg,opts.legend{:});
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
         setx(0,info,[t(1),t(end)]);
         
-    subplot('Position',PositionBottom);
+    ax(2) = subplot('Position',opts.PositionBottom);
         plot(t,Out);
         grid on;grid minor;box on;    
-        lg = legendlabels('Out');
+        lg = legend_('Out');
+        if ~isempty(info.outunit)
+           ylabel(sprintf('[%s]', info.outunit));
+        end
         if isfield(S,'OutNoise') && ~strcmp(opts.type,'windowed')
             hold on;
             plot(t,S.OutNoise);
         end
-        [~, lo] = legend(lg,lgopts{:});
+        [~, lo] = legend(lg,opts.legend{:});
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
@@ -154,18 +144,21 @@ if ~iscell(S) && strcmp(opts.type,'error')
     for j = 1:size(S.Out,2)
         if j > 1
             figure();
+            figprep();
         end
-        figprep();
         outunit = '';
         if ~isempty(info.outunit)
             outunit = sprintf(' [%s]', info.outunit);
         end
         if iscell(info.outstr)
-            outstr = sprintf('%s ',info.outstr{j});
+            outstrerr = info.outstr{j};
+            outstr = sprintf('%s%s',info.outstr{j},outunit);
         else
             outstr = info.outstr;
+            outstrerr = info.outstr;
             if size(S.Out,2) > 1
-                outstr = sprintf('%s(:,%d) ',outstr,j);
+                outstr = sprintf('%s(:,%d)%s',outstr,j,outunit);
+                outstrerr = sprintf('%s(:,%d)',outstr,j);
             end
         end
         metrics = sprintf('PE/CC/MSE = %.3f/%.3f/%.3f',...
@@ -173,26 +166,28 @@ if ~iscell(S) && strcmp(opts.type,'error')
                         S.Metrics.CC(j),...
                         S.Metrics.MSE(j));
         desc = S.Options.description;
-        lg1{1} = sprintf('%s Measured%s',outstr,outunit);
-        lg1{2} = sprintf('%s Predicted%s',outstr,outunit);
-        lg2 = sprintf('%s Error%s; %s',outstr,outunit,metrics);
+        lg1{1} = 'Measured';
+        lg1{2} = 'Predicted';
+        lg2 = sprintf('%s Error; %s',outstrerr,metrics);
 
-        subplot('Position',PositionTop);
+        ax(1,j) = subplot('Position',opts.PositionTop);
             plot(t,S.Out(:,j));
             grid on;grid minor;box on;hold on;
             plot(t,S.Metrics.Predicted(:,j));
-            [~, lo] = legend(lg1(:),'Location','NorthEast','Orientation','Vertical');
+            [~, lo] = legend(lg1(:),opts.legend{:});
+            ylabel(outstr);
             adjust_legend_lines(lo);
             adjust_ylim();
             adjust_exponent('y');
             setx(0,info,[t(1),t(end)]);
             tflab_title(S,opts,'ts');
-        subplot('Position',PositionBottom);
+        ax(2,j) = subplot('Position',opts.PositionBottom);
             plot(t,S.Metrics.Predicted(:,j)-S.Out(:,j));
             grid on;grid minor;box on;
-            adjust_ylim();
+            ylabel(outunit);            
+            %adjust_ylim();
             adjust_exponent('y')            
-            [~, lo] = legend(lg2,'Location','NorthEast','Orientation','Vertical');
+            [~, lo] = legend(lg2,opts.legend{:});
             adjust_legend_lines(lo);
             setx(1,info,[t(1),t(end)]);
 
@@ -214,7 +209,7 @@ if iscell(S)
         error('tsplot for cell array input must be ''error''');
     end
     
-    subplot('Position',PositionTop);
+    subplot('Position',opts.PositionTop);
         plot(t,S{1}.Out(:,1),c{1});
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
@@ -227,7 +222,7 @@ if iscell(S)
                         S{j}.Options.description);
         end
         if ~isempty(opts.title)
-            title(opts.title,'FontWeight','Normal');
+            title(opts.title);
         end
         [~, lo] = legend({lg0,lg{:}},...
                         'Location','NorthEast','Orientation','Vertical');
@@ -235,7 +230,7 @@ if iscell(S)
         adjust_ylim();
         adjust_exponent('y');
         setx(0,info,[t(1),t(end)]);
-    subplot('Position',PositionBottom);
+    subplot('Position',opts.PositionBottom);
         plot(t,S{1}.Out(:,2),c{1});
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
@@ -266,32 +261,22 @@ if iscell(S)
 end
 
 
-function ls = legendlabels(comp)
+function ls = legend_(comp)
 
-    unit =  '';
     if strcmp(comp,'In')
         compstrs = info.instr;
-        if ~isempty(info.inunit)
-            unit = info.inunit;
-        end
     else
         compstrs = info.outstr;
-        if ~isempty(info.outunit)
-            unit = info.outunit;
-        end
     end
-    unitstr = '';
-    if ~isempty(unit)
-        unitstr = sprintf(' [%s]',unit);
-    end
+
     for j = 1:size(S.(comp),2)
         if ~iscell(compstrs) && size(S.(comp),2) > 1
-            ls{j} = sprintf('%s(:,%d)%s\n',compstrs,j,unitstr);
+            ls{j} = sprintf('%s(:,%d)\n',compstrs,j);
         else
             if iscell(compstrs)
-                ls{j} = sprintf('%s%s\n', compstrs{j}, unitstr);
+                ls{j} = sprintf('%s\n', compstrs{j});
             else
-                ls{j} = sprintf('%s%s\n', compstrs, unitstr);
+                ls{j} = sprintf('%s\n', compstrs);
             end
         end
     end

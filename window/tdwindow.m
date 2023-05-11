@@ -6,9 +6,6 @@ function [X,W] = tdwindow(X,winfn,varargin)
 %    W = winfn(size(X,1));
 %    X = X.*repmat(W,1,size(X,2));
 %
-%    Example:
-%
-%
 %    See `help windows` for a list of window functions. See
 %    `help dpss` for information on the dpss function.
 %
@@ -22,4 +19,5 @@ else
     Ws = winfn(size(X,1),varargin{:});
     W = sum(Ws,2);
 end
+
 X = X.*repmat(W,1,size(X,2));

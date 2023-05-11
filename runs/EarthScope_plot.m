@@ -10,7 +10,7 @@ if ~exist('TF1','var')
     fname = fullfile('data','EarthScope',id,...
             sprintf('%s-%s-tf1.mat',id,daterange));
     fnamefull = fullfile(scriptdir(),fname);
-    logmsg(sprintf('Reading %s',fname));
+    logmsg(sprintf('Reading %s\n',fname));
     TF1 = load(fnamefull);
 end
 

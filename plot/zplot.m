@@ -4,54 +4,17 @@ function [ax1,ax2] = zplot(S,popts)
 assert(isstruct(S) || iscell(S), ...
     'S must be a tflab struct or cell array of tflab structs');
 
-% Default options
-opts = struct();
-    opts.title = '';
-    opts.type = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re,Im
-    opts.print = 0;
-    opts.printname = 'zplot';
-    opts.printdir = '';
-    opts.printfmt = {'pdf'};
-    if strcmp(opts.printname,'zplot')
-        switch opts.type
-            case 1
-                opts.printname = [opts.printname,'_magnitude_phase'];
-            case 2
-                opts.printname = [opts.printname,'_rhoa_phase'];            
-            case 3
-                opts.printname = [opts.printname,'_real_imaginary'];            
-        end
-    end
-    opts.vs_period = 1;
-    opts.unwrap = 0;
-    if isstruct(S)
-        opts.period_range = [1, 2*size(S.In,1)];
-        opts.frequency_range = [0, 0.5];
-    else
-        if opts.vs_period
-            Nt = size(S{1}.In,1);
-            for i = 2:length(S)
-                Nt = max(Nt,size(S{i}.In,1));
-            end
-            opts.period_range = [1, 2*Nt];
-        else
-            opts.frequency_range = [0, 0.5];
-        end
-    end
-    
-% Use default options if options not given
-if nargin > 1
-    fns = fieldnames(popts);
-    for i = 1:length(fns)
-        opts.(fns{i}) = popts.(fns{i});
-    end
+if nargin < 2
+    popts = struct();
 end
 
-% Line options
-lnopts = {'marker','.','markersize',10,'linestyle','none'};
+ptype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re,Im
+opts = tflabplot_options(S, popts, ptype, 'zplot');
 
-% Legend options
-lgopts = {'Location','NorthWest','Orientation','Horizontal'};
+if iscell(S) && length(S) == 1
+    S = S{1};
+end
+
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -69,9 +32,6 @@ else
     timeunit = S.Options.info.timeunit;
     timedelta = S.Options.info.timedelta;
 end
-
-PositionTop = [0.1300 0.5400 0.7750 0.4];
-PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
 if (iscell(S) && size(S{1}.Z,2) > 1) || (isstruct(S) && size(S.Z,2) > 1)
     Zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
@@ -104,7 +64,7 @@ if isstruct(S)
     end
     
     figprep();
-    ax1 = subplot('Position', PositionTop);
+    ax1 = subplot('Position', opts.PositionTop);
         switch opts.type
             case 1
                 y = abs(S.Z);
@@ -146,21 +106,23 @@ if isstruct(S)
             end
         end
         
-        plot(x, y, lnopts{:}, 'markersize', 20);
+        plot(x, y, opts.line{:}, 'markersize', 20);
         hold on;grid on;box on;
         if interp_Z_exists
-            plot(xi, yi, lnopts{:}, 'markersize', 15);
+            plot(xi, yi, opts.line{:}, 'markersize', 15);
         end
         if length(ls) > 1
             ylabel(unitstr(S.Options.info));
-            legend(ls,lgopts{:});
+            legend(ls,opts.legend{:});
         else
             ylabel(sprintf('%s %s',ls{1},unitstr(S.Options.info)));
         end
-        tflab_title(S,opts,'z');
-        
+        tflab_title(S,opts,'z');            
+        if opts.vs_period
+            set(gca,'XScale','log');
+        end
         if opts.type < 3
-            set(gca,'YScale','log');
+            set(gca,'YScale','log');            
             adjust_ylim('upper');
         else
             adjust_ylim('both');
@@ -169,7 +131,7 @@ if isstruct(S)
         adjust_exponent('y');
         setx(opts,0,timeunit);
 
-    ax2 = subplot('Position', PositionBottom);
+    ax2 = subplot('Position', opts.PositionBottom);
         if opts.type ~= 3
             if opts.unwrap
                 y = (180/pi)*unwrap(atan2(imag(S.Z),real(S.Z)));
@@ -209,25 +171,24 @@ if isstruct(S)
             end
         end
         hold on;grid on;box on;
-        plot(x, y, lnopts{:}, 'markersize', 20);
+        plot(x, y, opts.line{:}, 'markersize', 20);
         if interp_Z_exists
-            plot(xi, yi, lnopts{:}, 'markersize', 15);
+            plot(xi, yi, opts.line{:}, 'markersize', 15);
         end
         if length(ls) > 1
             ylabel(yl);
-            legend(ls,lgopts{:});
+            legend(ls,opts.legend{:});
         else
             ylabel(sprintf('%s %s',ls{1},yl));
         end
-        if ~opts.unwrap && opts.type ~= 3
-            set(gca,'YLim',[-185,185])
-            set(gca,'YTick',-180:60:180);
-        end        
         if opts.vs_period
             set(gca,'XScale','log');
         end
-        
-        legend(ls,lgopts{:});
+        if ~opts.unwrap && opts.type ~= 3
+            set(gca,'YScale','linear');
+            set(gca,'YTick',-180:45:180);
+        end
+        legend(ls,opts.legend{:});
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
@@ -247,12 +208,13 @@ if iscell(S)
     % TODO: Assumes units are the same for all Zs.
     %       Check this before plotting.
     for j = 1:size(S{1}.Z,2)
+        % Creates new figure for each column.
         figprep();
         if j > 1
             figure();
             figprep();
         end
-        ax1(j) = subplot('Position', PositionTop);
+        ax1(j) = subplot('Position', opts.PositionTop);
             for s = 1:length(S)
                 if opts.vs_period
                     x = timedelta./S{s}.fe;
@@ -289,11 +251,13 @@ if iscell(S)
                     y(idx) = NaN;
                 end
                 
-                lnopts = lineopts(size(S{s}.Z,1), s);
+                opts.line = lineopts(size(S{s}.Z,1), s);
+                h(s) = plot(x, y, opts.line{:});
+                if opts.type < 3
+                    set(gca,'YScale','log');
+                end
                 if opts.vs_period
-                    h(s) = semilogx(x, y, lnopts{:});
-                else
-                    h(s) = plot(x, y, lnopts{:});
+                    set(gca,'XScale','log');
                 end
                 if s == 1
                     grid on;hold on;box on;
@@ -307,35 +271,32 @@ if iscell(S)
                     %end
                 end
             end
-
+            
             yunitstr = unitstr(S{1}.Options.info);
             if opts.type == 1
                 yl = sprintf('$|%s|$%s',Zstrs{j},yunitstr);
+                adjust_ylim('upper');
             end
             if opts.type == 2
                 yl = sprintf('$%s% [$\Omega\cdot$m]',Rhostrs{j});
+                adjust_ylim('upper');            
             end
             if opts.type == 3
                 yl = sprintf('Re$(%s)$ %s',Zstrs{j},yunitstr);
+                adjust_ylim('both');            
             end
             if ~isempty(opts.period_range)
                 set(gca,'XLim',opts.period_range);
             end
-            if opts.type < 3
-                %set(gca,'YScale','log');
-            end
             ylabel(yl);
-            legend(h,ls,'Location','NorthEast','Orientation','Horizontal');
-            %tflab_title(S,opts,'z');        
-            adjust_ylim('both');
+            legend(h,ls,opts.legend{:});
             adjust_yticks(1e-4);
             if ~isempty(timeunit) && opts.vs_period
                 period_lines();
             end
             adjust_exponent('y');
             setx(opts,0,timeunit);
-
-        ax2(j) = subplot('Position', PositionBottom);
+        ax2(j) = subplot('Position', opts.PositionBottom);
             for s = 1:length(S)
                 yebl = [];
                 yebu = [];
@@ -367,11 +328,11 @@ if iscell(S)
                     y(idx) = NaN;
                 end
                 
-                lnopts = lineopts(size(S{s}.Z,1), s);
+                opts.line = lineopts(size(S{s}.Z,1), s);
                 if opts.vs_period
-                    semilogx(x, y, lnopts{:});
+                    semilogx(x, y, opts.line{:});
                 else
-                    plot(x, y, lnopts{:});
+                    plot(x, y, opts.line{:});
                 end
                 
                 if s == 1
@@ -386,14 +347,16 @@ if iscell(S)
 
             ylabel(yl);
             if opts.type ~= 3 && ~opts.unwrap
-                set(gca,'YLim',[-185,185]);
-                set(gca,'YTick',[-180:60:180]);
+                set(gca,'YScale','linear');
+                set(gca,'YLim',[-180,180]);
+                set(gca,'YTick',[-180:45:180]);
+                adjust_ylim();
+            else
+                adjust_ylim('upper');
             end
-            legend(ls,'Location','NorthEast','Orientation','Horizontal');
-            adjust_ylim('upper');
+            legend(ls,opts.legend{:});
             adjust_yticks(1e-4);
             adjust_exponent();
-            adjust_ylim('upper');
             setx(opts,1,timeunit);
 
         if opts.print
@@ -408,13 +371,13 @@ end % if iscell(S)
 
 end % function
 
-function lnopts = lineopts(Nz, s)
+function line = lineopts(Nz, s)
     ms = max(30-8*s,1);
     if Nz == 1
         ms = 30;
-        lnopts = {'.','markersize', ms};
+        line = {'.','markersize', ms};
     else
-        lnopts = {'linewidth',max(4-s,1),'marker','.','markersize',ms};
+        line = {'linewidth',max(4-s,1),'marker','.','markersize',ms};
     end
 end
 

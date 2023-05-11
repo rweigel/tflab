@@ -450,7 +450,7 @@ function S = main(B, E, t, opts)
 
     if ~isempty(opts.td.prewhiten.function)
         if opts.tflab.loglevel > 0
-            logmsg('Prewhitening input and output using %s\n',opts.td.prewhiten.functionstr);
+            logmsg('Prewhitening input and output using: %s\n',opts.td.prewhiten.functionstr);
         end
         S.Prewhiten = struct();
         S.Prewhiten.Comment = 'S.Prewhiten.In = prewhitening applied to S.Window.In (or S.In if now time domain window given).';

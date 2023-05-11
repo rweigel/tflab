@@ -6,7 +6,7 @@ tflab_setpaths();
 
 Nt = 100;  % Number of time samples
 k  = 10;   % Freq. index of non-zero Z
-Z  = 1+1j;
+Z  = (1+1j)/sqrt(2);
 wf = 0;    % 2*wf + 1 is number of points for regression.
 
 Sa_opts = struct('Nt',Nt,'Z',Z,'k',k,'dB',0,'dE',0);
@@ -35,6 +35,9 @@ figure(fn);clf;fn = fn+1;
 figure(fn);clf;fn = fn+1;
     psdplot(S1,struct('type','error'));
 
+figure(fn);clf;fn = fn+1;
+    snplot(S1);
+    
 figure(fn);clf;fn = fn+1;
     zplot({Sa,S1});
 figure(fn);clf;fn = fn+1;

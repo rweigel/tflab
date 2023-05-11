@@ -1,15 +1,27 @@
-%% Z nonzero at single frequency on DFT grid (so no leakage) and prewhitening
+%% Z nonzero at single frequency on DFT grid (so no leakage)
+%  with prewhitening
+
+% The change in the In and Out spectra is due to the fact that the
+% pre-whitening filter returns [0; diff(X)]. A zoom-in near t=1 shows
+% that harmonic wave has a discontinuity in its slope; the prewhitened
+% time series can be decomposed into d*delta(1) + A*sin(2*pi*t/T + phase).
+% The d*delta(1) terms results in a flat spectra in the frequency domain.
+% To avoid this discontinuity, the pre-whitening filter could return
+% a truncated timeseries, diff(X). In this case, both the input and
+% output spectrum will be affected by leakage because the truncated 
+% timeseries will not have a length that is an integer multiple of T.
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
 
 Nt = 1000;
-k  = 25;
+k  = 25;   % Frequency index
+Z  = (1+1j)/sqrt(2);
 f  = k/Nt;
-wf = 1;
+wf = 0;
 
-Sx_opts = struct('Nt',Nt,'Z',1+1j,'f',f,'dB',0.0,'dE',0.0);
+Sx_opts = struct('Nt', Nt, 'Z',Z, 'f', f, 'dB', 0.0, 'dE', 0.0);
 Sx = demo_signals('simple',Sx_opts);
 
 opts1 = tflab_options(0);
@@ -31,11 +43,14 @@ S2.Options.description = 'Diff prewhiten';
 Sx.Options.info = S1.Options.info; 
 Sx.Options.description = 'Actual';
 
-
-set(0,'DefaultFigureWindowStyle','docked')
+dock('on');
 f = 1;
 figure(f);clf;f = f+1;
     tsplot(S1,struct('type','raw'));
+figure(f);clf;f = f+1;
+    ax = tsplot(S2,struct('type','prewhitened'));
+    set(ax(1),'XLim',[0,30]);
+    set(ax(2),'XLim',[0,30]);
 
 figure(f);clf;f = f+1;
     tsplot(S1,struct('type','error','title',S1.Options.description));
@@ -45,16 +60,19 @@ figure(f);clf;f = f+1;
 figure(f);clf;f = f+1;
     psdplot(S1,struct('type','raw'));
 figure(f);clf;f = f+1;
-    psdplot({S1,S2},struct('type','prewhitened'));    
+    psdplot({S1,S2},struct('type','prewhitened'));
 figure(f);clf;f = f+1;
     psdplot({S1,S2},struct('type','error'));
+
+figure(f);clf;f = f+1;
+    snplot({S1,S2});
 
 figure(f);clf;f = f+1;
     zplot({Sx,S1,S2});
 figure(f);clf;f = f+1;
     zplot({Sx,S1,S2},struct('type',3));
 
-if wf > 0    
+if wf > 0 
     figure(f);clf;f = f+1;
         qqplot_(S1,k);
 end

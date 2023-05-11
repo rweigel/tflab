@@ -1,4 +1,5 @@
-%% Z nonzero at single frequency on DFT grid (so no leakage) with time domain window
+%% Z nonzero at single frequency on DFT grid (so no leakage)
+%  with time domain window
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
@@ -6,10 +7,11 @@ tflab_setpaths();
 
 Nt = 100;
 k  = 25;
+Z  = (1+1j)/sqrt(2);
 f  = k/Nt;
 wf = 1;
 
-Sx_opts = struct('Nt',Nt,'Z',1+1j,'f',f,'dB',0.0,'dE',0.0);
+Sx_opts = struct('Nt',Nt,'Z',Z,'f',f,'dB',0.0,'dE',0.0);
 Sx = demo_signals('simple',Sx_opts);
 
 opts1 = tflab_options(0);
@@ -34,8 +36,9 @@ S2.Options.description = 'Parzen';
 Sx.Options.info = S1.Options.info; 
 Sx.Options.description = 'Actual';
 
-set(0,'DefaultFigureWindowStyle','docked')
+dock('on');
 f = 1;
+
 figure(f);clf;f = f+1;
     tsplot(S1,struct('type','raw'));
 figure(f);clf;f = f+1;
@@ -47,8 +50,6 @@ figure(f);clf;f = f+1;
 figure(f);clf;f = f+1;
     tsplot(S2,struct('type','error','title',S2.Options.description));
 
-figure(f);clf;f = f+1;
-    psdplot(S1,struct('type','raw'));
 figure(f);clf;f = f+1;
     psdplot({S1,S2},struct('type','windowed'));
 figure(f);clf;f = f+1;

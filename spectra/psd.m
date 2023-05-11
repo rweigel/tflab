@@ -1,7 +1,7 @@
-function [S,D,f] = psd(x,opts,n)
-%PSD
+function [S,D,f] = psd(x,opts)
+%PSD Power spectra, Fourier coefficients, and frequencies
 %
-%  [S,D,f] = psd(x,opts,n). 
+%  [S,D,f] = psd(x,opts).
 %
 %  Computes the power spectra (not density) S and Fourier coefficients
 %  of signal x with N rows for positive frequencies according to
@@ -11,8 +11,6 @@ function [S,D,f] = psd(x,opts,n)
 %  At a given frequency, a sinusoid with amplitude A and arbitrary phase
 %  will have S = A^2 at that frequency.
 %  
-
-% Note that n is not used.
 
 flip = 0;
 if size(x,1) == 1
@@ -44,7 +42,7 @@ else
     winfn = @parzenwin;
 end
 
-[f,Ic,Ne] = evalfreq(n,opts.fd.evalfreq.functionargs{:});
+[f,Ic,Ne] = evalfreq(N,opts.fd.evalfreq.functionargs{:});
 
 %S(1,size(x,2)) = NaN;
 

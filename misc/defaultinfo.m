@@ -13,4 +13,4 @@ if ~isfield(S.Options,'info')
     return;
 end
 
-S.Options.info = updatedefaults(S.Options.info,dopts.info);
+S.Options.info = updatedefaults(dopts.info,S.Options.info);

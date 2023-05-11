@@ -26,6 +26,9 @@ if strcmp(stype,'simple')
         f = k/Nt;
     end
     % Generate input/output using exact amplitude and phase
+    % (A faster and less memory-intensive way to do this is with ifft() 
+    % on a frequency domain representation of the signals being
+    % constructed.)
     for i = 1:length(f)
         B(:,i) = cos(2*pi*f(i)*t);
         E(:,i) = real(Z(i))*cos(2*pi*f(i)*t) - imag(Z(i))*sin(2*pi*f(i)*t);

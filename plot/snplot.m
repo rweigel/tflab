@@ -4,35 +4,15 @@ function [ax1,ax2] = snplot(S,popts)
 assert(isstruct(S) || iscell(S), ...
     'S must be a tflab struct or cell array of tflab structs');
 
-% Default options
-opts = struct();
-    opts.title = '';
-    opts.print = 0;
-    opts.printname = 'snplot';
-    opts.printdir = '';
-    opts.printfmt = {'pdf'};
-
-    opts.period = 1;
-    opts.unwrap = 1;
-    opts.vs_period = 1;
-    opts.period_range = [];
-
-% Use default options if option not given
-if nargin > 1
-    fns = fieldnames(popts);
-    for i = 1:length(fns)
-        opts.(fns{i}) = popts.(fns{i});
-    end
+if nargin < 2
+    popts = struct();
 end
 
-% Line options
-lnopts = {'marker','.','markersize',20,'linestyle','none'};
+opts = tflabplot_options(S, popts, '', 'snplot');
 
-% Legend options
-lgopts = {'Location','NorthWest','Orientation','Horizontal'};
-
-PositionTop = [0.1300 0.5400 0.7750 0.4];
-PositionBottom = [0.1300 0.1100 0.7750 0.4];
+if iscell(S) && length(S) == 1
+    S = S{1};
+end
 
 if iscell(S)
     % TODO: Check all same.
@@ -50,35 +30,46 @@ if isstruct(S)
     % Single transfer function
     figprep();
     fe = S.Metrics.PSD.Smoothed.fe;
-    if opts.period
+    if opts.vs_period
         x = S.Options.info.timedelta./fe;
     else
         x = fe/S.Options.info.timedelta;
     end
-    
-    for j = 1:size(S.Out,2)
-        if iscell(S.Options.info.outstr)
-            lg{j} = sprintf('%s\n', S.Options.info.outstr{j});
-        else
-            lg{j} = sprintf('%s(:,%d)\n',S.Options.info.outstr,j);
+
+    lg = legend_(S);
+
+    ax1 = subplot('Position', opts.PositionTop);
+        SN = S.Metrics.SN.Smoothed;
+        plot(x,SN,opts.line{:});
+        grid on;box on;hold on;      
+        if size(S.Out,2) > 1
+            legend(lg,opts.legend{:});
         end
-    end
-    
-    ax1 = subplot('Position', PositionTop);
-        semilogx(x,S.Metrics.SN.Smoothed,lnopts{:});
-        legend(lg,lgopts{:});
         set(gca,'XTickLabel',[]);
         tflab_title(S,opts,'sn');
+        if opts.vs_period
+            set(gca,'XScale','log');
+        end
+        if max(SN(:)) > 100
+            set(gca,'YScale','log');
+        end
         ylabel('Signal to Error');
-        grid on;box on;hold on;
+        yline(1,'k');
+        adjust_ylim('upper');
+        adjust_yticks();
+        adjust_exponent();
         setx(opts,0,timeunit);
 
-    ax2 = subplot('Position', PositionBottom);
-        semilogx(x,S.Metrics.Coherence.Smoothed,lnopts{:});
-        legend(lg,lgopts{:});
-        ylabel('Meas. to Pred. Coherence');
+    ax2 = subplot('Position', opts.PositionBottom);
+        semilogx(x,S.Metrics.Coherence.Smoothed,opts.line{:});
         grid on;box on;hold on;
+        if size(S.Out,2) > 1
+            legend(lg,opts.legend{:});
+        end
+        ylabel('Meas. to Pred. Coherence');
         set(gca,'YLim',[0,1]);
+        yline(1,'k');
+        adjust_ylim('upper');
         adjust_exponent('x');
         setx(opts,1,timeunit);
         
@@ -92,14 +83,15 @@ end
 
 if iscell(S)
     % Multiple TFs
-    segment_aves = 1;     
+    segment_aves = 1;
     % j = columns of SN (components of output)
-    for j = 1:size(S{1}.Metrics.SN.Smoothed,2) 
+    for j = 1:size(S{1}.Metrics.SN.Smoothed,2)
+        lg = legend_(S, j);
         if j > 1
             figure();
         end
         figprep();
-        ax1 = subplot('Position', PositionTop);
+        ax1 = subplot('Position', opts.PositionTop);
             max_T = 0;
             for s = 1:length(S)
                 if isfield(S{s}.Metrics,'Segment')
@@ -116,51 +108,36 @@ if iscell(S)
                     fe = S{s}.Metrics.PSD.Smoothed.fe;
                     %fe = S{s}.Metrics.fe;
                 end
-                if opts.period
+                if opts.vs_period
                     x = 1./fe;
                     max_T = max(max_T,max(x(x < Inf)));
                 else
                     x = fe;
                 end
-                h(s) = semilogx(x,SN,lnopts{:});
-                grid on;box on;hold on;                 
-                ls{s} = sprintf('%s %s',...
-                    S{s}.Options.info.stationid,...
-                    S{s}.Options.description);
+                h(s) = plot(x,SN,opts.line{:});
+                grid on;box on;hold on;
                 if segment_aves
                     yl = SN-ye(:,1);
                     yu = -SN+ye(:,2);
                     errorbars(x,SN,yl,yu);
                 end
 
-            end                
-            legend(h,ls,lgopts{:});
-            if iscell(S{1}.Options.info.outstr)
-                pre = S{1}.Options.info.outstr{j};
-            else
-                pre = sprintf('%s(:,%d)',S{1}.Options.info.outstr,j);
             end
-            ylabel(sprintf('%s Signal to Error',pre));
-            if isfield(opts,'title') && ~isempty(opts.title)
-                title(opts.title,'FontWeight','normal');
-            end            
-            adjust_ylim('both');
-            limx = get(gca,'XLim');
-            plot([limx(1),limx(2)],[1,1],'k');
-            if 0
-                % export_fig can't handle transparent patches
-                patch([limx(1), limx(2), limx(2), limx(1)],...
-                      [0, 0, 1, 1],[0.1,0.1,0.1],...
-                      'FaceAlpha',0.1,'LineStyle','none');
+            if opts.vs_period
+                set(gca,'XScale','log');
             end
-            yt = get(gca,'YTick');
-            if (yt(1) < 0)
-                ytl = get(gca,'YTickLabel');
-                ytl{1} = '';
+            if max(SN(:)) > 100
+                set(gca,'YScale','log');
             end
+            legend(h,lg,opts.legend{:});
+            ylabel('Signal to Error');
+            adjust_ylim('upper');
+            adjust_yticks();
+            adjust_exponent();
+            yline(1,'k');
             setx(opts,0,timeunit);
             
-        ax2 = subplot('Position', PositionBottom);
+        ax2 = subplot('Position', opts.PositionBottom);
             for s = 1:length(S)
                 % TODO: Repeated code
                 if isfield(S{s}.Metrics,'Segment')
@@ -177,30 +154,23 @@ if iscell(S)
                     fe = S{s}.Metrics.PSD.Smoothed.fe;
                     %fe = S{s}.Metrics.fe;
                 end
-                if opts.period
+                if opts.vs_period
                     x = 1./fe;
                     max_T = max(max_T,max(x(x < Inf)));
                 else
                     x = fe;
                 end
-                semilogx(x,Coh,lnopts{:});
+                plot(x,Coh,opts.line{:});
                 grid on;box on;hold on;
             end
-            legend(ls,lgopts{:});
-            if iscell(S{1}.Options.info.outstr)
-                pre = S{1}.Options.info.outstr{j};
-            else
-                pre = sprintf('%s(:,%d)',S{1}.Options.info.outstr{j},j);
-            end            
-            ylabel(sprintf('%s Measured to Predicted Coherence',pre));
-            set(gca,'YLim',[0,1]);
-            adjust_ylim('both');
-            adjust_exponent('x');            
-            yt = get(gca,'YTick');
-            if (yt(1) < 0)
-                ytl = get(gca,'YTickLabel');
-                ytl{1} = '';
+            if opts.vs_period
+                set(gca,'XScale','log');
             end
+            legend(lg,opts.legend{:});
+            ylabel('Meas. to Pred. Coherence');
+            set(gca,'YLim',[0,1]);
+            adjust_ylim('upper');
+            adjust_exponent('x');            
             setx(opts,1,timeunit);
             
         if opts.print
@@ -212,4 +182,45 @@ if iscell(S)
         end
     end
 end
+end
+
+function lg = legend_(S,comp)
+
+    if iscell(S)
+        if (nargin == 1)
+            comp = 1;
+        end
+        for s = 1:length(S)
+            desc = S{s}.Options.description;
+            if ~isempty(desc)
+                desc = [' ',desc];
+            end
+            if iscell(S{s}.Options.info.outstr)
+                lg{s} = sprintf('%s%s\n',...
+                    S{s}.Options.info.outstr{comp}, desc);
+            else
+                if size(S{s}.Out,2) == 1
+                    lg{s} = sprintf('%s\n',desc);
+                else
+                    lg{s} = sprintf('%s(:,%d)%s\n',...
+                                S{s}.Options.info.outstr,comp,desc);
+                end
+            end
+        end
+    else
+        for j = 1:size(S.Out,2)
+            if iscell(S.Options.info.outstr)
+                lg{j} = sprintf('%s%s\n', S.Options.info.outstr{j});
+            else
+                if size(S.Out,2) == 1
+                    lg{j} = sprintf('%s\n',S.Options.info.outstr);
+                else
+                    lg{j} = sprintf('%s(:,%d)%s\n',S.Options.info.outstr,j);
+                end
+            end
+        end
+    end
+    
+end
+
 

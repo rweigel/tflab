@@ -1,6 +1,8 @@
 %% Single frequency not on DFT grid (so leakage)
-% See leakage.m for verifcation that spectrum is not symmetric
-% about f when signal phase is not zero or pi/2 (is not pure sin or cos).
+% See notes/leakage.m for additional demos of leakage and comparison
+% with analytical formulas. In particular, it shows that spectrum is not
+% symmetric about f when signal phase is not zero or pi/2 (is not pure
+% sin or cos).
 
 clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
@@ -9,8 +11,11 @@ tflab_setpaths();
 Nt = 100;
 f  = 25.5/Nt;
 wf = 0;
+dB = 0.0;
+dE = 0.0;
+Z  = (1+1j)/sqrt(2);
 
-Sa_opts = struct('Nt',Nt,'Z',1+1j,'f',f,'dB',0.0,'dE',0.0);
+Sa_opts = struct('Nt',Nt,'Z',Z,'f',f,'dB',dB,'dE',dE);
 Sa = demo_signals('simple',Sa_opts);
 
 opts1 = tflab_options(0);
@@ -18,13 +23,13 @@ opts1 = tflab_options(0);
     opts1.fd.evalfreq.functionargs = {[1,wf], 'linear'};
 
 S1 = tflab(Sa.In,Sa.Out,opts1);
-S1.Options.description = 'Estimated';
+S1.Options.description = sprintf('wf = %.1f, dB = %.1f, dE = %0.1f',wf, dB, dE);
 
 % Use same variable labels from S1 for Sa
 Sa.Options.info = S1.Options.info; 
 Sa.Options.description = 'Actual';
 
-set(0,'DefaultFigureWindowStyle','docked')
+dock('on');
 fn = 1;
 figure(fn);clf;fn = fn+1;
     tsplot(S1,struct('type','raw'));
@@ -35,6 +40,9 @@ figure(fn);clf;fn = fn+1;
     psdplot(S1,struct('type','raw'));
 figure(fn);clf;fn = fn+1;
     psdplot(S1,struct('type','error'));
+
+figure(fn);clf;fn = fn+1;
+    snplot(S1);
 
 figure(fn);clf;fn = fn+1;
     zplot({Sa,S1},struct('type',3));

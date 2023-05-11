@@ -21,61 +21,79 @@ end
 debug = 0;
 
 ax = gca();
-
 drawnow;
-yt = get(ax,'YTick');
-yl = get(ax,'YLim');
 
-if ~isempty(ax.UserData)
-    tf = strcmp(ax.UserData.YTickTickLast, yt);
+ytick = get(ax,'YTick');
+ytick_old = ytick;
+
+ylim = get(ax,'YLim');
+ylim_old = ylim;
+
+if ~isempty(ax.UserData) && isfield(ax.UserData, 'YLimLast')
+    tf = all(ax.UserData.YLimLast == ylim);
     if all(tf)
         if debug
-            fprintf('adjust_ylim(): Previous labels are same as current.\n');
+            fprintf('adjust_ylim(): Previous limits are same as current.\n');
         end
         return;
     end
 end
 
 if debug
-    yt
-    yl
+    fprintf('adjust_ylim():\n');
+    ytick
+    ylim
 end
 
 if strcmp(pos, 'upper') || strcmp(pos, 'both')
     if strcmp(get(ax,'YScale'),'log')
-        if length(yt) > 1
-            yl(end) = 0.5*10^(log10(yl(end)) + 0.5*(log10(yt(end))-log10(yt(end-1))));
+        if length(ytick) > 1
+            ylim(end) = ylim(end)*10^(0.5*(log10(ytick(end))-log10(ytick(end-1))));
+            %ylim(end) = 5*10^(log10(ylim(end)));
         end
     else
-        if (yl(1) == -yl(end)) && ~strcmp(pos, 'both')
+        if (ylim(1) == -ylim(end)) && ~strcmp(pos, 'both')
             % If limits were symmetric, adjust lower to keep symmetry.
-            yl(1) = yl(1) - (yt(end)-yt(end-1));
+            ylim(1) = ylim(1) - (ytick(end)-ytick(end-1));
         end
-        yl(end) = yl(end) + (yt(end)-yt(end-1));
+        ylim(end) = ylim(end) + (ytick(end)-ytick(end-1));
     end
 end
 
 if strcmp(pos,'lower') || strcmp(pos, 'both')
     if strcmp(get(ax,'YScale'),'log')
-        if length(yt) > 1
-            yl(1) = 0.5*10^(log10(yl(1)) - 0.5*(log10(yt(2))-log10(yt(1))));
+        if length(ytick) > 1
+            ylim(1) = ylim(1)/10^(0.5*(log10(ytick(2))-log10(ytick(1))));
+            ylim(1) = 0.5*10^(log10(ylim(1)) - 0.5*(log10(ytick(2))-log10(ytick(1))));
         end
     else
-        if (yl(1) == -yl(end)) && ~strcmp(pos, 'both')
+        if (ylim(1) == -ylim(end)) && ~strcmp(pos, 'both')
             % If limits were symmetric, adjust upper to keep symmetry.
-            yl(end) = yl(end) - (yt(2)-yt(1));
+            ylim(end) = ylim(end) - (ytick(2)-ytick(1));
         end
-        yl(1) = yl(1) - (yt(2)-yt(1));
+        ylim(1) = ylim(1) - (ytick(2)-ytick(1));
     end
 end
 
-if yl(1) > yl(2)
+if ylim(1) > ylim(2)
     return;
 end
 
-set(ax,'YLim',yl);
+if debug
+    fprintf('adjust_ylim(): Setting ax.UserData.YLimIgnoreChange = 1\n');
+end
+ax.UserData.YLimIgnoreChange = 1;
+
+set(ax,'YLim',ylim);
+set(ax,'YTick',ytick_old);
 drawnow;
-ax.UserData.YTickTickLast = yl;
+
+if debug
+    fprintf('adjust_ylim(): Setting ax.UserData.YLimIgnoreChange = 0\n');
+end
+
+ax.UserData.YLimIgnoreChange = 0;
+ax.UserData.YLimLast = ylim;
 
 if isprop(ax.YAxis,'LimitsChangedFcn')
     ax.YAxis.LimitsChangedFcn = @(src,evt) reset(src,evt,debug);
@@ -85,7 +103,7 @@ end
 
 function reset(obj,evt,debug)
     if debug
-        fprintf(['Reset called. Setting TickLabelMode to auto '...
+        fprintf(['adjust_ylim(): Reset called. Setting TickLabelMode to auto '...
                  'and deleting listener for %sLim change.\n'],direction);
     end
     set(gca,[upper(direction), 'TickMode'],'auto');

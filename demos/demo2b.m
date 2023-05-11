@@ -47,8 +47,6 @@ figure(f);clf;f = f+1;
     tsplot(S2,struct('type','error','title',S2.Options.description));
 
 figure(f);clf;f = f+1;
-    psdplot(S1,struct('type','raw'));
-figure(f);clf;f = f+1;
     psdplot({S1,S2},struct('type','windowed'));
 figure(f);clf;f = f+1;
     psdplot({S1,S2},struct('type','error'));

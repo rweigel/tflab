@@ -100,7 +100,8 @@ ax1 = subplot('Position',PositionTop);
     hold on;grid on;box on;
     title(titlestr);
     xlabel('');
-    ylabel(sprintf('Normalized Re[$\\Delta %s$] Quantiles',Zstrs{cidx}));
+    set(gca,'XTickLabels','');
+    ylabel(sprintf('Re[$\\Delta %s$] Quantiles',Zstrs{cidx}));
     if ~isempty(legendstr)
         legend(legendstr,'Location','SouthEast');
     end
@@ -110,16 +111,16 @@ ax2 = subplot('Position',PositionBottom);
     plotqq(Residuals,'imag');
     hold on;grid on;box on;    
     xlabel('Standard Normal Quantiles');
-    ylabel(sprintf('Normalized Im[$\\Delta %s$] Quantiles',Zstrs{cidx}));
+    ylabel(sprintf('Im[$\\Delta %s$] Quantiles',Zstrs{cidx}));
     adjust_exponent()
     legend off;
 
-return
+%return
 % Plot diagonal line    
-axes(ax1)
+axes(ax1);hold on;
 xl1 = get(ax1,'XLim');    
 yl1 = get(ax1,'YLim');
-axes(ax2)
+axes(ax2);hold on;
 xl2 = get(ax2,'XLim');
 yl2 = get(ax2,'YLim');
 m = max(abs([xl1,yl1,xl2,yl2]));

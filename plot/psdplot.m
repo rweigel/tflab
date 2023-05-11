@@ -4,49 +4,27 @@ function psdplot(S,popts)
 assert(isstruct(S) || iscell(S), ...
     'S must be a tflab struct or cell array of tflab structs');
 
-% Default options
-opts = struct();
-    opts.title = '';
-    opts.type = 'raw';
-    opts.print = 0;
-    opts.printname = 'psd';
-    opts.printdir = '';
-    opts.printfmt = {'pdf'};
-
-    opts.vs_period = 1;
-    if iscell(S)
-        for s = 1:length(S)
-            lens(s) = size(S{s}.In,1);
-        end
-        opts.period_range = [1, 2*max(lens)];
-    else        
-        opts.period_range = [1, 2*size(S.In,1)];
-    end
-    opts.frequency_range = [0, 0.5];
-    
-% Use default options if options not given
-if nargin > 1
-    fns = fieldnames(popts);
-    for i = 1:length(fns)
-        opts.(fns{i}) = popts.(fns{i});
-    end
+if nargin < 2
+    popts = struct();
 end
 
-% Line options
-lnopts = {'marker','.','markersize',20,'linestyle','none'};
+opts = tflabplot_options(S, popts, 'raw', 'psdplot');
 
-% Legend options
-lgopts = {'Location','NorthWest','Orientation','Horizontal'};
-
-PositionTop = [0.1300 0.5400 0.7750 0.4];
-PositionBottom = [0.1300 0.1100 0.7750 0.4];
-figprep();
+if iscell(S) && length(S) == 1
+    S = S{1};
+end
 
 if iscell(S)
+    for s = 1:length(S)
+        S{s} = defaultinfo(S{s});
+    end
     % TODO: Check all same.
     timeunit = S{1}.Options.info.timeunit;
+    timedelta = S{1}.Options.info.timedelta;
 else
+    S = defaultinfo(S);
     timeunit = S.Options.info.timeunit;
+    timedelta = S.Options.info.timedelta;
 end
 
 if strcmp(opts.type,'error')
@@ -55,11 +33,12 @@ if strcmp(opts.type,'error')
             fe{s} = S{s}.Metrics.PSD.Raw.fe;
             y1{s} = sqrt(S{s}.Metrics.PSD.Raw.Error);
             y2{s} = S{s}.Metrics.SN.Raw;
+            y2{s} = (180/pi)*angle(S{s}.Metrics.DFT.Raw.Error);            
         end
     else
         fe = S.Metrics.PSD.Raw.fe;
         y1 = sqrt(S.Metrics.PSD.Raw.Error);
-        y2 = S.Metrics.SN.Raw;
+        y2 = (180/pi)*angle(S.Metrics.DFT.Raw.Error);            
     end
 end
 if strcmp(opts.type,'error-smoothed')
@@ -71,7 +50,7 @@ if strcmp(opts.type,'error-smoothed')
         for s = 1:length(S)
             fe{s} = S{s}.Metrics.PSD.Smoothed.fe;
             y1{s} = sqrt(S{s}.Metrics.PSD.Smoothed.Error);
-            y2{s} = S{s}.Metrics.SN.Smoothed;
+            y2{s} = (180/pi)*angle(S{s}.Metrics.DFT.Smoothed.Error);            
         end
     else
         if ~isfield(S.Metrics.PSD,'Smoothed')
@@ -80,7 +59,7 @@ if strcmp(opts.type,'error-smoothed')
         end        
         fe = S.Metrics.PSD.Smoothed.fe;
         y1 = sqrt(S.Metrics.PSD.Smoothed.Error);
-        y2 = S.Metrics.SN.Smoothed;
+        y2 = (180/pi)*angle(S.Metrics.DFT.Raw.Error);            
     end
 end
 if strcmp(opts.type,'raw')
@@ -190,89 +169,98 @@ else
     end
 end
 
-if any(strcmp(opts.type,...
-      {'raw','raw-phase','windowed','prewhitened','zeropadded','smoothed'}))
+figprep();
+
+if ~any(strcmp(opts.type,{'error','error-smoothed'}))
     
     [lg1, lg2] = legend_(S);
+    [yl1, yl2] = ylabel_(S);
     
-    subplot('Position',PositionTop);
-        plot_(x,y1,lnopts)
+    subplot('Position',opts.PositionTop);
+        plot_(x,y1,opts)
+        grid on;box on;
         if endsWith(opts.type,'phase')
             set(gca,'YScale','linear');
             set(gca,'YTick',-180:45:180);
-            ylabel('$[^\circ]$');            
+            ylabel('$\phi$ $[^\circ]$');            
         else
-            ylabel('$|$Fourier Amplitude$|$');
             set(gca,'YScale','log');
         end
         if opts.vs_period
             set(gca,'XScale','log');
         end
-        if iscell(S)
-            ylabel(sprintf('In %s', S{1}.Options.info.inunit));
-        else
-            lg1 = plotnoise(lg1,'InNoisePSD', S.Options.info.inunit);
-            tflab_title(S,opts,'psd');
+        if ~isempty(lg1)
+            legend(lg1,opts.legend{:});
         end
-        grid on;box on;
-        legend(lg1,lgopts{:});
+        ylabel(yl1);
+        tflab_title(S, opts, 'psd');
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
         setx(opts, 0, timeunit);
 
-    subplot('Position',PositionBottom);
-        plot_(x,y2,lnopts)
+    subplot('Position',opts.PositionBottom);
+        plot_(x,y2,opts)
+        grid on;box on;
         set(gca,'YScale','log');
         if endsWith(opts.type,'phase')
             set(gca,'YScale','linear');
             set(gca,'YTick',-180:45:180);
-            ylabel('$[^\circ]$');
+            ylabel('$\phi$ $[^\circ]$');
         else
-            ylabel('$|$Fourier Amplitude$|$');
             set(gca,'YScale','log');
         end
         if opts.vs_period
             set(gca,'XScale','log');
         end
-        if iscell(S)
-            ylabel(sprintf('Out %s', S{1}.Options.info.inunit));
-        else
-            lg2 = plotnoise(lg2,'OutNoisePSD', S.Options.info.inunit);
+        if ~isempty(lg2)
+            legend(lg2,opts.legend{:});
         end
-        grid on;box on;
-        legend(lg2,lgopts{:});
+        ylabel(yl2);
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
         setx(opts, 1, timeunit);        
 else
-    subplot('Position',PositionTop)
-        [~,lg2] = legend_(S);
-        plot_(x,y1,lnopts)
+    [~,lg2] = legend_(S);
+    subplot('Position',opts.PositionTop);
+        plot_(x,y1,opts);
+        grid on;box on;
         set(gca,'YScale','log');
         if opts.vs_period
             set(gca,'XScale','log');
         end
         grid on;box on;
-        ylabel('$|$Fourier Amp of Error$|$')
-        legend(lg2,lgopts{:});
-        tflab_title(S,opts,'psd');
+        outunit = '';
+        if iscell(S)
+            outunit = S{1}.Options.info.outunit;
+            legend(lg2,opts.legend{:});
+        else
+            outunit = S.Options.info.outunit;
+            tflab_title(S,opts,'psd');
+        end
+        if ~isempty(outunit)
+            outunit = sprintf(' [%s]',outunit);
+        end
+        tflab_title(S, opts, 'psd');        
+        ylabel(['$|\widetilde{\mbox{Error}}|$', outunit]);
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
         setx(opts,0,timeunit);
         
-    subplot('Position',PositionBottom)
-        plot_(x,y2,lnopts);
-        set(gca,'YScale','log');
+    subplot('Position',opts.PositionBottom);
+        plot_(x,y2,opts);
+        grid on;box on;        
         if opts.vs_period
             set(gca,'XScale','log');
-            set(gca,'YScale','log');
         end
-        ylabel('SNR');
-        grid on;
-        legend(lg2,lgopts{:});
+        set(gca,'YScale','linear');
+        set(gca,'YTick',-180:45:180);
+        ylabel('$\phi$ of Error')
+        if iscell(S)
+            legend(lg2,opts.legend{:});
+        end
         adjust_ylim();
         adjust_exponent('y');
         setx(opts,1,timeunit);
@@ -290,57 +278,81 @@ function [lg1, lg2] = legend_(S)
 
     if iscell(S)
         for s = 1:length(S)
-            if isempty(x{s})
-                continue;
-            end
             info = S{s}.Options.info;
-            inunit = '';
-            if ~isempty(info.inunit)
-                inunit = sprintf(' [%s]', info.inunit);
-            end
             lg1{s} = S{s}.Options.description;
             lg2{s} = S{s}.Options.description;
         end
-        lg1 = lg1(~cellfun('isempty',lg1));
-        lg2 = lg2(~cellfun('isempty',lg2));
-    else        
+    else
         info = S.Options.info;
-        inunit = '';
-        if ~isempty(info.inunit)
-            inunit = sprintf(' [%s]', info.inunit);
-        end
-        for j = 1:size(S.In,2)
-            if iscell(info.instr)
-                lg1{j} = sprintf('%s %s',info.instr{j},inunit);
+        lg1 = '';
+        lg2 = '';
+        if size(S.In) > 1
+            if length(info.instr) == 1
+                lg1 = labelstr_(info.instr);
             else
-                lg1{j} = sprintf('%s(:,%d) %s',info.instr,j,inunit);
+                for j = 1:length(info.instr)
+                    lg1{j} = labelstr_(info.instr{j});
+                end
+            end
+            if length(info.outstr) == 1
+                lg2 = labelstr_(info.outstr);
+            else
+                for j = 1:length(info.outstr)
+                    lg2{j} = labelstr_(info.outstr{j});
+                end
             end
         end
-        outunit = '';
-        if ~isempty(info.outunit)
-            outunit = sprintf(' [%s]', info.outunit);
-        end
-        for j = 1:size(S.Out,2)
-            if iscell(info.outstr)
-                lg2{j} = sprintf('%s %s',info.outstr{j},outunit);
-            else
-                lg2{j} = sprintf('%s(:,%d) %s',info.outstr,j,outunit);
-            end
+    end    
+end
+
+function [yl1, yl2] = ylabel_(S)
+
+    if iscell(S)
+        info = S{1}.Options.info;
+        yl1 = [labelstr_(info.instr),unitstr_(info.inunit)];
+        yl2 = [labelstr_(info.outstr),unitstr_(info.outunit)];
+    else
+        info = S.Options.info;        
+        if size(S.In) > 1
+            yl1 = unitstr_(info.inunit);
+            yl2 = unitstr_(info.outunit);
+        else
+            yl1 = [labelstr_(info.instr),unitstr_(info.inunit)];
+            yl2 = [labelstr_(info.outstr),unitstr_(info.outunit)];
         end
     end
 end
 
-function plot_(x,y,lnopts)
+function s = labelstr_(labelstr)
+    if contains(labelstr,'$')
+        s = ['$|\widetilde{',replace(labelstr,'$',''),'}|$'];
+    else
+        s = ['$|\widetilde{\mbox{',labelstr,'}}|$'];
+    end
+end
+
+function s = unitstr_(unit, padstart)
+    prepad = ' ';
+    if nargin < 2 || padstart == 0
+        prepad = '';
+    end
+    s = '';
+    if ~isempty(unit)
+        s = sprintf('%s[%s]', prepad, unit);
+    end
+end
+
+function plot_(x,y,opts)
     if iscell(x) && iscell(y)
         hold on;
         for c = 1:length(x)
             if ~isempty(y)
-                plot(x{c},y{c},lnopts{:});
+                plot(x{c},y{c},opts.line{:});
             end
         end
         hold off;
     else
-        plot(x,y,lnopts{:});
+        plot(x,y,opts.line{:});
     end
 end
 
@@ -349,7 +361,7 @@ function ls1 = plotnoise(ls1,comp,unit)
     if isfield(S,comp) && strcmp(opts.type,'raw')
         hold on;
         y = ftrim(S.fe,S.(comp));
-        loglog(x,y,lnopts{:});
+        loglog(x,y,opts.line{:});
         jl = size(S.(comp),2);
         if strcmp(comp,'InNoisePSD')
             compstrs = info.instr;

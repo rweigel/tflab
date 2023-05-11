@@ -11,9 +11,10 @@ tflab_setpaths();
 
 Nt = 100;
 k  = 25;
-wf = 0;
+Z  = (1+1j)/sqrt(2);
+wf = 1;
 
-Sa_opts = struct('Nt',Nt,'Z',1j,'k',k,'dB',0,'dE',0);
+Sa_opts = struct('Nt',Nt,'Z',Z,'k',k,'dB',0,'dE',0);
 Sa = demo_signals('simple',Sa_opts);
 
 opts1 = tflab_options(0);
@@ -50,5 +51,6 @@ figure(f);clf;f = f+1;
 
 if wf > 0    
     figure(f);clf;f = f+1;
-        qqplot_(S1,k);
+        [~,Ik] = min(abs(1./S1.fe-Nt/k));
+        qqplot_(S1,Ik);
 end

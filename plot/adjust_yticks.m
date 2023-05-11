@@ -5,7 +5,7 @@ return;
 
 direction = 'y';
 
-debug = 1;
+debug = 0;
 
 if nargin < 4
     listen = 1;
@@ -29,6 +29,7 @@ yt = get(ax,'YTick')';
 dy = diff(yt);
 
 if debug
+   fprintf('adjust_yticks():\n');
     yt
     yl
 end
@@ -36,7 +37,6 @@ end
 if ~isempty(ax.UserData) && isfield(ax.UserData,'YTickLabelsLast')
     if length(ax.UserData.YTickLabelsLast) == length(yl)
         tf = strcmp(ax.UserData.YTickLabelsLast, yl);
-        tf
         if all(tf)
             if debug
                 fprintf('adjust_yticks(): Previous labels are same as current.\n');
@@ -132,11 +132,12 @@ end
 function reset(obj,evt,debug)
     if debug
         fprintf(['adjust_yticks(): Reset called. Setting TickLabelMode to auto '...
-                 'and deleting listener for %sLim change.\n'],direction);
+                 'and deleting listener for %sLim change.\n'], direction);
     end
+    set(ax,[upper(direction), 'TickMode'],'auto');
     set(ax,[upper(direction), 'TickLabelMode'],'auto');
     delete(obj);
-    adjust_yticks(t,ax,no_lead_number,0);
+    %adjust_yticks(t,ax,no_lead_number,0);
 end
 end
 

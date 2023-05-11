@@ -37,7 +37,8 @@ iopts = struct('info',struct());
     iopts.info.stationid = id;
 
 %% Compute first TF
-desc1 = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
+Ns = size(B,1)/pps;
+desc1 = sprintf('OLS; %d %d-day segment%s',Ns,pps/86400,plural(Ns));
 opts1 = tflab_options(1,iopts);
     opts1.tflab.loglevel = 1;
     opts1.td.window.width = pps;
