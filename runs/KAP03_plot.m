@@ -11,7 +11,7 @@ if ~exist('TF1','var')
     logmsg('Reading %s\n',fname);
     TF1 = load(fname);
 end
-if ~exist('S2','var')
+if ~exist('TF2','var')
     fname = fullfile(scriptdir(),'data',chainid,siteid,...
                 sprintf('%s-%s-tf2.mat',siteid, daterange));
     logmsg('Reading %s\n',fname);

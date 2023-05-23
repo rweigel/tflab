@@ -1,19 +1,7 @@
-%function [B,E,t] = Middelpos_read()
+function [B,E,t,outfile,infiles] = LEMI_read(name, ext, inpath, outpath)
 
 % Dir of this script
 scriptpath = fileparts(mfilename('fullpath')); 
-
-name = 'Dealesville';
-ext = 't06';
-inpath = [scriptpath,'data/Dealesville/measurements'];
-outpath = [scriptpath,'data/Dealesville'];
-
-if 1
-name = 'Middelpos';
-ext = 't82';
-inpath = [scriptpath,'/data/Middelpos/measurements']; 
-outpath = [scriptpath,'/data/Middelpos']; 
-end
 
 dlist = dir(inpath);
 
@@ -33,6 +21,7 @@ for i = 1:length(dlist)
         fprintf('Failed read. Skipping.\n');
         ex
     end
+    infiles{i} = fname;
     fprintf('Writing: %s\n',fnamemat);
     save(fnamemat,'data');
     last = dlist(i).name(1:end-8);
@@ -47,6 +36,6 @@ E = Data(:,12:13);
 t = datenum(Data(:,1:6));
 
 fname = sprintf('%s_%s-%s_raw.mat',name,first,last);
-matfile = [outpath,'/',fname]; 
-save(matfile,'B','E','t');
-fprintf('Wrote: %s\n',matfile);
+outfile = [outpath,'/',fname]; 
+save(outfile,'B','E','t','outfile','infiles');
+fprintf('Wrote: %s\n',outfile);

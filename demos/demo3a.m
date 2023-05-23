@@ -17,7 +17,7 @@ alpha = struct();
 
 A = struct();
     A.B  = 1;
-    A.dB = 0.5;
+    A.dB = 0.0;
     A.dE = 0.0;
     A.Z  = 1;
 

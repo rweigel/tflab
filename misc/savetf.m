@@ -1,20 +1,22 @@
-function savetf(TF,fname)
+function savetf(tf,fname)
 %SAVETF - Save output of tflab.
 %
-%   SAVETF(TF,filename) saves the output of of tflab to a MATLAB
+%   SAVETF(tf,filename) saves the output of of tflab to a MATLAB
 %   binary file named filename.
 %
-%   Use TF = load(filename) to recover state.
+%   Use tf = load(filename) to recover state.
 %
 %   See also TFLAB.
 
-if ~exist(fileparts(fname),'dir')
-    mkdir(fileparts(fname))
+base = fileparts(fname);
+if ~isempty(base) && ~exist(base, 'dir')
+    logmsg(sprintf('Creating: %s\n', base));
+    mkdir(base);
 end
 
-logmsg(sprintf('Saving: %s\n',fname));
+logmsg(sprintf('Saving: %s.mat\n',fname));
 
-save(fname,'-v7.3','-struct','TF');
+save(fname,'-v7.3','-struct','tf');
 
-logmsg(sprintf('Saved: %s\n',fname));
+logmsg(sprintf('Saved:  %s.mat\n',fname));
 

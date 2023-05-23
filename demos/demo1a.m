@@ -10,52 +10,51 @@ Z  = (1+1j)/sqrt(2);
 wf = 0;    % 2*wf + 1 is number of points for regression.
 
 Sa_opts = struct('Nt',Nt,'Z',Z,'k',k,'dB',0,'dE',0);
-Sa = demo_signals('simple',Sa_opts);
+tfa = demo_signals('simple',Sa_opts);
+tfa.Options.description = 'Actual';
 
 opts1 = tflab_options(0);
     opts1.tflab.loglevel = 1;
     opts1.fd.evalfreq.functionargs = {[1,wf], 'linear'};
+    opts1.description = 'Estimated';
 
-S1 = tflab(Sa.In,Sa.Out,opts1);
+tf1 = tflab(tfa.In, tfa.Out, opts1);
 
-S1.Options.description = 'Estimated';
-Sa.Options.description = 'Actual';
+dock on;figure(1);close all;
 
-dock on;figure(1);
-fn = 1;
-figure(fn);clf;fn = fn+1;
-    tsplot(S1,struct('type','raw'));
-figure(fn);clf;fn = fn+1;
-    tsplot(S1,struct('type','error'));
+figure();
+    tsplot(tf1,struct('type','raw'));
+figure();
+    tsplot(tf1,struct('type','error'));
 
-figure(fn);clf;fn = fn+1;
-    psdplot(S1,struct('type','raw'));
-figure(fn);clf;fn = fn+1;
-    psdplot(S1,struct('type','raw-phase'));
-figure(fn);clf;fn = fn+1;
-    psdplot(S1,struct('type','error'));
+figure();
+    psdplot(tf1,struct('type','raw'));
+figure();
+    psdplot(tf1,struct('type','raw-phase'));
+figure();
+    psdplot(tf1,struct('type','error'));
 
-figure(fn);clf;fn = fn+1;
-    snplot(S1);
+figure();
+    snplot(tf1);
     
-figure(fn);clf;fn = fn+1;
-    zplot({Sa,S1});
-figure(fn);clf;fn = fn+1;
-    zplot({Sa,S1},struct('type',3));
+figure();
+    zplot({tfa,tf1});
+figure();
+    zplot({tfa,tf1},struct('type',3));
 
 if wf > 0
     % Regression was used. Show qq plot.
     figure(fn);clf;fn = fn+1;
-        qqplot_(S1,k);
+        qqplot_(tf1,k);
 end
 
 
 %% Compute variance of Z as a function of Nt
 
 if 0
-    Ikeep = 1:size(S1.Z,1);
+    Ikeep = 1:size(tf1.Z,1);
     Ikeep = Ikeep(Ikeep ~= k);
-    Z = S1.Z(Ikeep);
+    Z = tf1.Z(Ikeep);
     fprintf('Nt = %f; var(Z) = %f\n\n',Nt,var(Z(2:end-1)));
     
     opts1 = tflab_options(0);
@@ -67,12 +66,12 @@ if 0
         k = round(N/4);
 
         Sa_opts = struct('Nt',Nt,'Z',1+1j,'k',k,'dB',0,'dE',0);
-        Sa = demo_signals('simple',Sa_opts);
+        tfa = demo_signals('simple',Sa_opts);
 
-        S1 = tflab(Sa.In,Sa.Out,opts1);
-        Ikeep = 1:size(S1.Z,1);
+        tf1 = tflab(tfa.In,tfa.Out,opts1);
+        Ikeep = 1:size(tf1.Z,1);
         Ikeep = Ikeep(Ikeep ~= k+1);
-        Z = S1.Z(Ikeep);
+        Z = tf1.Z(Ikeep);
         fprintf('Nt = %f; var(Z) = %f\n',Nt,var(Z(2:end-1)));
     end
     % Nt = 100.000000; var(Z) = 2.305222

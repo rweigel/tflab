@@ -12,6 +12,10 @@ if exist(mat_clean,'file')
     return
 end
 
+if ~exist(mat_raw,'file')
+    LEMI_read(name, ext, inpath, outpath);
+end
+
 fprintf('Reading: %s\n',mat_raw);
 load(mat_raw)
 

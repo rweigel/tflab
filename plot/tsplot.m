@@ -208,7 +208,7 @@ if iscell(S)
     if ~strcmp(opts.type,'error')
         error('tsplot for cell array input must be ''error''');
     end
-    
+
     subplot('Position',opts.PositionTop);
         plot(t,S{1}.Out(:,1),c{1});
         grid on;grid minor;box on;hold on;
@@ -281,6 +281,7 @@ function ls = legend_(comp)
         end
     end
     
+    return;
     if isfield(S,[comp,'Noise'])
         jl = j;
         for j = 1:size(S.([comp,'Noise']),2)
@@ -306,7 +307,7 @@ function setx(last,info,tl)
             io = 2; 
         end
         xtl = cellstr(get(gca,'XTickLabel'));
-        xtl{io} = sprintf('$$\\begin{array}{c}%s \\\\ %s\\end{array}$$',...
+        xtl{io} = sprintf('$$\\begin{array}{c}\\mbox{%s} \\\\ %s\\end{array}$$',...
                             xtl{io},datestr(tl(1),'yyyy'));
         set(gca,'XTickLabel',xtl, 'TickLabelInterpreter', 'latex');
     end

@@ -6,14 +6,8 @@ tflab_setpaths();
 % Get input/output data
 [B,E,t,infile,outfile] = Middelpos_clean(); 
 
-if 1 % For testing a run that takes less time.
-    B = B(1:12*86400,:);
-    E = E(1:12*86400,:);
-    t = t(1:12*86400);
-end
-
 if 1
-%% Band pass
+    %% Band pass
     addpath(fullfile(scriptdir(),'..','fft'));
     Tm = 3*86400;
     band = [1/Tm,0.5];
@@ -32,24 +26,24 @@ t = t(1:I);
 
 %% Set output file base name using start/stop times of input data
 filestr = sprintf('Middelpos-%s-%s',...
-                datestr(t(1),'yyyymmdd'),datestr(t(end),'yyyymmdd'));
+                  datestr(t(1),'yyyymmdd'),datestr(t(end),'yyyymmdd'));
 
-%% Set variable name information
-iopts = struct('info',struct(),'td',struct());
-iopts.info.instr     = {'$B_x$','$B_y$'};
-iopts.info.inunit    = 'nT';
-iopts.info.outstr    = {'$E_x$','$E_y$'};
-iopts.info.outunit   = 'mV/km';
-iopts.info.timeunit  = 's';
-iopts.info.timedelta = 1;
-iopts.info.timestart = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');
-iopts.info.chainid   = ''; % Use SANSA?
-iopts.info.stationid = 'Middelpos';
+%% Set default information
+dopts = struct('info',struct(),'td',struct());
+    dopts.info.instr     = {'$B_x$','$B_y$'};
+    dopts.info.inunit    = 'nT';
+    dopts.info.outstr    = {'$E_x$','$E_y$'};
+    dopts.info.outunit   = 'mV/km';
+    dopts.info.timeunit  = 's';
+    dopts.info.timedelta = 1;
+    dopts.info.timestart = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');
+    dopts.info.chainid   = 'SANSA';
+    dopts.info.stationid = 'Middelpos';
 
 
 %% Compute first TF
 desc1 = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
-opts1 = tflab_options(1,iopts);
+opts1 = tflab_options(1,dopts);
     opts1.tflab.loglevel = 1;
     opts1.td.window.width = pps;
     opts1.td.window.shift = pps;
@@ -66,7 +60,7 @@ savetf(TF1, fname1);
 
 %% Compute second TF
 desc2 = sprintf('OLS; One %d-day segment',size(B,1)/pps);
-opts2 = tflab_options(1,iopts);
+opts2 = tflab_options(1,dopts);
     opts2.tflab.loglevel = 1;
     opts2.filestr = sprintf('%s-tf2',filestr);
 
@@ -88,7 +82,7 @@ if (0)
     %%
     % Third TF
     desc3 = sprintf('OLS; %d 5-day segments',size(B,1)/(5*ppd));
-    opts3 = tflab_options(1,iopts);
+    opts3 = tflab_options(1,dopts);
         opts3.tflab.loglevel = 1;
         opts3.td.window.width = 5*86400;
         opts3.td.window.shift = 5*86400;

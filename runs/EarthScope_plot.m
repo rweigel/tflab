@@ -14,7 +14,6 @@ if ~exist('TF1','var')
     TF1 = load(fnamefull);
 end
 
-
 %% Set common print options
 copts.print    = 0; % Set to 1 to print pdf of each figure created.
 copts.printdir = fullfile(scriptdir(),'data','Middelpos','figures');
@@ -23,6 +22,7 @@ copts.printfmt = {'pdf'};
 figure(1);close all;
 
 %% Time series plots
+
 % Plot raw time series data used for TF1 (will be same as that for TF2)
 figure();
     tsopts = copts;
@@ -35,34 +35,37 @@ figure();
     tsopts.type = 'error';
     tsplot(TF1,tsopts);
 
-if 0
+% Plot error for TF2 only
+figure();
+    tsopts = copts;
+    tsopts.type = 'error';
+    tsplot(TF2,tsopts);
+    
 % Compare TF1 and TF2 error
 figure();
     tsopts = copts;
     tsopts.type  = 'error';
     tsplot({TF1,TF2},tsopts);
-end    
 
 %% SN plots
+
 % Plot SN for TF1 only
 figure();
     snopts = copts;
     snopts.period_range = [3, 86400];
     snplot(TF1,snopts);
 
-if 0    
 % Plot SN for TF2 only
 figure();
     snopts = copts;
     snopts.period_range = [3, 86400];
     snplot(TF2,snopts);
- 
+
 % Compare SN between TF1 and TF2
 figure();
     snopts = copts;
     snopts.period_range = [3, 86400];
     snplot({TF1,TF2},snopts);
-end
 
 %% PSD plots
 % Plot PSDs for TF1 only
@@ -72,13 +75,6 @@ figure();
     psdopts.type = 'smoothed';
     psdplot(TF1,psdopts);
 
-if 0    
-% Compare SN between TF1 and TF2
-figure();
-    psdopts = copts;
-    psdopts.period_range = [3, 86400];
-    psdplot({TF1,TF2},psdopts);
-end
 
 %% Z plots
 figure();
