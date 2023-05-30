@@ -1,4 +1,4 @@
-function psdplot(S,popts,comp)
+function ax = psdplot(S,popts,comp)
 %PSDPLOT
 
 assert(isstruct(S) || iscell(S), ...
@@ -18,10 +18,8 @@ if iscell(S) && length(S) == 1
     S = S{1};
 end
 
+S = defaultinfo(S);
 if iscell(S)
-    for s = 1:length(S)
-        S{s} = defaultinfo(S{s});
-    end
     % TODO: Check all same.
     timeunit = S{1}.Options.info.timeunit;
     timedelta = S{1}.Options.info.timedelta;
@@ -29,7 +27,6 @@ if iscell(S)
         error('Case of size(S.In,2) ~= size(S.Out,2) not handled');
     end
 else
-    S = defaultinfo(S);
     timeunit = S.Options.info.timeunit;
     timedelta = S.Options.info.timedelta;
 end
@@ -180,8 +177,9 @@ if any(strcmp(opts.type,{'error','error-smoothed'}))
 
     [~,lg2] = legend_(S);
     [yl1, yl2] = ylabelerror_(S);
-    subplot('Position',opts.PositionTop);
+    ax(1) = subplot('Position',opts.PositionTop);
         plot_(x,y1,opts);
+        colororder_(ax(1),y1);
         grid on;box on;
         set(gca,'YScale','log');
         if opts.vs_period
@@ -206,8 +204,9 @@ if any(strcmp(opts.type,{'error','error-smoothed'}))
         adjust_exponent();
         setx(opts,0,timeunit);
 
-    subplot('Position',opts.PositionBottom);
+    ax(2) = subplot('Position',opts.PositionBottom);
         plot_(x,y2,opts);
+        colororder_(ax(2),y2);
         grid on;box on;        
         if opts.vs_period
             set(gca,'XScale','log');
@@ -228,8 +227,9 @@ if ~any(strcmp(opts.type,{'error','error-smoothed'}))
     [lg1, lg2] = legend_(S);
     [yl1, yl2] = ylabel_(S);
     
-    subplot('Position',opts.PositionTop);
-        plot_(x,y1,opts)
+    ax(1) = subplot('Position',opts.PositionTop);
+        plot_(x,y1,opts);
+        colororder_(ax(1),y1);
         grid on;box on;
         if endsWith(opts.type,'phase')
             set(gca,'YScale','linear');
@@ -251,8 +251,9 @@ if ~any(strcmp(opts.type,{'error','error-smoothed'}))
         adjust_exponent();
         setx(opts, 0, timeunit);
 
-    subplot('Position',opts.PositionBottom);
-        plot_(x,y2,opts)
+    ax(2) = subplot('Position',opts.PositionBottom);
+        plot_(x,y2,opts);
+        colororder_(ax(2),y2);
         grid on;box on;
         set(gca,'YScale','log');
         if endsWith(opts.type,'phase')
@@ -364,17 +365,6 @@ function s = labelstr_(labelstr, prefix, mag)
         s = ['$|','\widetilde{',prefix, ' ', s, '}|$'];
     else
         s = ['$\phi$ of $','\widetilde{', prefix, ' ', s, '}$'];
-    end
-end
-
-function s = unitstr_(unit, padstart)
-    prepad = ' ';
-    if nargin < 2 || padstart == 0
-        prepad = '';
-    end
-    s = '';
-    if ~isempty(unit)
-        s = sprintf('%s[%s]', prepad, unit);
     end
 end
 

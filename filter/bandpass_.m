@@ -1,12 +1,12 @@
-function [x,aib] = bandpass(x,fb)
-%BANDPASS - Bandpass filter signal in frequency domain
+function [x,aib] = bandpass_(x,fb)
+%BANDPASS_ - Bandpass filter signal in frequency domain
 %
-%  y = bandpass(x,fb) Given a time series x and low/high bandpass
+%  y = bandpass_(x,fb) Given a time series x and low/high bandpass
 %  frequencies fb = [fl,fh], sets to zero the fourier coefficients of x 
 %  outside of the range fb and returns the inverse fourier transform of
 %  the modified coefficients.
 %
-%  See also BANDPASS_TEST.
+%  See also BANDPASS, BANDPASS_TEST.
 
 flip = 0;
 if size(x,1) == 1
@@ -33,7 +33,7 @@ if length(fb) == 1
 else
   if fb(2) == fb(1)
     warning('fb(2) == fb(1). Calling bandpass with a single frequency.');
-	[x,aib] = bandpass(x,fb);
+	[x,aib] = bandpass_(x,fb);
 	return;
   end
   assert(fb(2) > fb(1),'fb(2) must be greater than fb(1)');

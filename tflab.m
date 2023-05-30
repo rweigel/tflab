@@ -1,7 +1,9 @@
-function S = tflab(B,E,t,opts)
+function S = tflab(B,E,opts)
 %TFLAB Wrapper function for tflab_miso.
 %
 %  Frequency domain MIMO transfer function estimate
+%
+%  tf = TFLAB(B,E)
 %
 %  If B has Nb and E has Ne columns, Z will have 2*Nb*Ne columns, with
 %  columns 1:Nb corresponding to the transfer function
@@ -26,10 +28,7 @@ function S = tflab(B,E,t,opts)
 %  with the rows of Z being estimates of the transfer function at the
 %  evaluation frequencies given by field fe in S.
 %
-%  S = tflab(B,E,t) associates a time value with each row of B and
-%  E. Use t = [] to use the default of t = [1:size(B,1)]'.
-%
-%  S = tflab(B,E,t,options) uses options returned by the function
+%  S = tflab(B,E,options) uses options returned by the function
 %  tflab_options.
 %
 %  See also TRANSFERFNFD_OPTIONS, TRANSFERFNFD_TEST, TRANSFERFNFD_DEMO.
@@ -38,28 +37,7 @@ addpath(fullfile(fileparts(mfilename('fullpath'))));
 tflab_setpaths();
 
 if nargin == 2
-    t = [];
-    opts = [];
-end
-
-if nargin == 3
-    % tflab(B,E,t) or
-    % tflab(B,E,opts)
-    if isstruct(t)
-        % tflab(B,E,opts)
-        opts = t;
-        t = [];
-    else
-        % tflab(B,E,t)        
-        opts = [];
-        assert(size(t,1) == size(B,1),...
-                'Required: size(t,1) == size(B,1) == size(E,1)');    
-    end
-end
-
-if nargin < 3 || isempty(opts)
     % tflab(B,E) or
-    % tflab(B,E,t)
     % Use default options.
     opts = tflab_options(1);
     if opts.tflab.loglevel
@@ -70,7 +48,7 @@ end
 
 % For each matrix in B (and corresponding matrix in E), do TF calculations.
 if iscell(B)
-    S = tflab_intervals(B, E, t, opts);
+    S = tflab_intervals(B, E, opts);
     return;
 end
 
@@ -80,10 +58,6 @@ assert(size(B,1) == size(E,1),'Required: size(B,1) == size(E,1)');
 assert(size(B,1) >= size(B,2),...
     ['Not enough time samples: size(B,1) must be greater than '...
      'or equal to size(B,2)']);
-
-if nargin < 3 || isempty(t)
-    t = (opts.td.start:size(B,1))';
-end
 
 % If E has more than one column, do TF calculation for each column.
 if size(E,2) > 1
@@ -95,7 +69,7 @@ if size(E,2) > 1
             fprintf('%s\n',repmat('-',1,80));
             logmsg('Calling tflab(B,E(:,%d),...)\n',j);
         end
-        Sc = tflab(B,E(:,j),t,opts);
+        Sc = tflab(B,E(:,j),opts);
         if j == 1
             S = Sc;
         else
@@ -125,16 +99,14 @@ if opts.tflab.loglevel > 0
     end
 end
 
-if isnan(opts.td.window.width)
-    % Compute one TF (no segmenting)
-    if opts.td.window.loglevel
-        logmsg('opts.td.window.with is NaN. Using size(B,1).\n');
-    end
-    % Set default window width and shift equal to the number of time points.
-    opts.td.window.width = size(B,1);
-    opts.td.window.shift = size(B,1);
-    S = tflab(B,E,t,opts);
-    return;
+if isnan(opts.td.window.shift)
+    % TODO: Allow window.width to be non-NaN?
+    % No segmenting
+    S = struct('In',B,'Out',E,'Options',opts);
+    S = tflab_preprocess(S);
+    S = tflab_miso(S);
+    S = tflab_metrics(S);
+    return
 end
 
 % Compute TF for each segment of length opts.td.window.width
@@ -165,111 +137,123 @@ end
 
 % Compute TF for each segment
 for s = 1:length(a)
+
     Iseg = a(s):b(s);
     if opts.tflab.loglevel > 0
-        logmsg('Starting computation for segment %d of %d\n',s,length(a));
+        logmsg('Starting computations on segment %d of %d',s,length(a));
+        logmsg('Segment time index range = [%d:%d]\n',Iseg(1),Iseg(end));
     end
+    
     % Ss = Segment struct.
-    Ss = tflab_miso(B(Iseg,:),E(Iseg),t(Iseg),opts);
+    Ss = struct();
+    Ss.Options = opts;
     Ss.IndexRange = [a(s),b(s)]';
-    if opts.tflab.loglevel > 0 && ~isempty(opts.fd.stack.average.function)
-        % Summarize results for each column of E
-        for j = 1:size(E,2)
-            logmsg(['Finished segment %d of %d; PE/CC/MSE '...
-                     'of Out(%d:%d,%d) = %.2f/%.2f/%.3f\n'],...
-                     s,...
-                     length(a),...
-                     Iseg(1),...
-                     Iseg(end),...
-                     j,...
-                     Ss.Metrics.PE(j),...
-                     Ss.Metrics.CC(j),...
-                     Ss.Metrics.MSE(j));
+
+    Ss.In = B(Iseg,:);
+    Ss.Out = E(Iseg);
+
+    Ss = tflab_preprocess(Ss);
+    
+    if ~isempty(opts.fd.stack.average.function)
+        % Only compute Z if performing stack averaging.
+
+        logmsg('Computing Z for segment %d of %d\n',s,length(a));
+
+        Ss = tflab_miso(Ss);
+
+        if opts.tflab.loglevel > 0
+            logmsg('Computing metrics on segment using segment Z.\n');
+        end
+        Ss = tflab_metrics(Ss);
+        if opts.tflab.loglevel > 0
+            logmsg('Computed metrics on segment using segment Z.\n');
+        end
+
+        if opts.tflab.loglevel > 0 && ~isempty(opts.fd.stack.average.function)
+            logmsg('Computated Z and metrics for segment %d of %d; PE/CC/MSE %.2f/%.2f/%.3f\n',...
+                   s,length(a),Ss.Metrics.PE,Ss.Metrics.CC,Ss.Metrics.MSE);
         end
     end
+    
     if s == 1
+        % First segment
         S = Ss;
     else
+        % Combine segments
         S = combineStructs(S,Ss,3);
     end
 end
 
 if ~isempty(opts.fd.stack.average.function)
-    % TF is average of segment TFs
-    if size(S.In,3) > 1 % More than one segment
-        % Move top-level structures under Segment
-        S.Segment = S;
-        S.Segment = rmfield(S.Segment,'Options');
-        % Remove segment In, Out, and Time because they can be
-        % computed from IndexRange.
-        S.Segment = rmfield(S.Segment,'In');
-        S.Segment = rmfield(S.Segment,'Out');
-        S.Segment = rmfield(S.Segment,'Time');
-        S = rmfield(S,'Metrics');
-        if isfield(S,'Window')
-            S = rmfield(S,'Window');
-        end
-        S = rmfield(S,'IndexRange');
-        S = rmfield(S,'DFT');
-        S = rmfield(S,'Regression');
-        S = rmfield(S,'Z');
-        S = rmfield(S,'Phi');
-        S = rmfield(S,'H');
-        S = rmfield(S,'tH');
-        % Insert top-level structure elements
-        S.In = B;
-        S.Out = E;
-        S.Time = t;
-        logmsg('Computing stack average Z.\n');
-        S = stackAverage(S,opts);
+    if size(S.In,3) == 1
+        % Only enough data for one segment, so no avg. needed.
+        return;
     end
 else
-    
     % TF in a given frequency band is computed by doing regression on
     % DFTs in that frequency band for all segments.
     if isfield(opts.tflab, 'no_stack_regression')
+        % Special case when E and B are cell arrays (non-continuous intervals).
         if opts.tflab.loglevel > 0
-            logmsg(...
-                ['opts.tflab.no_stack_regression set. '...
-                 'Not doing stack regression (yet).\n']);
+            logmsg(['opts.tflab.no_stack_regression set. '...
+                    'Not doing stack regression (yet).\n']);
         end
         S.Segment = S;
         S = rmfield(S,'DFT');
-        return
-    else
+        return;
+    end    
+end
 
-        % Compute Z using stack regression. Computes segment metrics
-        % using computed Z.
-        logmsg('Computing Z using stack regression.\n');
-        S.Segment = S;
-        S.Segment = rmfield(S.Segment,'Options');
+% Move top-level structures under Segment
+S.Segment = S;
 
-        % Remove fields from top level of S b/c they are calculations for
-        % all segments.
-        fns = fieldnames(S);
-        for i = 1:length(fns)
-            if ~strcmp('Segment',fns{i}) &&  ~strcmp('Options',fns{i})
-                S = rmfield(S,fns{i});
-            end
-        end
-        
-        S = stackRegression(S, opts);
+% Remove Options from Segment b/c it applies to top-level
+S.Segment = rmfield(S.Segment,'Options');
 
-        % Remove segment In, Out, and Time because they can be
-        % computed from IndexRange.
-        S.Segment = rmfield(S.Segment,'In');
-        S.Segment = rmfield(S.Segment,'Out');
-        S.Segment = rmfield(S.Segment,'Time');        
-        
-        % Insert top-level structure elements
-        S.In = B;
-        S.Out = E;
-        S.Time = t; 
-        
-        logmsg('Computing stack regression metrics for full time series.\n');
-        S = tflab_metrics(S,opts);
-
+% Remove fields from top level of S b/c they were moved to S.Segments
+fns = fieldnames(S);
+for i = 1:length(fns)
+    if ~strcmp('Segment',fns{i}) &&  ~strcmp('Options',fns{i})
+        S = rmfield(S,fns{i});
     end
+end
+
+% Insert top-level structure elements
+S.In = B;
+S.Out = E;
+
+if ~isempty(opts.fd.stack.average.function)
+
+    % Compute TF by averaging segment TFs
+
+    % Remove In and Out from Segment b/c they can be computed from IndexRange.
+    S.Segment = rmfield(S.Segment,'In');
+    S.Segment = rmfield(S.Segment,'Out');
+
+    logmsg('Computing average of segment Zs.\n');
+    S = stackAverage(S,opts);
+
+    if opts.tflab.loglevel > 0
+        logmsg('Computing metrics on unsegmented data using average Z.\n');
+    end
+    S = tflab_metrics(S);
+    if opts.tflab.loglevel > 0
+        logmsg('Computed metrics on unsegmented data using average Z.\n');
+    end
+
+else
+    
+    logmsg('Computing Z using stack regression.\n');        
+    S = stackRegression(S, opts);
+
+    % Remove In and Out from Segment b/c they can be computed from IndexRange.
+    % (Then are needed for computing metrics in stackRegression, so must
+    % be removed after stackRegression() call.)
+    S.Segment = rmfield(S.Segment,'In');
+    S.Segment = rmfield(S.Segment,'Out');
+
+    logmsg('Computing stack regression metrics for full time series.\n');
+    S = tflab_metrics(S);
 end
 
 S.Options = opts;
@@ -279,28 +263,8 @@ end % tflab()
 function S = stackAverage(S,opts)
 
     S.Z = mean(S.Segment.Z,3);
-    S.Phi = atan2(imag(S.Z),real(S.Z));
-    
-    if iscell(S.In)
-        S.Metrics = {};
-        for i = 1:length(S.In)
-            tmp = struct();
-            tmp.In = S.In{i};
-            tmp.Out = S.Out{i};
-            tmp.Z = S.Z;
-            tmp.fe = S.fe;
-            tmp = tflab_metrics(tmp,opts);
-            S.Metrics{i} = tmp.Metrics;
-        end
-    else
-        if opts.tflab.loglevel > 0
-            logmsg('Computing metrics using stack averaged Z.\n');
-        end        
-        S = tflab_metrics(S,opts);
-        if opts.tflab.loglevel > 0
-            logmsg('Computed metrics using stack averaged Z.\n');
-        end
-    end
+    S.fe = S.Segment.fe;
+
 end
 
 function S = stackRegression(S,opts)
@@ -378,34 +342,8 @@ function S = stackRegression(S,opts)
         logmsg('Finished stack regression.\n');
     end
     
+    S.Z = Z;  
     S.fe = S.Segment.fe;
-    S.Z = Z;    
-
-    if opts.tflab.loglevel > 1
-        logmsg('Computing Phi\n');
-    end
-    S.Phi = atan2(imag(Z),real(Z));
-    if opts.tflab.loglevel > 1
-        logmsg('Finished computing Phi\n');
-    end
-
-    if opts.tflab.loglevel > 1
-        logmsg('Interpolating Z\n');    
-    end
-    [Zi,~,Zir,fir] = zinterp(S.fe,S.Z,size(S.Segment.In,1));
-    %S.Zi = Zir;
-    %S.fi = fir;
-    if opts.tflab.loglevel > 1
-        logmsg('Finished interpolating Z\n');
-    end
-
-    if opts.tflab.loglevel > 1
-        logmsg('Computing H\n');
-    end
-    [S.H,S.tH] = z2h(Zi);
-    if opts.tflab.loglevel > 1
-        logmsg('Finished computing H\n');
-    end
 
     if opts.tflab.loglevel > 0
         logmsg(...
@@ -417,7 +355,7 @@ function S = stackRegression(S,opts)
     % because it will be used to compute metrics for each segment.
     S.Segment.Z = Z;
 
-    S.Segment = tflab_metrics(S.Segment,opts);
+    S.Segment = tflab_metrics(S.Segment);
     
     % Remove inserted Z.
     S.Segment = rmfield(S.Segment,'Z');
@@ -425,17 +363,15 @@ function S = stackRegression(S,opts)
     if opts.tflab.loglevel > 0
         for c = 1:size(S.Segment.Metrics.PE, 2)
             for s = 1:size(S.Segment.Metrics.PE, 3)
-                logmsg(...
-                        'Segment %d: PE/CC/MSE = %.2f/%.2f/%.3f\n',...
+                logmsg('Segment %d: PE/CC/MSE = %.2f/%.2f/%.3f\n',...
                          s,...
                          S.Segment.Metrics.PE(1,c,s),...
                          S.Segment.Metrics.CC(1,c,s),...
                          S.Segment.Metrics.MSE(1,c,s));
             end
         end
-        logmsg(...
-                ['Finished computing metrics on each segment using stack regression '...
-                 'transfer function.\n']);
+        logmsg(['Finished computing metrics on each segment using '...
+                'stack regression transfer function.\n']);
     end
 
 end
@@ -469,23 +405,18 @@ function S = combineStructs(S1,S2,dim)
 
 end
 
-function S = tflab_intervals(B, E, t, opts)    
+function S = tflab_intervals(B, E, opts)    
+
     % Each cell contians an interval and an arbitrary gap in time is
     % assumed between the end of one cell and the start of the next
     % cell.
+
     assert(all(size(B) == size(E)),'Required: size(B) == size(E)');
     assert(isvector(B),'Required: B must be vector cell array');
     assert(isvector(E),'Required: E must be vector cell array');
-    if ~isempty(t)
-        assert(all(size(t) == size(B)),'Required: size(t) == size(B)');
-        assert(isvector(t),'Required: t must be vector cell array');
-    else
-        for c = 1:length(B)
-            t{c} = (opts.td.start:size(B{c},1))';
-        end
-    end
     sE = size(E{1},2);
     sB = size(B{1},2);
+
     % Check that number of columns is same for all intervals.
     for c = 2:length(B)
         assert(size(B{c},2) == sB,...
@@ -494,6 +425,7 @@ function S = tflab_intervals(B, E, t, opts)
             'Number of columns in E{%d} must be the same as E{1}.',c);
         Nr(c) = size(B,1);
     end
+    
     if isnan(opts.td.window.width) && length(unique(Nr)) ~= 1
         warning(['opts.td.window.width not given and intervals do not', ...
                 'all have the same length.\n', ...
@@ -507,9 +439,8 @@ function S = tflab_intervals(B, E, t, opts)
     
     for c = 1:length(B) % Number of segments
         if opts.tflab.loglevel > 0
-            logmsg(...
-                'Starting computation for disconnected segment c = %d of %d\n',...
-                c,length(B));
+            logmsg('Starting computation for interval c = %d of %d\n',...
+                    c,length(B));
         end
         % Compute Z for each segment in each interval
         if opts.tflab.loglevel > 0
@@ -518,11 +449,10 @@ function S = tflab_intervals(B, E, t, opts)
         end
         
         opts.tflab.no_stack_regression = 1;
-        Sc = tflab(B{c},E{c},t{c},opts);
+        Sc = tflab(B{c},E{c},opts);
         
         Sc = rmfield(Sc,'In');
         Sc = rmfield(Sc,'Out');
-        Sc = rmfield(Sc,'Time');
         if ~isfield(Sc,'Segment')
             % If an interval had only one segment
             Sc.Segment = Sc;
@@ -548,22 +478,20 @@ function S = tflab_intervals(B, E, t, opts)
         end
 
         % Compute Z at each fe by regressing on all segment DFTs near fe.
-        %S.Segment = stackRegression(S.Segment, opts);
         S = stackRegression(S, opts);
-                
+
         % Calculate predicted/metrics/psd for each cell element        
         Sc = S;
         for c = 1:length(B)
             Sc.In = B{c};
             Sc.Out = E{c};
-            Sc.Time = t{c};
-
+            
             if opts.tflab.loglevel > 0
                 logmsg(...
                     ['Computing metrics for B{%d} and E{%d} using stack '...
                      'regression transfer function.\n'],c,c);
             end
-            Sc = tflab_metrics(Sc,opts);
+            Sc = tflab_metrics(Sc);
             if opts.tflab.loglevel > 0
                 logmsg(...
                     ['Finished computing metrics for B{%d} and E{%d} using '...
@@ -583,13 +511,11 @@ function S = tflab_intervals(B, E, t, opts)
         
         S.In = B;
         S.Out = E;
-        S.Time = t;
     else       
         % Compute stack average Z and its predicted/metrics/psd for
         % full In/Out
         S.In = B;
         S.Out = E;
-        S.Time = t;
         S = rmfield(S,'DFT');
         S = rmfield(S,'Regression');
         S = rmfield(S,'Z');

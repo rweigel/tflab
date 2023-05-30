@@ -1,11 +1,14 @@
-function [Zi,fi,Zir,fir] = zinterp(f,Z,fi,opts)
-% ZINTERP - Interpolate transfer function onto frequency grid
+function [Zi,fi,Zip,fip] = zinterp(f,Z,fi,opts)
+% ZINTERP - Interpolate transfer function on to frequency grid
 %
 %  [Zi,fi] = ZINTERP(f,Z,N) returns Zi on the N-point DFT grid fi given by
 %  fi = fftfreq(N) using INTERP1 with method='linear' and extrapval=0. f >=
 %  0 is required and f(end) = +0.5 is allowed. The ordering of values in fi
 %  follows the convention of FFTFREQ (and FFT) and a given Z value at f =
 %  +0.5 will appear at fi = -0.5 if N is even.
+%
+%  [Zi,fi,Zip,fip] = ZINTERP(f,Z,N) returnz Zip for positive frequencies
+%  fip.
 %
 %  If f(1) = 0, it is not used for interpolation and if fi(1) = 0, Zi(1,:)
 %  is set to Z(1,:).
@@ -14,6 +17,7 @@ function [Zi,fi,Zir,fir] = zinterp(f,Z,fi,opts)
 %  using the given Z at frequencies f using INTERP1. fi >= 0 and f >= 0 are
 %  required and the f(1) = 0 case is handled as described above.
 %
+
 %  See also ZINTERP_DEMO, ZINTERP_TEST.
 
 % TODO: Allow interpolation in log space.
@@ -32,7 +36,7 @@ else
     end
 end
 
-assert(ndims(Z) == 2,'Z can have at most two dimensions.');
+assert(ismatrix(Z),'Z can have at most two dimensions.');
 
 assert(iscolumn(f),'f must be a column vector (nx1)');
 assert(iscolumn(fi),'fi must be a column vector (nx1)');
@@ -113,8 +117,8 @@ if fi(1) == 0 % If lowest interp. frequency is zero (and so was removed)
 end
 
 if ~isnan(N)
-    Zir = Zi; % Reduced Zi.
-    fir = fi;
+    Zip = Zi; % Zi for positive frequencies only
+    fip = fi;
     % Zinterp(f,Z,N) usage. Create z with negative frequencies (for use
     % with ifft, for example).
     [Zi,fi] = zfull(Zi,N);

@@ -20,15 +20,12 @@ if iscell(S) && length(S) == 1
     S = S{1};
 end
 
+S = defaultinfo(S);
 if iscell(S)
-    for s = 1:length(S)
-        S{s} = defaultinfo(S{s});
-    end
     % TODO: Check all same.
     timeunit = S{1}.Options.info.timeunit;
     timedelta = S{1}.Options.info.timedelta;
 else
-    S = defaultinfo(S);
     timeunit = S.Options.info.timeunit;
     timedelta = S.Options.info.timedelta;
 end

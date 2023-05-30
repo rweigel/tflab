@@ -85,17 +85,18 @@ for i = 1:3
     H = zeros(i+1,1);
     H(1) = 1;
     S0 = demo_signals('fromH/filter()', struct('H', H, 'N', 100));
-    S0.In = S0.In - mean(S0.In);
-    S0.Out = S0.Out - mean(S0.Out);
 
     opts = tflab_options(0);
     S1 = tflab(S0.In, S0.Out, opts);
+
+    Z1i = zinterp(S1.fe,S1.Z,size(S1.In,1));
+    [H1,t1] = z2h(Z1i);
     
     % Computed H should match used H and be zero for lags longer than
     % used H.
     L = length(S0.H);
-    assert(max(abs(S0.H - S1.H(1:L))) <= 3*eps);
-    assert(max(abs(S1.H(L+1:end))) <= 3*eps);
+    assert(max(abs(S0.H - H1(1:L))) <= 3*eps);
+    assert(max(abs(H1(L+1:end))) <= 3*eps);
     
     % Analytically, real part of Z is 1, imaginary part is 0.    
     re = real(S1.Z)-1; 
@@ -310,7 +311,6 @@ assert(all(S1.Z(2:end)-S3.Z(2:end) < 10*eps));
 % Average TF should be 1.0 for all fe, same as S1.Z.
 fprintf('\n');
 
-
 %% API Test - Stack Regression
 % When intervals and/or segments are used, the default is to compute a
 % transfer function that is the average of each segment. 
@@ -397,5 +397,4 @@ assert(all(S3.Z(:) == S4.Z(:)))
 
 %assert(all(S1.Z == S2.Z));
 fprintf('\n');
-
 logmsg('tflab_test.m: All tests passed.\n');

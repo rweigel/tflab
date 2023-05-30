@@ -1,5 +1,12 @@
 function S = defaultinfo(S)
 
+if iscell(S)
+    for s = 1:length(S)
+        S{s} = defaultinfo(S{s});
+    end
+    return;
+end
+
 dopts = tflab_options();
 
 if ~isfield(S,'Options')

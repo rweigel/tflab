@@ -76,9 +76,3 @@ figure();
     zplot({S1,S2});   
 figure();
     zplot({S1,Sx}); % Compare exact with computed
-
-loglog(1./S0.fe(2:end),abs(S0.Z(2:end,1,:)),'k','LineWidth',5);
-hold on;grid on;
-loglog(1./S2.fe(2:end),abs(S2.Z(2:end,1,:)),'b','LineWidth',3);
-loglog(1./S1.fe(2:end),abs(S1.Z(2:end,1,:)),'r','LineWidth',3);
-%loglog(1./S1.fe(2:end),abs(squeeze(S1.Segment.Z(2:end,1,:))))

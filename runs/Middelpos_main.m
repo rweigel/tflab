@@ -11,8 +11,8 @@ if 1
     addpath(fullfile(scriptdir(),'..','fft'));
     Tm = 3*86400;
     band = [1/Tm,0.5];
-    B = bandpass(B,band);
-    E = bandpass(E,band);
+    B = bandpass_(B,band);
+    E = bandpass_(E,band);
     E = E(Tm+1:end-Tm,:);
     B = B(Tm+1:end-Tm,:);
 end
@@ -23,6 +23,13 @@ I = pps*floor(size(B,1)/pps);
 B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
+
+if 0
+% Trim for faster run
+B = B(1:10*pps,:);
+E = E(1:10*pps,:);
+t = t(1:10*pps,:);
+end
 
 %% Set output file base name using start/stop times of input data
 filestr = sprintf('Middelpos-%s-%s',...

@@ -4,7 +4,7 @@ tflab_setpaths();
 
 %% Load data if not already in memory.
 %daterange = '20120712-20120717';
-daterange = '20120712-20121107';
+daterange = '20120712-20121031';
 if ~exist('TF1','var')
     fname = fullfile('data','Middelpos',...
             sprintf('Middelpos-%s-tf1.mat',daterange));

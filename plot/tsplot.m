@@ -20,63 +20,49 @@ if iscell(S) && length(S) == 1
     S = S{1};
 end
 
-if iscell(S) && length(S) == 1
-    S = S{1};
-end
-
+S = defaultinfo(S);
 if iscell(S)
     info = S{1}.Options.info;
-    t = S{1}.Time;
-    if length(S) > 1
-        for j = 2:length(S)
-            if ~all(size(S{1}.Time) == size(S{j}.Time))
-                error('Time arrays must have same size.\n');
-            end
-            d = S{1}.Time == S{j}.Time;
-            if ~all(d(:))
-                error('Time arrays must have same content.\n');
-            end
-        end
+    timeunit  = S{1}.Options.info.timeunit;
+    timedelta = S{1}.Options.info.timedelta;
+
+    t = timeVector(S{1});
+    timeunits = {};
+    timestarts = {};
+    for s = 1:length(S)
+        timeunits{s}  = S{s}.Options.info.timeunit;
+        timestarts{s} = S{s}.Options.info.timestart;
+    end
+    % TODO: Allow different timeunits and timestarts.
+    if length(unique(timeunits)) > 1
+        error('Time units must all be the same');
+    end
+    if length(unique(timestarts)) > 1
+        error('Time starts must all be the same');
     end
 else
     info = S.Options.info;
-    t = S.Time;
-end
-
-if ~isempty(info.timestart)
-    try
-        fmt = 'yyyy-mm-ddTHH:MM:SS.FFF';
-        to = datenum(info.timestart,fmt);
-    catch
-        warning(['Could not parse Options.info.timestart. Format must be ',fmt]);
-        info.timestart = '';
-    end
-end
-
-if ~isempty(info.timestart)
-    dt = info.timedelta;
-    t = [0:length(t)-1]';
-    if strcmp(info.timeunit,'ms')
-        ppd = 86400000/info.timedelta;
-    elseif strcmp(info.timeunit,'s')
-        ppd = 86400/info.timedelta;
-    elseif strcmp(info.timeunit,'m')
-        ppd = 1440/info.timedelta;
-    else
-        warning('Options.td.timeunit = %s not recognized. Must be ms, s, or m\n',...
-            info.timeunit);
-        info.timestart = '';
-    end
-    t = to + t/ppd;
+    timeunit  = S.Options.info.timeunit;
+    timedelta = S.Options.info.timedelta;
+    t = timeVector(S);
 end
 
 figprep();
 
-if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
+if ~iscell(S) && ~strcmp(opts.type,'error')
 
     if strcmp(opts.type,'raw')
         In = S.In;
         Out = S.Out;
+    end
+
+    if strcmp(opts.type,'detrended')
+        if ~isfield(S,'Detrend')
+            logmsg('Data were not detrended. Not plotting detrended timeseries.\n');
+            return
+        end
+        In = S.Detrend.In;
+        Out = S.Detrend.Out;
     end
     
     if strcmp(opts.type,'windowed')
@@ -87,6 +73,7 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
         In = S.Window.In;
         Out = S.Window.Out;
     end
+    
     if strcmp(opts.type,'prewhitened')
         if ~isfield(S,'Prewhiten')
             logmsg('Data were not prewhitened. Not plotting prewhitened timeseries.\n');
@@ -95,39 +82,42 @@ if ~iscell(S) && any(strcmp(opts.type,{'raw','windowed','prewhitened'}))
         In = S.Prewhiten.In;
         Out = S.Prewhiten.Out;
     end
+
+    [yl1, yl2] = ylabel_(S);
+    [lg1, lg2] = legend_(S);
     
     ax(1) = subplot('Position',opts.PositionTop);
         plot(t,In);
+        colororder_(ax(1), S.In);
         grid on;grid minor;box on;
-        lg = legend_('In');
-        if ~isempty(info.inunit)
-           ylabel(sprintf('[%s]', info.inunit));
+        tflab_title(S,opts,'ts');
+        ylabel(yl1);
+        if ~isempty(lg1)
+            [~, lo] = legend(lg1,opts.legend{:});
+            adjust_legend_lines(lo);
         end
         if isfield(S,'InNoise') && ~strcmp(opts.type,'windowed')
             hold on;
             plot(t,S.InNoise);
         end
-        tflab_title(S,opts,'ts');
-        [~, lo] = legend(lg,opts.legend{:});
-        adjust_legend_lines(lo);
-        adjust_ylim();
+        %adjust_ylim();
         adjust_exponent('y');
         setx(0,info,[t(1),t(end)]);
         
     ax(2) = subplot('Position',opts.PositionBottom);
         plot(t,Out);
+        colororder_(ax(2), S.Out);
         grid on;grid minor;box on;    
-        lg = legend_('Out');
-        if ~isempty(info.outunit)
-           ylabel(sprintf('[%s]', info.outunit));
+        ylabel(yl2);
+        if ~isempty(lg2)
+            [~, lo] = legend(lg2,opts.legend{:});
+            adjust_legend_lines(lo);
         end
         if isfield(S,'OutNoise') && ~strcmp(opts.type,'windowed')
             hold on;
             plot(t,S.OutNoise);
         end
-        [~, lo] = legend(lg,opts.legend{:});
-        adjust_legend_lines(lo);
-        adjust_ylim();
+        %adjust_ylim();
         adjust_exponent('y');
         setx(1,info,[t(1),t(end)]);  
     
@@ -193,7 +183,8 @@ if ~iscell(S) && strcmp(opts.type,'error')
 
         if opts.print
             for i = 1:length(opts.printfmt)
-                fname = sprintf('%s_%s.%s',opts.printname,opts.type, opts.printfmt{i});
+                fname = sprintf('%s_%s.%s',...
+                            opts.printname,opts.type, opts.printfmt{i});
                 figsave(fullfile(opts.printdir, fname));
             end
         end
@@ -260,62 +251,36 @@ if iscell(S)
     end
 end
 
-
-function ls = legend_(comp)
-
-    if strcmp(comp,'In')
-        compstrs = info.instr;
-    else
-        compstrs = info.outstr;
-    end
-
-    for j = 1:size(S.(comp),2)
-        if ~iscell(compstrs) && size(S.(comp),2) > 1
-            ls{j} = sprintf('%s(:,%d)\n',compstrs,j);
-        else
-            if iscell(compstrs)
-                ls{j} = sprintf('%s\n', compstrs{j});
-            else
-                ls{j} = sprintf('%s\n', compstrs);
-            end
-        end
-    end
     
-    return;
-    if isfield(S,[comp,'Noise'])
-        jl = j;
-        for j = 1:size(S.([comp,'Noise']),2)
-            if iscell(compstrs)        
-                ls{j+jl} = sprintf('%s(:,%d) Noise%s\n',compstrs{j},j,unitstr);    
-            else
-                ls{j+jl} = sprintf('%s Noise%s\n',compstrs,unitstr);
-            end
-        end
-    end
-end
-
 
 function setx(last,info,tl)
+
     if ~isempty(info.timestart)
+
         % Set tick positions
         set(gca,'XLim',tl);
         adjust_xlim();
-        datetick('x','keeplimits');
-        xt = get(gca,'XTick');
-        io = 1;
-        if xt(1) < tl(1) % First label is not visible.
-            io = 2; 
+
+        if ischar(info.timestart)
+            datetick('x','keeplimits');
+            xt = get(gca,'XTick');
+            io = 1;
+            if xt(1) < tl(1) % First label is not visible.
+                io = 2; 
+            end
+            xtl = cellstr(get(gca,'XTickLabel'));
+            xtl{io} = sprintf('$$\\begin{array}{c}\\mbox{%s} \\\\ %s\\end{array}$$',...
+                                xtl{io},datestr(tl(1),'yyyy'));
+            set(gca,'XTickLabel',xtl, 'TickLabelInterpreter', 'latex');
         end
-        xtl = cellstr(get(gca,'XTickLabel'));
-        xtl{io} = sprintf('$$\\begin{array}{c}\\mbox{%s} \\\\ %s\\end{array}$$',...
-                            xtl{io},datestr(tl(1),'yyyy'));
-        set(gca,'XTickLabel',xtl, 'TickLabelInterpreter', 'latex');
     end
-    if ~last
+    
+    if last == 0
         % Hide tick labels
         set(gca,'XTickLabel',[]);
     end
-    if last && isempty(info.timestart)
+
+    if last == 1 && ~ischar(info.timestart)
         % Use default label
         if isempty(info.timeunit)
             xlabel('t');
@@ -328,4 +293,66 @@ function setx(last,info,tl)
 end
 
 end % function
+
+function [lg1, lg2] = legend_(S)
+
+    info = S.Options.info;
+    lg1 = '';
+    lg2 = '';
+    if size(S.In) > 1
+        for j = 1:length(info.instr)
+            lg1{j} = info.instr{j};
+        end
+    end
+    if size(S.Out) > 1
+        for j = 1:length(info.outstr)
+            lg2{j} = info.outstr{j};
+        end
+    end    
+end
+
+function [yl1, yl2] = ylabel_(S)    
+    info = S.Options.info;
+    if size(S.In,2) > 1
+        yl1 = unitstr_(info.inunit);
+    else
+        yl1 = [info.instr,' ',unitstr_(info.inunit)];
+    end
+    if size(S.Out,2) > 1
+        yl2 = unitstr_(info.outunit);
+    else
+        yl2 = [info.outstr,' ',unitstr_(info.outunit)];
+    end
+end
+
+function t = timeVector(S)
+
+    info = S.Options.info;
+    nt = size(S.In,1);
+    if ischar(info.timestart)
+        try
+            fmt = 'yyyy-mm-ddTHH:MM:SS.FFF';
+            to = datenum(info.timestart,fmt);
+        catch
+            warning(['Could not parse Options.info.timestart. Format must be ',fmt]);
+            info.timestart = '';
+        end
+        dt = info.timedelta;
+        % Determine ppd (point per day)
+        if strcmp(info.timeunit,'ms') || startsWith(info.timeunit,'millis')
+            ppd = 86400000/dt;
+        elseif  startsWith(info.timeunit,'s')
+            ppd = 86400/dt;
+        elseif strcmp(info.timeunit,'m') || startsWith(info.timeunit,'min')
+            ppd = 1440/dt;
+        else
+            error(['Options.td.timeunit = %s not recognized. ',...
+                   'Must be "millseconds", "seconds", or "minutes".'],...
+                    info.timeunit);
+        end
+        t = to + (0:nt-1)'/ppd;
+    else
+        t = (info.timestart:info.timedelta:nt)';
+    end
+end
 

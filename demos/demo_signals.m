@@ -12,9 +12,11 @@ function S = demo_signals(stype, opts)
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
 
-assert(nargin == 2,'Two inputs are required');
 
 if strcmp(stype,'simple')
+    
+    assert(nargin == 2,'Two inputs are required');
+    
     Nt = opts.Nt;
     t = (0:Nt-1)';
     Z = opts.Z;
@@ -36,7 +38,6 @@ if strcmp(stype,'simple')
 
     S.In  = sum(B,2) + opts.dB*randn(Nt,1);
     S.Out = sum(E,2) + opts.dE*randn(Nt,1);
-    S.Time = t;
     S.Z  = Z;
     S.fe = f;
 
@@ -47,6 +48,26 @@ end
 
 if strcmp(stype,'powerlaw')
 
+    % B(t,j,k) = A(j) (f(k).^alpha.B(j)) sin(2*pi*f(k)*t + phase)
+    % E(t,j,k) = Z(j)*(f(k).^alpha.Z(k)).*B(t,j,k);
+
+    if nargin < 2
+        opts.N = 1000;
+        opts.n = 1000;
+
+        opts.A.B = [1];     % Amplitude of Bx
+        opts.alpha.B = [1]; 
+
+        opts.A.dB = [0];
+        opts.alpha.dB = [0];
+
+        opts.A.Z = [1];
+        opts.alpha.Z = [1];
+
+        opts.A.dE = [0];
+        opts.alpha.dE = [0];
+    end
+    
     assert(opts.N > 1, 'N > 1 is required');
 
     % Create signal using N frequencies    
@@ -57,12 +78,14 @@ if strcmp(stype,'powerlaw')
     [~,f] = fftfreq(opts.n);
     f = f';
 
-    % TODO: In the case that n = N, we could create time series
-    % by first creating ffts and then inverting ffts. 
+    % TODO: In the case that n = N, we could create time series by first
+    % creating ffts and then inverting ffts. (Analytic formulas also exist
+    % for n ~= N).
  
     if isfield(opts,'keep')
         F = F(opts.keep);
     end
+    
     % Keep only frequencies in range of frequencies in f.
     F = F(F >= f(2) & F <= f(end));
     
@@ -89,6 +112,7 @@ if strcmp(stype,'powerlaw')
 
         E = E + opts.A.Z(k)*(Ff.^opts.alpha.Z(k)).*B(:,:,k);
     end
+    
     % Add noise to E
     PhidE = 2*pi*rand(1, length(F));
     PhidE = repmat(PhidE, length(t), 1);    
@@ -113,7 +137,6 @@ if strcmp(stype,'powerlaw')
     
     S.In  = B;
     S.Out = E;
-    S.Time = t;
     S.Z  = Z;
     S.fe = f;
     S.H = z2h(zinterp(f,Z,opts.n));
@@ -123,6 +146,8 @@ end
 
 if strcmp(stype,'fromH/zpredict()')
 
+    assert(nargin == 2,'Two inputs are required');
+    
     N = opts.N;
     [~,f] = fftfreq(N);
     H = opts.H;
@@ -144,6 +169,9 @@ if strcmp(stype,'fromH/zpredict()')
 end
 
 if strcmp(stype,'fromH/filter()')
+    
+    assert(nargin == 2,'Two inputs are required');
+    
     description = '';
 
     H = opts.H;
@@ -158,6 +186,9 @@ if strcmp(stype,'fromH/filter()')
 end
 
 if strcmp(stype,'fromlowpassH')
+
+    assert(nargin == 2,'Two inputs are required');
+    
     % Low pass filter impulse responses
 
     ndim = opts;

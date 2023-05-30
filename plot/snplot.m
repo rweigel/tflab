@@ -14,6 +14,7 @@ if iscell(S) && length(S) == 1
     S = S{1};
 end
 
+S = defaultinfo(S);
 if iscell(S)
     % TODO: Check all same.
     timeunit = S{1}.Options.info.timeunit;
@@ -41,7 +42,8 @@ if isstruct(S)
     ax1 = subplot('Position', opts.PositionTop);
         SN = S.Metrics.SN.Smoothed;
         plot(x,SN,opts.line{:});
-        grid on;box on;hold on;      
+        colororder_(ax1, SN);
+        grid on;box on;hold on;
         if size(S.Out,2) > 1
             legend(lg,opts.legend{:});
         end
@@ -62,6 +64,7 @@ if isstruct(S)
 
     ax2 = subplot('Position', opts.PositionBottom);
         semilogx(x,S.Metrics.Coherence.Smoothed,opts.line{:});
+        colororder_(ax2, S.Metrics.Coherence.Smoothed);
         grid on;box on;hold on;
         if size(S.Out,2) > 1
             legend(lg,opts.legend{:});

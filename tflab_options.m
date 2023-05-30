@@ -35,9 +35,10 @@ opts.info = struct();
     
     % Timestart is a time string of the form
     %   'yyyy-mm-ddTHH:MM:SS.FFF'.
-    % Example: 
-    %   opts.td.timestart = '2001-01-01T00:00:00.000';
-    opts.info.timestart = ''; 
+    %   Example: 
+    %     opts.td.timestart = '2001-01-01T00:00:00.000';
+    % or an integer. 
+    opts.info.timestart = 1; 
     
     % Measurement cadence. Specify units using opt.info.timeunit.  
     opts.info.timedelta = 1; 
@@ -59,9 +60,6 @@ opts.info = struct();
 % # of points at start and end to trim before computing metrics
 % (pe/cc/mse/sn/coherence). NaN => no trim.
 opts.td.Ntrim = 60*30;
-
-% Dimensionless start time; ignored if time array passed to tflab.
-opts.td.start = 1;
 
 % Number of zeros added to the end of all time series prior to computing
 % DFT. NaN => no pad.
