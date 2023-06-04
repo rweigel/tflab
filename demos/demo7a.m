@@ -27,6 +27,6 @@ tf1 = tflab(tfa.In, tfa.Out, opts1);
 dock on;figure(1);close all;
 
 figure();clf;
-    ax = tsplot(tf1,struct('type','raw'));
+    ax = tsplot(tf1,struct('type','original'));
 figure();clf;
     tsplot(tf1,struct('type','Detrended','title','detrended'));

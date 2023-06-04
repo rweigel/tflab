@@ -35,28 +35,28 @@ Sx.Options.info = S1.Options.info;
 Sx.Options.description = 'Actual';
 
 
-set(0,'DefaultFigureWindowStyle','docked')
-f = 1;
-figure(f);clf;f = f+1;
-    tsplot(S1,struct('type','raw'));
-figure(f);clf;f = f+1;
+dock on;figure(1);close all;
+
+figure();
+    tsplot(S1,struct('type','original'));
+figure();
     tsplot(S1,struct('type','windowed'));
-figure(f);clf;f = f+1;
+figure();
     tsplot(S1,struct('type','error','title',S1.Options.description));
-figure(f);clf;f = f+1;
+figure();
     tsplot(S2,struct('type','error','title',S2.Options.description));
 
-figure(f);clf;f = f+1;
-    psdplot({S1,S2},struct('type','windowed'));
-figure(f);clf;f = f+1;
-    psdplot({S1,S2},struct('type','error'));
+figure();
+    dftplot({S1,S2},struct('type','windowed'));
+figure();
+    dftplot({S1,S2},struct('type','error'));
 
-figure(f);clf;f = f+1;
+figure();
     zplot({Sx,S1,S2});
-figure(f);clf;f = f+1;
+figure();
     zplot({Sx,S1,S2},struct('type',3));
 
-if wf > 0    
-    figure(f);clf;f = f+1;
+if wf > 0
+    figure();
         qqplot_(S1,Nf-wf+1);
 end

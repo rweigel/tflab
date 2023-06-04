@@ -6,41 +6,34 @@ addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
 
 N = 11;     % Number of input/output points
-H = [0,1]'; % Impulse reponse filter E(f) = H(f)*B(f)
+H = [1,0];   % Should get exact H back from Z
 
-% Get in/out signals and exact transfer function
-S0 = demo_signals('fromH',struct('H',H,'N',N));
+N = 1001;     % Number of input/output points
+H = [0,1];   % Will not get exact H back from Z, but better w/ incr. N.
 
-opts = tflab_options(0);         % Use default options
-opts.tflab.loglevel = 1;
+In = randn(N+length(H),1);
+Out = filter(H,1,In);
 
-S1 = tflab(S0.In,S0.Out,opts);   % Compute transfer function
+% Remove non-steady-state
+In = In(length(H):end);
+Out = Out(length(H):end); 
 
-% Add variables to S0 for plotting
-%S0.Options.info = S1.Options.info; % Use same variable labels from S1 for S0
-S0.Options.description = 'Actual'; % For plot labels
+opts = tflab_options(0);
+S1 = tflab(In,Out,opts);
 
+dock on;figure(1);close all;
 
-close all;
-% Plot raw input/output data
 figure()
-    tsplot(S1,struct('type','raw'));
+    tsplot(S1,struct('type','original'));
 
-% Plot actual and predicted output
 figure()
     tsplot(S1,struct('type','error'));
 
-% Plot spectrum of input/output data
 figure()
-psdplot(S1,struct('type','raw'));
+    dftplot(S1,struct('type','original'));
 
-% Compare exact Z with computed
 figure()
-zplot({S0,S1});
+    zplot(S1);
 
-% Compare exact H with computed
 figure()
-hplot(S1,[-5,5]);   
-
-assert(all(abs(real(S1.Z) - real(S0.Z))) <= 10*eps);
-assert(all(abs(imag(S1.Z) - imag(S0.Z))) <= 10*eps);
+    hplot(S1,[-5,5]);

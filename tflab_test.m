@@ -191,8 +191,8 @@ S1 = tflab(B(:,1),E(:,1),opts);
 fprintf('---\n');
 S2 = tflab(B(:,1),[E(:,1),E(:,1)],opts);
 
-assert(all(S1.Metrics.Predicted == S2.Metrics.Predicted(:,1)));
-assert(all(S1.Metrics.Predicted == S2.Metrics.Predicted(:,2)));
+assert(all(S1.OutPredicted == S2.OutPredicted(:,1)));
+assert(all(S1.OutPredicted == S2.OutPredicted(:,2)));
 
 %%%
 fprintf('\n');
@@ -206,8 +206,8 @@ S2 = tflab(B,E(:,2),opts);
 fprintf('---\n');
 S3 = tflab(B,E,opts);
 
-assert(all(S1.Metrics.Predicted == S3.Metrics.Predicted(:,1)));
-assert(all(S2.Metrics.Predicted == S3.Metrics.Predicted(:,2)));
+assert(all(S1.OutPredicted == S3.OutPredicted(:,1)));
+assert(all(S2.OutPredicted == S3.OutPredicted(:,2)));
 fprintf('\n');
 
 
@@ -229,8 +229,8 @@ fprintf('---\n');
 S2 = tflab([B;B],[E;E],opts);
 
 % Results for two segments in S2 should be same a single segment in S1.
-assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,1)));
-assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,2)));
+assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,1,1)));
+assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,1,2)));
 assert(all(S1.Z == S2.Segment.Z(:,:,1)))
 assert(all(S1.Z == S2.Segment.Z(:,:,2)))
 assert(all(S1.Z(:) == S2.Z(:)));
@@ -252,8 +252,8 @@ S1 = tflab(B(:,1),E(:,1),opts);
 fprintf('---\n');
 S2 = tflab([B(:,1);B(:,1)],[E;E],opts);
 
-assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,1)));
-assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,1,2)));
+assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,1,1)));
+assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,1,2)));
 
 fprintf('\n');
 %%%
@@ -261,13 +261,15 @@ logmsg('API Segmenting; Test 3.5.\n');
 
 S3 = tflab(B,E,opts);
 S4 = tflab([B;B],[E;E],opts);
-assert(all(S3.Metrics.Predicted(:,1) == S4.Segment.Metrics.Predicted(:,1,1)));
-assert(all(S3.Metrics.Predicted(:,2) == S4.Segment.Metrics.Predicted(:,2,1)));
-assert(all(S3.Metrics.Predicted(:,1) == S4.Segment.Metrics.Predicted(:,1,2)));
-assert(all(S3.Metrics.Predicted(:,2) == S4.Segment.Metrics.Predicted(:,2,2)));
-assert(all(S3.Z(:) == S4.Z(:)));
-fprintf('\n');
+assert(all(S3.OutPredicted(:,1) == S4.Segment.OutPredicted(:,1,1)));
+assert(all(S3.OutPredicted(:,2) == S4.Segment.OutPredicted(:,2,1)));
+assert(all(S3.OutPredicted(:,1) == S4.Segment.OutPredicted(:,1,2)));
+assert(all(S3.OutPredicted(:,2) == S4.Segment.OutPredicted(:,2,2)));
 
+% 2:end to remove Z(f = 0) which may have NaNs for Z
+tmp = S3.Z(2:end,:) == S4.Z(2:end,:);
+assert(all(tmp(:)));
+fprintf('\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% API Test - Intervals
@@ -289,7 +291,7 @@ S1 = tflab([B;B],[E;E],opts);
 fprintf('---\n');
 S2 = tflab({B;B},{E;E},opts);
 assert(all(S1.Z(:) == S2.Z(:)));
-assert(all(S1.Segment.Metrics.Predicted(:) == S2.Segment.Metrics.Predicted(:)))
+assert(all(S1.Segment.OutPredicted(:) == S2.Segment.OutPredicted(:)))
 
 %%%
 fprintf('\n');
@@ -302,9 +304,9 @@ S2 = tflab({B,[B;B]},{E,[E;E]},opts);
 fprintf('---\n');
 S3 = tflab({B,[B;B]},{0.5*E,[1.0*E;1.5*E]},opts);
 
-assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,:,1)))
-assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,:,2)))
-assert(all(S1.Metrics.Predicted == S2.Segment.Metrics.Predicted(:,:,3)))
+assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,:,1)))
+assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,:,2)))
+assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,:,3)))
 % DC value will be different for S3, so omit from test:
 assert(all(S1.Z(2:end)-S3.Z(2:end) < 10*eps));
 
@@ -350,7 +352,10 @@ S1 = tflab(B,E,opts);
 fprintf('---\n');
 opts.fd.stack.average.function = ''; % Don't compute stack average.
 S2 = tflab(B,E,opts);
-assert(all(S1.Z(:) == S2.Z(:)))
+
+% 2:end to remove Z(f = 0) which may have NaNs for Z
+tmp = S1.Z(2:end,:) == S2.Z(2:end,:);
+assert(all(tmp(:)));
 
 fprintf('\n');
 %%%

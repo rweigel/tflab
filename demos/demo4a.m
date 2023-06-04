@@ -40,7 +40,7 @@ opts2 = tflab_options(0);
     opts2.fd.stack.average.function = '';
     opts2.td.window.width = n/5;
     opts2.td.window.shift = n/5;
-    opts2.fd.regression.function = @tls_regress;
+    opts2.fd.regression.function = @regress_tls;
     opts2.fd.regression.functionstr = 'TLS';
     opts2.fd.regression.functionargs = {};
     opts2.fd.regression.loglevel = 1;
@@ -61,20 +61,19 @@ if isfield(Sx,'InNoise')
     S1.InNoisePSD = psd(S1.InNoise);
 end
 
-set(0,'DefaultFigureWindowStyle','docked')
-f = 1;
-figure(f);clf;f = f+1;
-    tsplot(S1,struct('type','raw'));
-figure(f);clf;f = f+1;
+dock on;figure(1);close all;
+
+figure();
+    tsplot(S1,struct('type','original'));
+figure();
     tsplot(S1,struct('type','error','title',S1.Options.description));
-figure(f);clf;f = f+1;
+figure();
     tsplot(S2,struct('type','error','title',S2.Options.description));
     
-figure(f);clf;f = f+1;
-    psdplot(S1,struct('type','raw'));
-figure(f);clf;f = f+1;
-    psdplot({S1,S2},struct('type','error-smoothed'));
+figure();
+    dftplot(S1,struct('type','original'));
+figure();
+    dftplot({S1,S2},struct('type','error-averaged'));
 
-figure(f);clf;f = f+1;
+figure();
     zplot({Sx, S1, S2},struct('type',3));
-    

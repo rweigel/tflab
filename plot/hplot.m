@@ -12,23 +12,27 @@ end
 
 Hstrs = {'H_{xx}','H_{xy}','H_{yx}','H_{yy}'};
 
-if isstruct(S1) && ~isstruct(S2)
-    H1 = fftshift(S1.H);
-    tH1 = fftshift(S1.tH);
-    if isempty(xl)
-        [a,b] = findss(H1);
-    else
-        a = find(tH1>=xl(1),1);
-        if isempty(a),a = 1;end
-        b = find(tH1>=xl(2),1);
-        if isempty(b),b = length(tH1);end        
-    end
+Zi = zinterp(S1.fe,S1.Z,size(S1.In,1));
+[H,t] = z2h(Zi);
+H = fftshift(H);
+t = fftshift(t);
 
-    if b-a > 10
-        plot(tH1(a:b), H1(a:b),'k','marker','.','markersize',5);
+if isstruct(S1) && ~isstruct(S2)
+    
+    if isempty(xl)
+        [a,b] = findss(H);
     else
-        stem(tH1(a:b),H1(a:b),'ko','MarkerSize',2);
-        set(gca,'XTick',[tH1(a):tH1(b)]);
+        a = find(t>=xl(1),1);
+        if isempty(a),a = 1;end
+        b = find(t>=xl(2),1);
+        if isempty(b),b = length(t);end        
+    end
+    
+    if b-a > 20
+        plot(t(a:b), H(a:b),'k','marker','.','markersize',5);
+    else
+        stem(t(a:b),H(a:b),'filled','ko','MarkerSize',5);
+        set(gca,'XTick',[t(a):t(b)]);
     end
     
     grid on;box on;hold on;
@@ -91,6 +95,7 @@ end
 
 function [a,b] = findss(x, w, t)
     % Find limits above/below which x is "steady state".
+
     if nargin < 2
         w = 10;
     end

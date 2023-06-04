@@ -103,7 +103,8 @@ if isnan(opts.td.window.shift)
     % TODO: Allow window.width to be non-NaN?
     % No segmenting
     S = struct('In',B,'Out',E,'Options',opts);
-    S = tflab_preprocess(S);
+    S = tflab_tdpreprocess(S);
+    S = tflab_fdpreprocess(S);
     S = tflab_miso(S);
     S = tflab_metrics(S);
     return
@@ -140,7 +141,7 @@ for s = 1:length(a)
 
     Iseg = a(s):b(s);
     if opts.tflab.loglevel > 0
-        logmsg('Starting computations on segment %d of %d',s,length(a));
+        logmsg('Starting computations on segment %d of %d\n',s,length(a));
         logmsg('Segment time index range = [%d:%d]\n',Iseg(1),Iseg(end));
     end
     
@@ -149,11 +150,12 @@ for s = 1:length(a)
     Ss.Options = opts;
     Ss.IndexRange = [a(s),b(s)]';
 
-    Ss.In = B(Iseg,:);
+    Ss.In  = B(Iseg,:);
     Ss.Out = E(Iseg);
 
-    Ss = tflab_preprocess(Ss);
-    
+    Ss = tflab_tdpreprocess(Ss);
+    Ss = tflab_fdpreprocess(Ss);
+
     if ~isempty(opts.fd.stack.average.function)
         % Only compute Z if performing stack averaging.
 
@@ -186,6 +188,7 @@ end
 
 if ~isempty(opts.fd.stack.average.function)
     if size(S.In,3) == 1
+        S = rmfield(S,'IndexRange');
         % Only enough data for one segment, so no avg. needed.
         return;
     end
@@ -252,7 +255,7 @@ else
     S.Segment = rmfield(S.Segment,'In');
     S.Segment = rmfield(S.Segment,'Out');
 
-    logmsg('Computing stack regression metrics for full time series.\n');
+    logmsg('Computing metrics for full time series using computed Z.\n');
     S = tflab_metrics(S);
 end
 
@@ -269,111 +272,43 @@ end
 
 function S = stackRegression(S,opts)
 
-    % At each evaluation frequency index i and output column c and for each
-    % segment s, S.DFT.Out(i,c,s) is a single-column matrix with rows of
-    % DFTs of segment s in the frequency band associated with i.
-    % S.DFT.In(i,1,s) is a matrix with same number of columns of S.In. Each
-    % column of S.DFT.In(i,1,s) contains the DFTs for the respective column
-    % in S.In for freq. band i and segment s.
-
     if opts.tflab.loglevel > 0
         logmsg('Starting stack regression.\n');
     end
 
-    regressargs = opts.fd.regression.functionargs;
-    regressfunc = opts.fd.regression.function;
-    
-    for i = 1:size(S.Segment.DFT.In, 1) % Eval frequencies
-        for c = 1:size(S.Segment.DFT.Out, 2) % Columns of E
+    for i = 1:length(S.Segment.fe)
 
-            if opts.tflab.loglevel > 1
-                logmsg('Performing stack regression for eval freq. %d and on column %d of input.\n', i, c);
-            end
-            
-            tmp = squeeze(S.Segment.DFT.In(i,1,:));
-            ftB = cat(1,tmp{:});
+        tmp = squeeze(S.Segment.DFT.In(i,1,:));
+        S.DFT.In{i,1} = cat(1,tmp{:});
 
-            tmp = squeeze(S.Segment.DFT.Out(i,c,:));
-            ftE = cat(1,tmp{:});
+        tmp = squeeze(S.Segment.DFT.Out(i,1,:));
+        S.DFT.Out{i,1} = cat(1,tmp{:});
 
-            tmp = squeeze(S.Segment.DFT.Weights(i,c,:));
-            W   = cat(1,tmp{:});
-            Wr  = repmat(W,1,size(ftB,2));
-            if length(W) < size(ftB,2)
-                if S.Segment.fe(i) == 0
-                    z = zeros(1,size(ftB,2));
-                    warning(sprintf('System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',S.Segment.fe(i)));
-                else
-                    z = nan(1,size(ftB,2));
-                    warning(sprintf('System if underdetermined for fe = %f. Setting Z equal to NaN(s) for this frequency.',S.Segment.fe(i)));
-                end
-                S.Regression.Weights{i,c} = nan*W;
-                S.Regression.Residuals{i,c} = nan*W;
-            else          
-                % https://www.mathworks.com/matlabcentral/answers/364719-detect-warning-and-take-action#answer_289064    
-                warning('');
-                %[z,weights,residuals] = opts.fd.regression.function(Wr.*ftB,W.*ftE,args{:});
-                [z,residuals,weights] = regressfunc(W.*ftE,Wr.*ftB,regressargs{:});                warnMsg = lastwarn;
-                if ~isempty(warnMsg)
-                    logmsg('Warning above occured on output column %d, eval freq. = %g\n', c, S.Segment.fe(i));
-                    %ftE
-                    %ftB
-                    %keyboard
-                end
-                S.DFT.f{i,c} = S.Segment.DFT.f{i,c};
-                S.DFT.Out{i,c} = ftE;
-                S.DFT.In{i,c} = ftB;
-                S.Regression.Weights{i,c} = weights;
-                S.Regression.Residuals{i,c} = residuals;
-            end
-            if c == 1
-                Zc = z.';
-            else
-                Zc = [Zc,z.'];
-            end
-            if opts.tflab.loglevel > 1
-                logmsg('Performed stack regression for eval freq. %d and on column %d of input.\n', i, c);
-            end            
-        end
-        Z(i,:) = Zc;
+        tmp = squeeze(S.Segment.DFT.In(i,1,:));
+        S.DFT.f{i,1} = cat(1,tmp{:});
+
+        tmp = squeeze(S.Segment.DFT.Weights(i,1,:));
+        S.DFT.Weights{i,1} = cat(1,tmp{:});
     end
-
+    
+    S.fe = S.Segment.fe;
+    S = tflab_miso(S);
     if opts.tflab.loglevel > 0
         logmsg('Finished stack regression.\n');
     end
-    
-    S.Z = Z;  
-    S.fe = S.Segment.fe;
-
-    if opts.tflab.loglevel > 0
-        logmsg(...
-                ['Computing metrics on each segment using stack regression '...
-                 'transfer function.\n']);
-    end
-    
+   
     % Temporarily insert Z computed using stack regression into Segment
     % because it will be used to compute metrics for each segment.
-    S.Segment.Z = Z;
+    S.Segment.Z = S.Z;
 
+    if opts.tflab.loglevel > 0
+        logmsg('Computing metrics on segments.\n');
+    end
+    
     S.Segment = tflab_metrics(S.Segment);
     
     % Remove inserted Z.
     S.Segment = rmfield(S.Segment,'Z');
-
-    if opts.tflab.loglevel > 0
-        for c = 1:size(S.Segment.Metrics.PE, 2)
-            for s = 1:size(S.Segment.Metrics.PE, 3)
-                logmsg('Segment %d: PE/CC/MSE = %.2f/%.2f/%.3f\n',...
-                         s,...
-                         S.Segment.Metrics.PE(1,c,s),...
-                         S.Segment.Metrics.CC(1,c,s),...
-                         S.Segment.Metrics.MSE(1,c,s));
-            end
-        end
-        logmsg(['Finished computing metrics on each segment using '...
-                'stack regression transfer function.\n']);
-    end
-
 end
 
 function S = combineStructs(S1,S2,dim)

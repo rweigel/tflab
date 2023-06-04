@@ -36,6 +36,7 @@ addpath(fullfile(pkgdir,'fft'));
 addpath(fullfile(pkgdir,'misc'));
 addpath(fullfile(pkgdir,'plot'));
 addpath(fullfile(pkgdir,'plot/adjust'));
+addpath(fullfile(pkgdir,'plot/annotate'));
 addpath(fullfile(pkgdir,'regression'));
 addpath(fullfile(pkgdir,'spectra'));
 addpath(fullfile(pkgdir,'stats'));

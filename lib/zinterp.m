@@ -47,8 +47,6 @@ if isscalar(fi) % Zinterp(f,Z,N) usage
     assert(fi > 1,'N > 1 is required when using zinterp(f,Z,N)');
     N = fi;
     [fa,fi] = fftfreq(N);
-    fa = fa';
-    fi = fi';
     % fi contains unique DFT frequencies with f = -0.5 mapped to f = +0.5
     % when N is even so that fi(end) = +0.5.
 end

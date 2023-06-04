@@ -52,11 +52,11 @@ if strcmp(scale,'linear')
     assert(dN > 0,'dN must be greater than zero.');
     
     % Linearly spaced center frequencies
-    Ic = [1,2+w:dN:length(f)-w]; % Indices of window centers
+    Ic = [1,2+w:dN:length(f)-w]'; % Indices of window centers
     % e.g., if w = 1, first window center at 3 and
     % window will extend from 2 through 4; second window center at 3+dN.
     if mod(N,2) == 0
-        Ic = [Ic(1:end-1),length(f)];
+        Ic = [Ic(1:end-1);length(f)];
         % f = 0.5 is always real and so imaginary part of Z cannot be
         % regressed with other frequencies. We could allow f = 0.5
         % to be regressed with real parts for f < 0.5, but this would
@@ -85,7 +85,7 @@ if strcmp(scale,'logarithmic')
     Nd = log10(1/4)-log10(2/N); % Number of decades
 
     % Nominal evaluation frequencies. 
-    fen = logspace(log10(2/N),log10(1/4),round(Nd*Npd));
+    fen = logspace(log10(2/N),log10(1/4),round(Nd*Npd))';
 
     if isempty(fen) % Will happen when N < 10.
         fen = 0.25;
@@ -97,9 +97,9 @@ if strcmp(scale,'logarithmic')
     % fea will be an array of evaluation frequencies that are also actual
     % frequencies. (Needed so that when windowing is used, the same
     % number to left and right of eval freq are used).
-    fea = [f(2),fen,f(end)];
+    fea = [f(2);fen;f(end)];
     for i = 1:length(fea)
-        [~,Ic(i)] = min(abs(f-fea(i)));
+        [~,Ic(i,1)] = min(abs(f-fea(i)));
     end
     fea = f(Ic);
     % Actual evaluation frequencies, fea, are now equal to an actual
@@ -112,14 +112,14 @@ if strcmp(scale,'logarithmic')
     for i = 2:length(fea)-1
         Il = find(f >= fea(i-1),1); % Find frequency nearest above or equal to previous eval freq.
         Iu = Ic(i)+(Ic(i)-Il); % Upper frequency is determined by how many frequencies below were used.
-        fe(i-1) = fea(i);
-        N(i-1) = (Iu(1)-Il(end))/2;
+        fe(i-1,1) = fea(i);
+        N(i-1,1) = (Iu(1)-Il(end))/2;
     end
     Ic = Ic(2:end-1);
 
-    fe = [0,fe];
-    Ic = [1,Ic];
-    Ne  = [0,N];
+    fe = [0;fe];
+    Ic = [1;Ic];
+    Ne  = [0;N];
     [fe,Iu] = unique(fe);
     Ic = Ic(Iu);
     Ne = Ne(Iu);

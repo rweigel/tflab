@@ -72,11 +72,9 @@ if strcmp(stype,'powerlaw')
 
     % Create signal using N frequencies    
     [~,F] = fftfreq(opts.N);
-    F = F';
 
     t = (0:opts.n-1)';
     [~,f] = fftfreq(opts.n);
-    f = f';
 
     % TODO: In the case that n = N, we could create time series by first
     % creating ffts and then inverting ffts. (Analytic formulas also exist
@@ -152,8 +150,8 @@ if strcmp(stype,'fromH/zpredict()')
     [~,f] = fftfreq(N);
     H = opts.H;
     f = f';
-    [z,w] = freqz(opts.H,1,f,1);
-    [Z,fi] = zinterp(f,z,opts.N);    
+    z = freqz(opts.H,1,f,1);
+    Z = zinterp(f,z,opts.N);    
 
     rng(1);
     B = randn(opts.N,1);
@@ -172,8 +170,6 @@ if strcmp(stype,'fromH/filter()')
     
     assert(nargin == 2,'Two inputs are required');
     
-    description = '';
-
     H = opts.H;
     N = opts.N;
     
@@ -183,6 +179,9 @@ if strcmp(stype,'fromH/filter()')
     % Remove non-steady-state
     B = B(length(H)+1:end); 
     E = E(length(H)+1:end);
+
+    S.In  = B;
+    S.Out = E;
 end
 
 if strcmp(stype,'fromlowpassH')
@@ -280,17 +279,3 @@ if strcmp(stype,'fromlowpassH')
     NB  = NB(Nss*length(h)+1:end,:);
 
 end
-
-% Compute exact transfer function
-[Z,f] = h2z(H);
-Z(Z==0) = eps; % So points show up on loglog plot.
-
-S.In  = B;
-S.Out = E;
-S.Z  = Z;
-S.fe = f';
-S.H = H;
-S.tH = (0:size(H,1)-1)';
-%S.H  = [H ; 0*H(2:end)];         % Convert H to standard form
-%S.tH = [tH ; -fliplr(tH(2:end));]; % Create negative time values
-S.Options.description = description;

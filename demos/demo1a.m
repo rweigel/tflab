@@ -23,16 +23,16 @@ tf1 = tflab(tfa.In, tfa.Out, opts1);
 dock on;figure(1);close all;
 
 figure();
-    tsplot(tf1,struct('type','raw'));
+    tsplot(tf1,struct('type','original'));
 figure();
     tsplot(tf1,struct('type','error'));
 
 figure();
-    psdplot(tf1,struct('type','raw'));
+    dftplot(tf1,struct('type','original-raw-magnitudes'));
 figure();
-    psdplot(tf1,struct('type','raw-phase'));
+    dftplot(tf1,struct('type','original-raw-phases'));
 figure();
-    psdplot(tf1,struct('type','error'));
+    dftplot(tf1,struct('type','error-raw-magphase'));
 
 figure();
     snplot(tf1);
@@ -44,7 +44,7 @@ figure();
 
 if wf > 0
     % Regression was used. Show qq plot.
-    figure(fn);clf;fn = fn+1;
+    figure();
         qqplot_(tf1,k);
 end
 

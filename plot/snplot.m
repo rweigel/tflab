@@ -10,49 +10,49 @@ end
 
 opts = tflabplot_options(S, popts, '', 'snplot');
 
-if iscell(S) && length(S) == 1
-    S = S{1};
+if ~iscell(S)
+    S = {S};
 end
 
 S = defaultinfo(S);
-if iscell(S)
-    % TODO: Check all same.
-    timeunit = S{1}.Options.info.timeunit;
-else
-    timeunit = S.Options.info.timeunit;
+% TODO: Check all same. This assumes 1s.
+timeunit = S{1}.Options.info.timeunit;
+
+for s = 1:length(S)
+    if 1 || startsWith(opts.type,'averaged')
+        fe{s} = S{s}.fe;
+        y1{s} = S{s}.Metrics.SN;
+        y2{s} = S{s}.Metrics.Coherence;
+    end
+    if opts.vs_period
+        x{s} = S{s}.Options.info.timedelta./fe{s};
+    else
+        x{s} = fe{s}/S{s}.Options.info.timedelta;
+    end
 end
 
-if iscell(S) && length(S) == 1
-    S = S{1};
-end
-% TODO: Above code is copy of code in zplot().
-
-if isstruct(S)
+if length(S) == 1
     % Single transfer function
     figprep();
-    fe = S.Metrics.PSD.Smoothed.fe;
-    if opts.vs_period
-        x = S.Options.info.timedelta./fe;
-    else
-        x = fe/S.Options.info.timedelta;
-    end
-
-    lg = legend_(S);
+    x  = x{1};
+    y1 = y1{1};
+    y2 = y2{1};
+    lg = legend_(S{1});
 
     ax1 = subplot('Position', opts.PositionTop);
-        SN = S.Metrics.SN.Smoothed;
-        plot(x,SN,opts.line{:});
-        colororder_(ax1, SN);
+        
+        plot(x,y1,opts.line{:});
+        colororder_(ax1, y1);
         grid on;box on;hold on;
-        if size(S.Out,2) > 1
+        if size(y1,2) > 1
             legend(lg,opts.legend{:});
         end
         set(gca,'XTickLabel',[]);
-        tflab_title(S,opts,'sn');
+        titlestr(S,opts,'sn');
         if opts.vs_period
             set(gca,'XScale','log');
         end
-        if max(SN(:)) > 100
+        if max(y1(:)) > 100
             set(gca,'YScale','log');
         end
         ylabel('Signal to Error');
@@ -63,10 +63,10 @@ if isstruct(S)
         setx(opts,0,timeunit);
 
     ax2 = subplot('Position', opts.PositionBottom);
-        semilogx(x,S.Metrics.Coherence.Smoothed,opts.line{:});
-        colororder_(ax2, S.Metrics.Coherence.Smoothed);
+        semilogx(x,y2,opts.line{:});
+        colororder_(ax2, y2);
         grid on;box on;hold on;
-        if size(S.Out,2) > 1
+        if size(y2,2) > 1
             legend(lg,opts.legend{:});
         end
         ylabel('Meas. to Pred. Coherence');
@@ -84,108 +84,54 @@ if isstruct(S)
     end
 end
 
-if iscell(S)
+if length(S) > 1
     % Multiple TFs
-    segment_aves = 1;
-    % j = columns of SN (components of output)
-    for j = 1:size(S{1}.Metrics.SN.Smoothed,2)
-        lg = legend_(S, j);
-        if j > 1
-            figure();
+    comp = 1;
+    figprep();
+    lg = legend_(S,comp);
+    ax1 = subplot('Position', opts.PositionTop);
+        grid on;box on;hold on;
+        for s = 1:length(y1)
+            plot(x{s},y1{s}(:,comp),opts.line{:});
         end
-        figprep();
-        ax1 = subplot('Position', opts.PositionTop);
-            max_T = 0;
-            for s = 1:length(S)
-                if isfield(S{s}.Metrics,'Segment')
-                    segment_aves = 1;
-                else
-                    segment_aves = 0;
-                end
-                if segment_aves
-                    ye = S{s}.Metrics.Segment.SN_95_boot(:,:,j);
-                    SN = mean(S{s}.Metrics.Segment.SN(:,j,:),3);
-                    fe = S{s}.Metrics.Segment.fe;
-                else
-                    SN = S{s}.Metrics.SN.Smoothed(:,j);
-                    fe = S{s}.Metrics.PSD.Smoothed.fe;
-                    %fe = S{s}.Metrics.fe;
-                end
-                if opts.vs_period
-                    x = 1./fe;
-                    max_T = max(max_T,max(x(x < Inf)));
-                else
-                    x = fe;
-                end
-                h(s) = plot(x,SN,opts.line{:});
-                grid on;box on;hold on;
-                if segment_aves
-                    yl = SN-ye(:,1);
-                    yu = -SN+ye(:,2);
-                    errorbars(x,SN,yl,yu);
-                end
+        if opts.vs_period
+            set(gca,'XScale','log');
+        end
+        if max(y1{s}(:,comp)) > 100
+            set(gca,'YScale','log');
+        end
+        legend(lg,opts.legend{:});
+        ylabel('Signal to Error');
+        adjust_ylim('upper');
+        adjust_yticks();
+        adjust_exponent();
+        yline(1,'k');
+        setx(opts,0,timeunit);
 
-            end
-            if opts.vs_period
-                set(gca,'XScale','log');
-            end
-            if max(SN(:)) > 100
-                set(gca,'YScale','log');
-            end
-            legend(h,lg,opts.legend{:});
-            ylabel('Signal to Error');
-            adjust_ylim('upper');
-            adjust_yticks();
-            adjust_exponent();
-            yline(1,'k');
-            setx(opts,0,timeunit);
-            
-        ax2 = subplot('Position', opts.PositionBottom);
-            for s = 1:length(S)
-                % TODO: Repeated code
-                if isfield(S{s}.Metrics,'Segment')
-                    segment_aves = 1;
-                else
-                    segment_aves = 0;
-                end
-                if segment_aves
-                    ye = S{s}.Metrics.Segment.SN_95_boot(:,:,j);
-                    SN = mean(S{s}.Metrics.Segment.SN(:,j,:),3);
-                    fe = S{s}.Metrics.Segment.fe;
-                else
-                    Coh = S{s}.Metrics.Coherence.Smoothed(:,j);
-                    fe = S{s}.Metrics.PSD.Smoothed.fe;
-                    %fe = S{s}.Metrics.fe;
-                end
-                if opts.vs_period
-                    x = 1./fe;
-                    max_T = max(max_T,max(x(x < Inf)));
-                else
-                    x = fe;
-                end
-                plot(x,Coh,opts.line{:});
-                grid on;box on;hold on;
-            end
-            if opts.vs_period
-                set(gca,'XScale','log');
-            end
-            legend(lg,opts.legend{:});
-            ylabel('Meas. to Pred. Coherence');
-            set(gca,'YLim',[0,1]);
-            adjust_ylim('upper');
-            adjust_exponent('x');            
-            setx(opts,1,timeunit);
-            
-        if opts.print
-            ext = regexprep(S{1}.Options.info.outstr{j},'\$','');        
-            for i = 1:length(opts.printfmt)
-                fname = sprintf('%s-%s.%s',opts.printname, ext, opts.printfmt{i});
-                figsave(fullfile(opts.printdir, fname), opts);
-            end
+    ax2 = subplot('Position', opts.PositionBottom);
+        grid on;box on;hold on;
+        for s = 1:length(y2)
+            plot(x{s},y2{s}(:,comp),opts.line{:});
+        end
+        if opts.vs_period
+            set(gca,'XScale','log');
+        end
+        legend(lg,opts.legend{:});
+        ylabel('Meas. to Pred. Coherence');
+        set(gca,'YLim',[0,1]);
+        adjust_ylim('upper');
+        adjust_exponent('x');            
+        setx(opts,1,timeunit);
+
+    if opts.print
+        ext = regexprep(S{1}.Options.info.outstr{comp},'\$','');        
+        for i = 1:length(opts.printfmt)
+            fname = sprintf('%s-%s.%s',opts.printname, ext, opts.printfmt{i});
+            figsave(fullfile(opts.printdir, fname), opts);
         end
     end
 end
-end
+end % function
 
 function lg = legend_(S,comp)
 
@@ -200,7 +146,7 @@ function lg = legend_(S,comp)
             end
             if iscell(S{s}.Options.info.outstr)
                 lg{s} = sprintf('%s%s\n',...
-                    S{s}.Options.info.outstr{comp}, desc);
+                            S{s}.Options.info.outstr{comp}, desc);
             else
                 if size(S{s}.Out,2) == 1
                     lg{s} = sprintf('%s\n',desc);

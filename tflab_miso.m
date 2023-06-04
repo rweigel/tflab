@@ -53,41 +53,29 @@ for j = 1:length(fe)
                  fe(j),length(f),f(1),f(end));
     end
 
-    regressargs = opts.fd.regression.functionargs;
-    regressfunc = opts.fd.regression.function;
-
     lastwarn('');
-
-    if length(f) < size(ftB,2)
-        if fe(j) == 0
-            Z(j,:) = zeros(1,size(ftB,2));
-            S.Regression.Weights{j,1} = nan*W;
-            S.Regression.Residuals{j,1} = nan*W;
-            %logmsg(['System is underdetermined for fe = %f. ',...
-            %        'Setting Z equal to zero(s) for this frequency.'],fe(j));
-        else
-            Z(j,:) = nan(1,size(ftB,2));
-            S.Regression.Weights{j,1} = nan*W;
-            S.Regression.Residuals{j,1} = nan*W;
-            logmsg(['!!! System is underdetermined for fe = %f. ',...
-                    'Setting Z equal to NaN(s) for this frequency.'],fe(j));
+    if size(ftB,2) == 1 && length(f) == 1
+        z = ftE./ftB;
+        if isinf(z)
+            z = nan;
         end
+        Z(j,1) = z;
+        S.Regression.Weights{j,1} = nan*W;
+        S.Regression.Residuals{j,1} = nan*W;
+        continue;
+    end
+    if length(f) < size(ftB,2)
+        Z(j,:) = nan(1,size(ftB,2));
+        S.Regression.Weights{j,1} = nan*W;
+        S.Regression.Residuals{j,1} = nan*W;
+        logmsg(['!!! System is underdetermined for fe = %f. ',...
+                'Setting Z equal to NaN(s) for this frequency.'],fe(j));
         continue;
     end
 
-    if size(ftB,1) == 1 && size(ftB,2) == 1
-        if ftB == 0 && ftE ~= 0 && fe(j) == 0.5
-            % Special case for when there is an evaluation freq.
-            % at 0.5. Will occur if frequency window is of length
-            % 1, as it is for some of the tests and demos.
-            Z(j,:) = zeros(1,size(ftB,2)) + 1j*zeros(1,size(ftB,2));
-            S.Regression.Weights{j,1} = nan*W;
-            S.Regression.Residuals{j,1} = nan*W;
-            logmsg('!!! System if underdetermined for fe = %f. Setting Z equal to zero(s) for this frequency.',fe(j));
-            continue;
-        end
-    end
-
+    regressargs = opts.fd.regression.functionargs;
+    regressfunc = opts.fd.regression.function;
+    
     [Z(j,:),Residuals,Weights] = ...
                regressfunc(W.*ftE,Wr.*ftB,regressargs{:});
 
@@ -113,7 +101,7 @@ end
 if opts.fd.regression.loglevel > 0
     logmsg(['Finished freq band and regression '...
             'calculations for %d eval. freqs.\n'],...
-             length(Ic)-1);
+             length(fe)-1);
 end
 
 if all(isnan(Z(:)))
@@ -121,4 +109,3 @@ if all(isnan(Z(:)))
 end
 
 S.Z = Z;
-S.Phi = atan2(imag(S.Z),real(S.Z));

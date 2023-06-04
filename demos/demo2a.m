@@ -29,27 +29,27 @@ S1.Options.description = sprintf('wf = %.1f, dB = %.1f, dE = %0.1f',wf, dB, dE);
 Sa.Options.info = S1.Options.info; 
 Sa.Options.description = 'Actual';
 
-dock('on');
-fn = 1;
-figure(fn);clf;fn = fn+1;
-    tsplot(S1,struct('type','raw'));
-figure(fn);clf;fn = fn+1;
+dock on;figure(1);close all;
+
+figure();
+    tsplot(S1,struct('type','original'));
+figure();
     tsplot(S1,struct('type','error'));
 
-figure(fn);clf;fn = fn+1;
-    psdplot(S1,struct('type','raw'));
-figure(fn);clf;fn = fn+1;
-    psdplot(S1,struct('type','error'));
+figure();
+    dftplot(S1,struct('type','original'));
+figure();
+    dftplot(S1,struct('type','error'));
 
-figure(fn);clf;fn = fn+1;
+figure();
     snplot(S1);
 
-figure(fn);clf;fn = fn+1;
+figure();
     zplot({Sa,S1},struct('type',3));
-figure(fn);clf;fn = fn+1;
+figure();
     zplot({Sa,S1});
 
 if wf > 0    
-    figure(fn);clf;fn = fn+1;
+    figure();
         qqplot_(S1,25);
 end

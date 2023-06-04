@@ -4,7 +4,7 @@ clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
 
-N = 101;
+N = 11;
 f = fftfreqp(N);
 t = (0:N-1)';
 for i = 2:length(f)
@@ -12,7 +12,6 @@ for i = 2:length(f)
     Phi(i,1) = -2*pi*f(i);
     B(:,i) = cos(2*pi*f(i)*t);
     E(:,i) = cos(2*pi*f(i)*t + Phi(i));
-    %E(:,i) = cos(2*pi*f(i)*t);
 end
 
 B = sum(B,2);
@@ -28,13 +27,15 @@ E = E + (mean(B)-mean(E));
 opts = tflab_options(0);
 S1 = tflab(B,E,opts);
 
-figure(1);clf;
-    tsplot(S1,struct('type','raw'));   % Plot raw input/output data
-figure(2);clf;
-    tsplot(S1,struct('type','error')); % Plot raw input/output data
-figure(3);clf;
-    psdplot(S1,struct('type','raw'));
-figure(4);clf;
-    zplot(S1);   % Compare exact with computed
-figure(5);clf;
+dock on;figure(1);close all;
+
+figure();
+    tsplot(S1,struct('type','original'));
+figure();
+    tsplot(S1,struct('type','error'));
+figure();
+    dftplot(S1,struct('type','original'));
+figure();
+    zplot(S1);
+figure();
     hplot(S1,[-5,5]);   % Compare exact with computed

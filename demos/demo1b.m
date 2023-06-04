@@ -21,7 +21,7 @@ opts1 = tflab_options(0);
     opts1.td.window.functionstr = 'Rectangle';
     opts1.td.window.functionargs = {@rectwin};
 S1 = tflab(Sx.In,Sx.Out,opts1);
-S1.Options.description = 'Rectangle';
+S1.Options.description = 'Rectangle windowed';
 
 opts2 = tflab_options(0);
     opts2.tflab.loglevel = 1;
@@ -30,37 +30,36 @@ opts2 = tflab_options(0);
     opts2.td.window.functionstr = 'Parzen';
     opts2.td.window.functionargs = {@parzenwin};
 S2 = tflab(Sx.In,Sx.Out,opts2);
-S2.Options.description = 'Parzen';
+S2.Options.description = 'Parzen windowed';
 
 % Use same variable labels from S1 for Sa
 Sx.Options.info = S1.Options.info; 
 Sx.Options.description = 'Actual';
 
-dock('on');
-f = 1;
+dock on;figure(1);close all;
 
-figure(f);clf;f = f+1;
-    tsplot(S1,struct('type','raw'));
-figure(f);clf;f = f+1;
+figure();
+    tsplot(S1,struct('type','original'));
+figure();
     tsplot(S1,struct('type','windowed'));
-figure(f);clf;f = f+1;
+figure();
     tsplot(S2,struct('type','windowed'));
-figure(f);clf;f = f+1;
+figure();
     tsplot(S1,struct('type','error','title',S1.Options.description));
-figure(f);clf;f = f+1;
+figure();
     tsplot(S2,struct('type','error','title',S2.Options.description));
 
-figure(f);clf;f = f+1;
-    psdplot({S1,S2},struct('type','windowed'));
-figure(f);clf;f = f+1;
-    psdplot({S1,S2},struct('type','error'));
+figure();
+    dftplot({S1,S2},struct('type','final-raw'));
+figure();
+    dftplot({S1,S2},struct('type','error-raw'));
 
-figure(f);clf;f = f+1;
+figure();
     zplot({Sx,S1,S2});
-figure(f);clf;f = f+1;
+figure();
     zplot({Sx,S1,S2},struct('type',3));
 
 if wf > 0    
-    figure(f);clf;f = f+1;
+    figure();
         qqplot_(S1,k);
 end

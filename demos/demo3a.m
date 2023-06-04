@@ -56,24 +56,24 @@ if isfield(Sx,'InNoise')
     S1.InNoisePSD = psd(S1.InNoise);
 end
 
-set(0,'DefaultFigureWindowStyle','docked')
-fn = 1;
-figure(fn);clf;fn = fn+1;
-    tsplot(S1,struct('type','raw'));
-figure(fn);clf;fn = fn+1;
+dock on;figure(1);close all;
+
+figure();
+    tsplot(S1,struct('type','original'));
+figure();
     tsplot(S1,struct('type','error','title',S1.Options.description));
-figure(fn);clf;fn = fn+1;
+figure();
     tsplot(S2,struct('type','error','title',S2.Options.description));
     
-figure(fn);clf;fn = fn+1;
-    psdplot(S1,struct('type','raw'));
-figure(fn);clf;fn = fn+1;
-    psdplot({S1,S2},struct('type','error-smoothed'));
+figure();
+    dftplot(S1,struct('type','original'));
+figure();
+    dftplot({S1,S2},struct('type','error-averaged'));
 
-figure(fn);clf;fn = fn+1;
+figure();
     zplot({Sx, S1, S2},struct('type',3));
     
 if wf > 0
-    figure(fn);clf;fn = fn+1;
+    figure();
         qqplot_(S1,2);
 end

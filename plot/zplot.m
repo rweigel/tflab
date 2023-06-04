@@ -8,36 +8,27 @@ if nargin < 2
     popts = struct();
 end
 
+if iscell(S) && length(S) == 1
+    S = S{1};
+end
+
 ptype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re,Im
 opts = tflabplot_options(S, popts, ptype, 'zplot');
-
-if iscell(S) && length(S) == 1
-    S = S{1};
-end
-
-
-if iscell(S) && length(S) == 1
-    S = S{1};
-end
 
 S = defaultinfo(S);
 if iscell(S)
     % TODO: Check all same.
-    timeunit = S{1}.Options.info.timeunit;
+    timeunit  = S{1}.Options.info.timeunit;
     timedelta = S{1}.Options.info.timedelta;
+    Zstrs   = S{1}.Options.info.zstrs;
+    Rhostrs = S{1}.Options.info.rhostrs;
+    Phistrs = S{1}.Options.info.phistrs;
 else
-    timeunit = S.Options.info.timeunit;
+    timeunit  = S.Options.info.timeunit;
     timedelta = S.Options.info.timedelta;
-end
-
-if (iscell(S) && size(S{1}.Z,2) > 1) || (isstruct(S) && size(S.Z,2) > 1)
-    Zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
-    Rhostrs = {'\rho^a_{xx}','\rho^a_{xy}','\rho^a_{yx}','\rho^a_{yy}'};
-    Phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{yx}','\phi_{yy}'};
-else
-    Zstrs = {'Z'};
-    Rhostrs = {'\rho^a'};
-    Phistrs = {'\phi'};
+    Zstrs   = S.Options.info.zstrs;
+    Rhostrs = S.Options.info.rhostrs;
+    Phistrs = S.Options.info.phistrs;
 end
 
 % Single transfer function
@@ -109,12 +100,12 @@ if isstruct(S)
             plot(xi, yi, opts.line{:}, 'markersize', 15);
         end
         if length(ls) > 1
-            ylabel(unitstr(S.Options.info));
+            ylabel(unitstr_(S.Options.info));
             legend(ls,opts.legend{:});
         else
-            ylabel(sprintf('%s %s',ls{1},unitstr(S.Options.info)));
+            ylabel(sprintf('%s %s',ls{1},unitstr_(S.Options.info)));
         end
-        tflab_title(S,opts,'z');            
+        titlestr(S,opts,'z');            
         if opts.vs_period
             set(gca,'XScale','log');
         end
@@ -147,7 +138,7 @@ if isstruct(S)
             yl = '[$^\circ$]';
         else
             y = imag(S.Z);
-            yl = unitstr(S.Options.info);
+            yl = unitstr_(S.Options.info);
             for j = 1:size(S.Z,2)
                 ls{j} = sprintf('Im$(%s)$ Estimated',Zstrs{j});
             end
@@ -248,7 +239,7 @@ if iscell(S)
                     y(idx) = NaN;
                 end
                 
-                opts.line = lineopts(size(S{s}.Z,1), s);
+                opts.line = lineopts_(size(S{s}.Z,1), s);
                 h(s) = plot(x, y, opts.line{:});
                 if opts.type < 3
                     set(gca,'YScale','log');
@@ -269,9 +260,9 @@ if iscell(S)
                 end
             end
             
-            yunitstr = unitstr(S{1}.Options.info);
+            yunitstr_ = unitstr_(S{1}.Options.info);
             if opts.type == 1
-                yl = sprintf('$|%s|$%s',Zstrs{j},yunitstr);
+                yl = sprintf('$|%s|$%s',Zstrs{j},yunitstr_);
                 adjust_ylim('upper');
             end
             if opts.type == 2
@@ -279,7 +270,7 @@ if iscell(S)
                 adjust_ylim('upper');            
             end
             if opts.type == 3
-                yl = sprintf('Re$(%s)$ %s',Zstrs{j},yunitstr);
+                yl = sprintf('Re$(%s)$ %s',Zstrs{j},yunitstr_);
                 adjust_ylim('both');            
             end
             if ~isempty(opts.period_range)
@@ -299,7 +290,7 @@ if iscell(S)
                 yebu = [];
                 if opts.type == 3
                     y = imag(S{s}.Z(:,j));
-                    yl = sprintf('Im$(%s)$ %s',Zstrs{j},unitstr(S{1}.Options.info));
+                    yl = sprintf('Im$(%s)$ %s',Zstrs{j},unitstr_(S{1}.Options.info));
                     ls{s} = sprintf('%s',S{s}.Options.description);
                     if isfield(S{s},'ZCL')
                         yebl = squeeze(imag(S{s}.ZCL.Z.Normal.x_1sigma(:,j,1)));
@@ -325,7 +316,7 @@ if iscell(S)
                     y(idx) = NaN;
                 end
                 
-                opts.line = lineopts(size(S{s}.Z,1), s);
+                opts.line = lineopts_(size(S{s}.Z,1), s);
                 if opts.vs_period
                     semilogx(x, y, opts.line{:});
                 else
@@ -368,7 +359,7 @@ end % if iscell(S)
 
 end % function
 
-function line = lineopts(Nz, s)
+function line = lineopts_(Nz, s)
     ms = max(30-8*s,1);
     if Nz == 1
         ms = 30;
@@ -378,7 +369,7 @@ function line = lineopts(Nz, s)
     end
 end
 
-function str = unitstr(info)
+function str = unitstr_(info)
 
     str = '';
     if isempty(info.inunit) || isempty(info.outunit)

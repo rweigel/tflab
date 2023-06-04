@@ -30,27 +30,27 @@ S1.Options.description = 'Estimated';
 Sa.Options.info = S1.Options.info; 
 Sa.Options.description = 'Actual';
 
-set(0,'DefaultFigureWindowStyle','docked')
-f = 1;
-figure(f);clf;f = f+1;
-    tsplot(S1,struct('type','raw'));
-figure(f);clf;f = f+1;
+dock on;figure(1);close all;
+
+figure();
+    tsplot(S1,struct('type','original'));
+figure();
     tsplot(S1,struct('type','error'));
     
-figure(f);clf;f = f+1;
-    psdplot(S1,struct('type','raw'));
-figure(f);clf;f = f+1;
-    psdplot(S1,struct('type','zeropadded'));    
-figure(f);clf;f = f+1;
-    psdplot(S1,struct('type','error'));
+figure();
+    dftplot(S1,struct('type','original'));
+figure();
+    dftplot(S1,struct('type','zeropadded'));    
+figure();
+    dftplot(S1,struct('type','error'));
 
-figure(f);clf;f = f+1;
+figure();
     zplot({Sa,S1});
-figure(f);clf;f = f+1;
+figure();
     zplot({Sa,S1},struct('type',3));
 
 if wf > 0    
-    figure(f);clf;f = f+1;
+    figure();
         [~,Ik] = min(abs(1./S1.fe-Nt/k));
         qqplot_(S1,Ik);
 end

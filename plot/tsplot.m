@@ -14,7 +14,7 @@ if nargin < 2
     popts = struct();
 end
 
-opts = tflabplot_options(S, popts, 'raw', 'tsplot');
+opts = tflabplot_options(S, popts, 'original', 'tsplot');
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -26,7 +26,7 @@ if iscell(S)
     timeunit  = S{1}.Options.info.timeunit;
     timedelta = S{1}.Options.info.timedelta;
 
-    t = timeVector(S{1});
+    t = timeVector_(S{1});
     timeunits = {};
     timestarts = {};
     for s = 1:length(S)
@@ -44,45 +44,28 @@ else
     info = S.Options.info;
     timeunit  = S.Options.info.timeunit;
     timedelta = S.Options.info.timedelta;
-    t = timeVector(S);
+    t = timeVector_(S);
 end
 
 figprep();
 
 if ~iscell(S) && ~strcmp(opts.type,'error')
 
-    if strcmp(opts.type,'raw')
+    if strcmp(opts.type,'original')
         In = S.In;
         Out = S.Out;
-    end
-
-    if strcmp(opts.type,'detrended')
-        if ~isfield(S,'Detrend')
-            logmsg('Data were not detrended. Not plotting detrended timeseries.\n');
-            return
+    elseif strcmp(opts.type,'final')
+        In = S.In_.Final;
+        Out = S.Out_.Final;
+    else    
+        typeuc = [upper(opts.type(1)),opts.type(2:end)];
+        if ~isfield(S.In_,typeuc)
+            error('Data were not %s. No plot created.',opts.type);
         end
-        In = S.Detrend.In;
-        Out = S.Detrend.Out;
+        In = S.In_.(typeuc);
+        Out = S.Out_.(typeuc);
     end
     
-    if strcmp(opts.type,'windowed')
-        if ~isfield(S,'Window')
-            logmsg('Data were not windowed. Not plotting windowed timeseries.\n');
-            return
-        end
-        In = S.Window.In;
-        Out = S.Window.Out;
-    end
-    
-    if strcmp(opts.type,'prewhitened')
-        if ~isfield(S,'Prewhiten')
-            logmsg('Data were not prewhitened. Not plotting prewhitened timeseries.\n');
-            return
-        end
-        In = S.Prewhiten.In;
-        Out = S.Prewhiten.Out;
-    end
-
     [yl1, yl2] = ylabel_(S);
     [lg1, lg2] = legend_(S);
     
@@ -90,19 +73,19 @@ if ~iscell(S) && ~strcmp(opts.type,'error')
         plot(t,In);
         colororder_(ax(1), S.In);
         grid on;grid minor;box on;
-        tflab_title(S,opts,'ts');
+        titlestr(S,opts,'ts');
         ylabel(yl1);
         if ~isempty(lg1)
             [~, lo] = legend(lg1,opts.legend{:});
             adjust_legend_lines(lo);
         end
         if isfield(S,'InNoise') && ~strcmp(opts.type,'windowed')
-            hold on;
-            plot(t,S.InNoise);
+            %hold on;
+            %plot(t,S.InNoise);
         end
         %adjust_ylim();
         adjust_exponent('y');
-        setx(0,info,[t(1),t(end)]);
+        setx_(0,info,[t(1),t(end)]);
         
     ax(2) = subplot('Position',opts.PositionBottom);
         plot(t,Out);
@@ -114,16 +97,17 @@ if ~iscell(S) && ~strcmp(opts.type,'error')
             adjust_legend_lines(lo);
         end
         if isfield(S,'OutNoise') && ~strcmp(opts.type,'windowed')
-            hold on;
-            plot(t,S.OutNoise);
+            %hold on;
+            %plot(t,S.OutNoise);
         end
         %adjust_ylim();
         adjust_exponent('y');
-        setx(1,info,[t(1),t(end)]);  
+        setx_(1,info,[t(1),t(end)]);  
     
     if opts.print
         for i = 1:length(opts.printfmt)
-            fname = sprintf('%s_%s.%s',opts.printname, opts.type, opts.printfmt{i});
+            fname = sprintf('%s_%s.%s',...
+                        opts.printname, opts.type, opts.printfmt{i});
             figsave(fullfile(opts.printdir, fname), opts);
         end
     end
@@ -163,23 +147,23 @@ if ~iscell(S) && strcmp(opts.type,'error')
         ax(1,j) = subplot('Position',opts.PositionTop);
             plot(t,S.Out(:,j));
             grid on;grid minor;box on;hold on;
-            plot(t,S.Metrics.Predicted(:,j));
+            plot(t,S.Out_.Predicted(:,j));
             [~, lo] = legend(lg1(:),opts.legend{:});
             ylabel(outstr);
             adjust_legend_lines(lo);
             adjust_ylim();
             adjust_exponent('y');
-            setx(0,info,[t(1),t(end)]);
-            tflab_title(S,opts,'ts');
+            setx_(0,info,[t(1),t(end)]);
+            titlestr(S,opts,'ts');
         ax(2,j) = subplot('Position',opts.PositionBottom);
-            plot(t,S.Metrics.Predicted(:,j)-S.Out(:,j));
+            plot(t,S.Out_.Predicted(:,j)-S.Out(:,j));
             grid on;grid minor;box on;
             ylabel(outunit);            
             %adjust_ylim();
             adjust_exponent('y')            
             [~, lo] = legend(lg2,opts.legend{:});
             adjust_legend_lines(lo);
-            setx(1,info,[t(1),t(end)]);
+            setx_(1,info,[t(1),t(end)]);
 
         if opts.print
             for i = 1:length(opts.printfmt)
@@ -208,7 +192,7 @@ if iscell(S)
         lg0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
 
         for j = 1:length(S)
-            plot(t,S{j}.Metrics.Predicted(:,1),c{j+1});
+            plot(t,S{j}.Out_.Predicted(:,1),c{j+1});
             lg{j} = sprintf('Predicted %s\n',...
                         S{j}.Options.description);
         end
@@ -220,7 +204,7 @@ if iscell(S)
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
-        setx(0,info,[t(1),t(end)]);
+        setx_(0,info,[t(1),t(end)]);
     subplot('Position',opts.PositionBottom);
         plot(t,S{1}.Out(:,2),c{1});
         grid on;grid minor;box on;hold on;
@@ -230,7 +214,7 @@ if iscell(S)
 
         for j = 1:length(S)
             for j = 1:length(S)
-                plot(t,S{j}.Metrics.Predicted(:,2),c{j+1});
+                plot(t,S{j}.Out_.Predicted(:,2),c{j+1});
                 lg{j} = sprintf('Predicted %s\n',...
                             S{j}.Options.description);
             end
@@ -240,7 +224,7 @@ if iscell(S)
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
-        setx(1,info,[t(1),t(end)]);
+        setx_(1,info,[t(1),t(end)]);
     
     if opts.print
         for i = 1:length(opts.printfmt)
@@ -251,9 +235,9 @@ if iscell(S)
     end
 end
 
-    
+end % function
 
-function setx(last,info,tl)
+function setx_(last,info,tl)
 
     if ~isempty(info.timestart)
 
@@ -292,8 +276,6 @@ function setx(last,info,tl)
         
 end
 
-end % function
-
 function [lg1, lg2] = legend_(S)
 
     info = S.Options.info;
@@ -314,18 +296,18 @@ end
 function [yl1, yl2] = ylabel_(S)    
     info = S.Options.info;
     if size(S.In,2) > 1
-        yl1 = unitstr_(info.inunit);
+        yl1 = unitstr(info.inunit);
     else
-        yl1 = [info.instr,' ',unitstr_(info.inunit)];
+        yl1 = [info.instr,' ',unitstr(info.inunit)];
     end
     if size(S.Out,2) > 1
-        yl2 = unitstr_(info.outunit);
+        yl2 = unitstr(info.outunit);
     else
-        yl2 = [info.outstr,' ',unitstr_(info.outunit)];
+        yl2 = [info.outstr,' ',unitstr(info.outunit)];
     end
 end
 
-function t = timeVector(S)
+function t = timeVector_(S)
 
     info = S.Options.info;
     nt = size(S.In,1);

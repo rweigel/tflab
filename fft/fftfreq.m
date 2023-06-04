@@ -1,13 +1,13 @@
-function [f,fu] = fftfreq(N, s)
-%FFTFREQ    Discrete Fourier Transform sample frequencies
+function [f,fu] = fftfreq(N, dt)
+%FFTFREQ Discrete Fourier Transform sample frequencies
 %
 %   f = FFTFREQ(N) returns
 %
 %   f = (1/N)*[0, 1, ..., N/2-1, -N/2, ..., -1] if N is even
 %   f = (1/N)*[0, 1, ..., (N-1)/2, -(N-1)/2, ..., -1] if N is odd
 %
-%   f = FFTFREQ(N, s) returns FFTFREQP(N)/d, where d is interpreted
-%   as the sampling frequency.
+%   f = FFTFREQ(N, dt) returns FFTFREQP(N)/dt, where dt is the time between
+%   samples.
 %
 %   [f,fu] = FFTFREQ(...) returns the unique DFT frequencies:
 %
@@ -20,7 +20,7 @@ function [f,fu] = fftfreq(N, s)
 %   See also FFTFREQP, EVALFREQ.
 
 if nargin == 1
-    s = 1;
+    dt = 1;
 end
 
 assert(N >= 0,'N must be >= 0');
@@ -33,11 +33,13 @@ end
 if mod(N,2) == 0 % Even
     fp = 0:N/2-1;
     fn = -N/2:-1;
-    fu = [fp,N/2]/(N*s);
+    fu = [fp,N/2]/(N*dt);
 else
     fp = 0:(N-1)/2;
     fn = -(N-1)/2:-1;
-    fu = fp/(N*s);
+    fu = fp/(N*dt);
 end
 
-f = [fp,fn]/(N*s);    
+f = [fp,fn]/(N*dt);
+f = f';
+fu = fu';

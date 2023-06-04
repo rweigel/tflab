@@ -8,7 +8,7 @@ dopts.title = '';
 
 dopts.type = dtype;
 
-prefix = struct('tsplot','ts','psdplot','psd','zplot','tf','snplot','sn');
+prefix = struct('tsplot','ts','dftplot','dft','zplot','tf','snplot','sn');
 
 % Print options passed to tflab's figsave()
 dopts.print = 0;
@@ -26,6 +26,25 @@ dopts.legend = {'Location', 'NorthWest', 'Orientation', 'Horizontal'};
 dopts.PositionTop = [0.1300 0.5400 0.7750 0.4];
 dopts.PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
+if strcmp(plotfun,'dftplot')
+    if isempty(opts.type)
+        opts.type = 'original-raw-magphase';
+    end
+    tparts = split(opts.type,'-');
+    if length(tparts) == 1
+        tparts{2} = 'raw';
+    end
+    if length(tparts) == 2
+        if strcmp(tparts{1},'error')
+            tparts{3} = 'magphase';
+        else
+            tparts{3} = 'magnitudes';
+        end
+    end
+    opts.type = join(tparts,'-');
+    opts.type = opts.type{:};
+end
+
 if strcmp(plotfun,'zplot')
     dopts.unwrap = 0;
     switch dtype
@@ -38,7 +57,7 @@ if strcmp(plotfun,'zplot')
     end
 end
 
-if any(strcmp(plotfun,{'psdplot','zplot','snplot'}))
+if any(strcmp(plotfun,{'dftplot','zplot','snplot'}))
     dopts.vs_period = 1;
     if iscell(S)
         for s = 1:length(S)

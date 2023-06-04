@@ -61,17 +61,17 @@ if 0
     S1 = tflab_metrics(S1, opts);
 end
 
-Sx.Time = S1.Time;                 % Use default computed time from S1 for S0
 Sx.Options.info = S1.Options.info; % Use same variable labels from S1 for S0
 Sx.Options.description = 'Actual';
 
-close all;
+dock on;figure(1);close all;
+
 figure();
-    tsplot(S1,struct('type','raw'));   % Plot raw input/output data
+    tsplot(S1,struct('type','original'));
 figure();
-    tsplot(S1,struct('type','error')); % Plot raw input/output data
+    tsplot(S1,struct('type','error'));
 figure();
-    psdplot(S1,struct('type','raw'));
+    dftplot(S1,struct('type','original'));
 figure();
     zplot({S1,S2});   
 figure();
