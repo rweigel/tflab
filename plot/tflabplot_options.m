@@ -1,7 +1,5 @@
 function opts = tflabplot_options(S,opts,dtype,plotfun)
 
-% TODO: Can get plotfun from calling function.
-
 dopts = struct();
 
 dopts.title = '';
@@ -17,7 +15,7 @@ dopts.printdir = '';
 dopts.printfmt = {'pdf'};
 
 % Line options passed to plot()
-dopts.line = {'marker', '.', 'markersize', 20, 'linestyle', 'none'};
+dopts.line = {'marker', '.', 'markersize', 15, 'linestyle', 'none'};
 
 % Legend options passed to legend()
 dopts.legend = {'Location', 'NorthWest', 'Orientation', 'Horizontal'};
@@ -25,6 +23,14 @@ dopts.legend = {'Location', 'NorthWest', 'Orientation', 'Horizontal'};
 % Options passed to subplot()
 dopts.PositionTop = [0.1300 0.5400 0.7750 0.4];
 dopts.PositionBottom = [0.1300 0.1100 0.7750 0.4];
+
+if iscell(S)
+    nOut = size(S{1}.Out,2);
+    nIn = size(S{1}.In,2);
+else
+    nOut = size(S.Out,2);
+    nIn = size(S.In,2);
+end
 
 if strcmp(plotfun,'dftplot')
     if isempty(opts.type)
@@ -46,6 +52,7 @@ if strcmp(plotfun,'dftplot')
 end
 
 if strcmp(plotfun,'zplot')
+    
     dopts.unwrap = 0;
     switch dtype
         case 1
@@ -55,20 +62,81 @@ if strcmp(plotfun,'zplot')
         case 3
             dopts.printname = [dopts.printname,'_real_imaginary'];            
     end
+    
+    if nOut == 1
+        if nIn == 1
+            dopts.zstrs = {'Z'};
+            dopts.rhostrs = {'\rho^a'};
+            dopts.phistrs = {'\phi'};
+        end
+        if nIn == 2
+            dopts.zstrs = {'Z_{x}','Z_{y}'};
+            dopts.rhostrs = {'\rho^a_{x}','\rho^a_{y}'};
+            dopts.phistrs = {'\phi_{x}','\phi_{y}'};
+        end
+        if nIn == 3
+            dopts.zstrs = {'Z_{x}','Z_{y}','Z_{z}'};
+            dopts.rhostrs = {'\rho^a_{x}','\rho^a_{y}','\rho^a_{z}'};
+            dopts.phistrs = {'\phi_{x}','\phi_{y}','\phi_{z}'};
+        end
+    end
+    if nOut == 2 && nIn == 2
+        dopts.zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
+        dopts.rhostrs = {'\rho^a_{xx}','\rho^a_{xy}','\rho^a_{yx}','\rho^a_{yy}'};
+        dopts.phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{yx}','\phi_{yy}'};
+    end    
 end
 
 if any(strcmp(plotfun,{'dftplot','zplot','snplot'}))
     dopts.vs_period = 1;
     if iscell(S)
         for s = 1:length(S)
-            lens(s) = size(S{s}.In,1);
+            timedeltas(s) = S{s}.Metadata.timedelta;
+            T = timedeltas(s)./S{s}.fe;
+            Tmaxes(s) = max(T(~isnan(T)));
         end
-        dopts.period_range = [1, 2*max(lens)];
-    else        
-        dopts.period_range = [1, 2*size(S.In,1)];
+        timedelta = min(timedeltas);
+        dopts.period_range = [2*timedelta, max(Tmaxes)];
+    else
+        timedelta = S.Metadata.timedelta;
+        T = 1./S.fe;
+        Tmax = max(T(~isnan(T)));
+        dopts.period_range = [2, Tmax]*timedelta;
     end
-    dopts.frequency_range = [0, 0.5];
+    dopts.frequency_range = [0, 0.5]/timedelta;     
 end
+
+if iscell(S)
+    S = S{1};
+end
+
+dopts.inunit = S.Metadata.inunit;
+dopts.instr = S.Metadata.instr;
+if nIn > 1
+    if ~iscell(S.Metadata.instr)
+        for j = 1:nIn
+            dopts.instr{j} = sprintf('%s(:,%d)',S.Metadata.instr,j);
+        end
+    else
+        % Check that length(S.Metadata.instr) = nIn
+    end
+else
+    dopts.instr = {S.Metadata.instr};
+end    
+
+dopts.outunit = S.Metadata.outunit;
+dopts.outstr = S.Metadata.outstr;
+if nOut > 1
+    if ~iscell(S.Metadata.instr)
+        for j = 1:nOut
+            dopts.outstr{j} = sprintf('%s(:,%d)',S.Metadata.outstr,j);
+        end
+    else
+        % Check that length(S.Metadata.outstr) = nOut
+    end
+else
+    dopts.outstr = {S.Metadata.outstr};
+end    
 
 % Replace default options with given options in opts
 fns = fieldnames(dopts);

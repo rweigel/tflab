@@ -24,7 +24,7 @@ B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-if 0
+if 0  
 % Trim for faster run
 B = B(1:10*pps,:);
 E = E(1:10*pps,:);
@@ -35,51 +35,49 @@ end
 filestr = sprintf('Middelpos-%s-%s',...
                   datestr(t(1),'yyyymmdd'),datestr(t(end),'yyyymmdd'));
 
-%% Set default information
-dopts = struct('info',struct(),'td',struct());
-    dopts.info.instr     = {'$B_x$','$B_y$'};
-    dopts.info.inunit    = 'nT';
-    dopts.info.outstr    = {'$E_x$','$E_y$'};
-    dopts.info.outunit   = 'mV/km';
-    dopts.info.timeunit  = 's';
-    dopts.info.timedelta = 1;
-    dopts.info.timestart = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');
-    dopts.info.chainid   = 'SANSA';
-    dopts.info.stationid = 'Middelpos';
-
+%% Set metadata
+meta = struct();
+    meta.instr     = {'$B_x$','$B_y$'};
+    meta.inunit    = 'nT';
+    meta.outstr    = {'$E_x$','$E_y$'};
+    meta.outunit   = 'mV/km';
+    meta.timeunit  = 's';
+    meta.timedelta = 1;
+    meta.timestart = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');
+    meta.chainid   = 'SANSA';
+    meta.stationid = 'Middelpos';
 
 %% Compute first TF
 desc1 = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
-opts1 = tflab_options(1,dopts);
+opts1 = tflab_options(1);
     opts1.tflab.loglevel = 1;
     opts1.td.window.width = pps;
     opts1.td.window.shift = pps;
-    opts1.filestr = sprintf('%s-tf1',filestr);
 
 TF1 = tflab(B(:,1:2),E,opts1);
 % Modify default description of run
 TF1.Options.description = desc1;
-TF1 = tflab_uncertainty(TF1);
+TF1.Metadata = meta;
+%TF1 = tflab_uncertainty(TF1);
 
-fname1 = fullfile(scriptdir(),'data','Middelpos',[opts1.filestr,'.mat']);
+fname1 = fullfile(scriptdir(),'data','Middelpos',[filestr,'-tf1.mat']);
 savetf(TF1, fname1);
-
 
 %% Compute second TF
 desc2 = sprintf('OLS; One %d-day segment',size(B,1)/pps);
-opts2 = tflab_options(1,dopts);
+opts2 = tflab_options(1);
     opts2.tflab.loglevel = 1;
-    opts2.filestr = sprintf('%s-tf2',filestr);
 
-TF2 = tflab(B(:,1:2),E,opts2);           
+TF2 = tflab(B(:,1:2),E,opts2);
 % Modify default description of run
 TF2.Options.description = desc2;
+TF2.Metadata = meta;
 
 % Test S2.Z on same segments as S1.
-TF2 = tflab_metrics(TF2,opts2,TF1.Segment.IndexRange);
-TF2 = tflab_uncertainty(TF2);
+%TF2 = tflab_metrics(TF2,opts2,TF1.Segment.IndexRange);
+%TF2 = tflab_uncertainty(TF2);
 
-fname = fullfile(scriptdir(),'data','Middelpos',[opts2.filestr,'.mat']);
+fname = fullfile(scriptdir(),'data','Middelpos',[filestr,'-tf2.mat']);
 savetf(TF2, fname);
 
 Middelpos_plot;

@@ -1,5 +1,5 @@
 *~
 .DS_Store
 *.mat
-runs/data/
+runs/data
 *.asv

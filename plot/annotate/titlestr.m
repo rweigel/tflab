@@ -1,53 +1,65 @@
-function h = tflab_title(tf, opts, plottype)
+function h = titlestr(tf, opts, plottype)
 
 if ~isstruct(tf)
     return;
 end
 
-if ~isempty(opts.title)
+if ~isempty(opts.title) || ~isfield(tf,'Options')
     h = title(opts.title);
     return;
 end
 
 spacer = ' $|$ ';
 
-tfo = tf.Options;
-tfoi = tf.Options.info;
-
+tfom = tf.Metadata;
 ts = '';
-if ~isempty(tfoi.stationid) && isempty(tfoi.chainid)
-    ts = sprintf('Site: %s',tfoi.stationid);            
+if ~isempty(tfom.stationid) && isempty(tfom.chainid)
+    ts = sprintf('Site: %s',tfom.stationid);            
 end
-if ~isempty(tfoi.stationid) && ~isempty(tfoi.chainid)
-    ts = sprintf('%s/%s',tfoi.chainid, tfoi.stationid);
+if ~isempty(tfom.stationid) && ~isempty(tfom.chainid)
+    ts = sprintf('%s/%s',tfom.chainid, tfom.stationid);
 end
 if ~isempty(ts)
     ts = [ts, spacer];
 end    
 
+tfo = tf.Options;
 if strcmp(plottype, 'ts')
-    if strcmp(opts.type,'windowed') && ~isempty(tfo.td.window.function)
-        ts = sprintf('%s%s windowed',...
-                     ts,tfo.td.window.functionstr);
-    end
-    if strcmp(opts.type,'prewhitened') && ~isempty(tfo.td.prewhiten.function)
-        ts = sprintf('%s%s prewhitened',...
-                     ts,tfo.td.prewhiten.functionstr);
-    end
     if strcmp(opts.type,'error')
         ts = sprintf('%s%s',ts,tfo.description);
+    end
+    if strcmp(opts.type,'zeropadded')
+        ts = sprintf('%sPadded with %d zeros',ts,tf.Options.td.zeropad);
+    else
+        ftype = opts.type(1:end-2); % Remove "ed"
+        if isfield(tfo.td, ftype) && ~isempty(tfo.td.(ftype).function)
+            fdesc = tfo.td.(ftype).functionstr;
+            if isempty(fdesc)
+                ts = sprintf('%s%sed',ts,ftype);
+            else
+                ts = sprintf('%s%s %sed',ts,fdesc,ftype);
+            end
+        end
     end
 end
 
-if strcmp(plottype, 'psd')
-    if strcmp(opts.type,'zeropadded') && isfield(tf,'Zeropad')
-        ts = sprintf('%sPadded with %d zeros',ts,tf.Options.td.zeropad);
-    end    
-    if strcmp(opts.type,'windowed') && isfield(tf,'Window')
-        ts = [tf.Options.td.window.functionstr, '-windowed (in TD)'];
-    end
-    if strcmp(opts.type,'error')
+if strcmp(plottype, 'dft')
+    tparts = split(opts.type,'-');
+    ftype = tparts{1}(1:end-2); % Remove "ed"
+    if strcmp(tparts{1},'error')
         ts = sprintf('%s%s',ts,tfo.description);
+    end
+    if strcmp(tparts{1},'zeropadded')
+        ts = sprintf('%sPadded with %d zeros',ts,tf.Options.td.zeropad);
+    else
+        if isfield(tfo.td, ftype) && ~isempty(tfo.td.(ftype).function)
+            fdesc = tf.Options.td.(ftype).functionstr;
+            if isempty(fdesc)
+                ts = sprintf('%s%sed',ts,ftype);
+            else
+                ts = sprintf('%s%s %sed',ts,fdesc,ftype);
+            end
+        end
     end
 end
 

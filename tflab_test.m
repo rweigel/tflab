@@ -94,8 +94,8 @@ for i = 1:3
     
     % Computed H should match used H and be zero for lags longer than
     % used H.
-    L = length(S0.H);
-    assert(max(abs(S0.H - H1(1:L))) <= 3*eps);
+    L = length(H);
+    assert(max(abs(H - H1(1:L))) <= 3*eps);
     assert(max(abs(H1(L+1:end))) <= 3*eps);
     
     % Analytically, real part of Z is 1, imaginary part is 0.    
@@ -191,8 +191,8 @@ S1 = tflab(B(:,1),E(:,1),opts);
 fprintf('---\n');
 S2 = tflab(B(:,1),[E(:,1),E(:,1)],opts);
 
-assert(all(S1.OutPredicted == S2.OutPredicted(:,1)));
-assert(all(S1.OutPredicted == S2.OutPredicted(:,2)));
+assert(all(S1.Out_.Predicted == S2.Out_.Predicted(:,1)));
+assert(all(S1.Out_.Predicted == S2.Out_.Predicted(:,2)));
 
 %%%
 fprintf('\n');
@@ -206,12 +206,12 @@ S2 = tflab(B,E(:,2),opts);
 fprintf('---\n');
 S3 = tflab(B,E,opts);
 
-assert(all(S1.OutPredicted == S3.OutPredicted(:,1)));
-assert(all(S2.OutPredicted == S3.OutPredicted(:,2)));
+assert(all(S1.Out_.Predicted == S3.Out_.Predicted(:,1)));
+assert(all(S2.Out_.Predicted == S3.Out_.Predicted(:,2)));
 fprintf('\n');
 
 
-%% API Test - Segmenting
+%% API Test - Segmentd
 % E and B are split into segments and transfer functions are computed for
 % each segment.
 logmsg('API Segmenting; Test 3.3.\n');
@@ -229,8 +229,8 @@ fprintf('---\n');
 S2 = tflab([B;B],[E;E],opts);
 
 % Results for two segments in S2 should be same a single segment in S1.
-assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,1,1)));
-assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,1,2)));
+assert(all(S1.Out_.Predicted == S2.Segment.Out_.Predicted(:,1,1)));
+assert(all(S1.Out_.Predicted == S2.Segment.Out_.Predicted(:,1,2)));
 assert(all(S1.Z == S2.Segment.Z(:,:,1)))
 assert(all(S1.Z == S2.Segment.Z(:,:,2)))
 assert(all(S1.Z(:) == S2.Z(:)));
@@ -252,8 +252,8 @@ S1 = tflab(B(:,1),E(:,1),opts);
 fprintf('---\n');
 S2 = tflab([B(:,1);B(:,1)],[E;E],opts);
 
-assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,1,1)));
-assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,1,2)));
+assert(all(S1.Out_.Predicted == S2.Segment.Out_.Predicted(:,1,1)));
+assert(all(S1.Out_.Predicted == S2.Segment.Out_.Predicted(:,1,2)));
 
 fprintf('\n');
 %%%
@@ -261,10 +261,10 @@ logmsg('API Segmenting; Test 3.5.\n');
 
 S3 = tflab(B,E,opts);
 S4 = tflab([B;B],[E;E],opts);
-assert(all(S3.OutPredicted(:,1) == S4.Segment.OutPredicted(:,1,1)));
-assert(all(S3.OutPredicted(:,2) == S4.Segment.OutPredicted(:,2,1)));
-assert(all(S3.OutPredicted(:,1) == S4.Segment.OutPredicted(:,1,2)));
-assert(all(S3.OutPredicted(:,2) == S4.Segment.OutPredicted(:,2,2)));
+assert(all(S3.Out_.Predicted(:,1) == S4.Segment.Out_.Predicted(:,1,1)));
+assert(all(S3.Out_.Predicted(:,2) == S4.Segment.Out_.Predicted(:,2,1)));
+assert(all(S3.Out_.Predicted(:,1) == S4.Segment.Out_.Predicted(:,1,2)));
+assert(all(S3.Out_.Predicted(:,2) == S4.Segment.Out_.Predicted(:,2,2)));
 
 % 2:end to remove Z(f = 0) which may have NaNs for Z
 tmp = S3.Z(2:end,:) == S4.Z(2:end,:);
@@ -272,6 +272,8 @@ assert(all(tmp(:)));
 fprintf('\n');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 %% API Test - Intervals
 % When there are gaps in time in the input/data, one can pass a cell array
 % of intervals and then the transfer function is computed on each interval.
@@ -291,7 +293,7 @@ S1 = tflab([B;B],[E;E],opts);
 fprintf('---\n');
 S2 = tflab({B;B},{E;E},opts);
 assert(all(S1.Z(:) == S2.Z(:)));
-assert(all(S1.Segment.OutPredicted(:) == S2.Segment.OutPredicted(:)))
+assert(all(S1.Segment.Out_.Predicted(:) == S2.Segment.Out_.Predicted(:)))
 
 %%%
 fprintf('\n');
@@ -304,14 +306,15 @@ S2 = tflab({B,[B;B]},{E,[E;E]},opts);
 fprintf('---\n');
 S3 = tflab({B,[B;B]},{0.5*E,[1.0*E;1.5*E]},opts);
 
-assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,:,1)))
-assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,:,2)))
-assert(all(S1.OutPredicted == S2.Segment.OutPredicted(:,:,3)))
+assert(all(S1.Out_.Predicted == S2.Segment.Out_.Predicted(:,:,1)))
+assert(all(S1.Out_.Predicted == S2.Segment.Out_.Predicted(:,:,2)))
+assert(all(S1.Out_.Predicted == S2.Segment.Out_.Predicted(:,:,3)))
 % DC value will be different for S3, so omit from test:
 assert(all(S1.Z(2:end)-S3.Z(2:end) < 10*eps));
 
 % Average TF should be 1.0 for all fe, same as S1.Z.
 fprintf('\n');
+
 
 %% API Test - Stack Regression
 % When intervals and/or segments are used, the default is to compute a
@@ -378,6 +381,7 @@ opts.td.window.shift = N; % Will result in two intervals.
 
 S3 = tflab([B;B],[E;E],opts);
 fprintf('---\n');
+
 opts.fd.stack.average.function = '';
 S4 = tflab([B;B],[E;E],opts); % window.width and window.shift ignored.
 assert(all(abs(S3.Z(:) - S4.Z(:)) < 10*eps))

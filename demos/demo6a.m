@@ -30,42 +30,50 @@ alpha = struct();
 A = struct();
     A.B  = 1;
     A.E  = 1;
-    A.dB = 0.2;
-    A.dE = 0.2;
+    A.dB = 0.1;
+    A.dE = 0.1;
     A.Z  = 1;
 
+% Here we set rng(1) so that same In and Out are created each time this
+% script is run. This is to avoid error that sometimes appears:
+% "Note: The following floating-point exceptions are signalling:
+% IEEE_INVALID_FLAG"
+% TODO: Determine what is causing this error.
+rng(1);
 Sx_opts = struct('N',N,'n',n,'alpha',alpha,'A',A);
 Sx = demo_signals('powerlaw',Sx_opts);
 
-opts = tflab_options(0);
+opts = tflab_options(1);
   opts.tflab.loglevel = 0;
   opts.fd.program.name = 'lemimt';
   opts.fd.program.options = ''; % Command line options, e.g., '-r -c'
-  opts.info.inunit= 'nT';
-  opts.info.outunit= 'mV/km';
-  opts.info.timeunit = 's';
-  opts.info.timedelta = 1; % time in timeunit between records.
-  opts.info.description = 'LEMI';
 
 B(:,1) = Sx.In;
-B(:,2) = Sx.In;
-B(:,3) = randn(size(B,1),1);
+E(:,1) = Sx.Out;
 
-E(:,1) = 0.5*B(:,1) + 0.5*B(:,2);
-E(:,2) = 0.5*B(:,1) + 0.5*B(:,2);
+S = tflab_lemimt(B,E);
 
-S = tflab_lemimt(B,E,opts);
-S = tflab_metrics(S,opts);
+S.Options.description = 'LEMI MT';
+S.Metadata.inunit= 'nT';
+S.Metadata.outunit= 'mV/km';
+S.Metadata.timeunit = 's';
+S.Metadata.timedelta = 1; % time in timeunit between records.
 
-figure(1);clf;
-    tsplot(S,struct('type','raw'));
+% Set options used to computed averaged coherence and signal to error.
+S.Options.fd.evalfreq.function = @evalfreq;
+S.Options.fd.evalfreq.functionargs = {7, 'logarithmic'};
+S.Options.fd.window.function = @rectwin;
 
-figure(2);clf;
+S = tflab_metrics(S);
+
+dock on;figure(1);close all;
+
+figure();clf;
+    tsplot(S,struct('type','original'));
+
+figure();clf;
     tsplot(S,struct('type','error'));
 
-%figure(3);clf;
-%    psdplot(S,'raw');
-
-figure(4);clf;
+figure();clf;
     %zplot(S0a,S1);
     zplot(S);

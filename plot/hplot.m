@@ -10,6 +10,8 @@ if nargin == 2 && ~isstruct(S2)
     xl = S2;
 end
 
+S1 = tflab_metadata(S1);
+
 Hstrs = {'H_{xx}','H_{xy}','H_{yx}','H_{yy}'};
 
 Zi = zinterp(S1.fe,S1.Z,size(S1.In,1));
@@ -38,16 +40,16 @@ if isstruct(S1) && ~isstruct(S2)
     grid on;box on;hold on;
 
     unitstr = '';
-    if ~isempty(S1.Options.info.outunit)
-        unitstr = sprintf('[(%s)/%s]',S1.Options.info.outunit,S1.Options.info.inunit);
+    if ~isempty(S1.Metadata.outunit)
+        unitstr = sprintf('[(%s)/%s]',...
+            S1.Metadata.outunit,S1.Metadata.inunit);
         ylabel(unitstr);
     end
     title(S1.Options.description,'FontWeight','Normal');
     legend('$H$', 'Location', 'NorthEast');
     timeunit = '';
-    if ~isempty(S1.Options.info.timeunit)
-        unitstr = sprintf(' [%s]',S1.Options.info.timeunit);
-        ylabel(unitstr);
+    if ~isempty(S1.Metadata.timeunit)
+        timeunit = sprintf(' [%s]',S1.Metadata.timeunit);
     end
     xlabel(sprintf('$t$%s', timeunit));
     if ~isempty(xl)

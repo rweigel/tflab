@@ -1,26 +1,20 @@
-function [se,f] = signaltoerror(sig, err, opts, smoothed)
+function [se,f] = signaltoerror(sig, err, averaged, opts)
 
-if nargin < 3
+if ~exist('averaged', 'var')
+    averaged = 0;
+end
+
+if nargin < 3 || averaged == 0
     [dftsig, f] = fftu(sig);
     dfterr = fftu(err);
     se = abs(dftsig).^2./abs(dfterr).^2;
-    return
+    return;
 end
 
-[dftsig,f] = dftsegments(sig, opts);
-dfterr = dftsegments(err, opts);
+[dftsig,f] = dftbands(sig, opts);
+dfterr = dftbands(err, opts);
 
-if ~exist('smoothed', 'var')
-    smoothed = 0;
-end
-if smoothed == 1
-    w = dftweights(f, dftsig, dfterr, opts);
-end
-
+w = dftweights(f, dftsig, dftsig, opts);
 for s = 1:length(f)
-    if smoothed  == 0
-        se{s,1} = abs(dftsig{s}).^2./abs(dfterr{s}).^2;
-    else
-        se(s,:) = abs(sum(w{s}.*dftsig{s})).^2./abs(sum(w{s}.*dfterr{s})).^2;
-    end
+    se(s,:) = abs(sum(w{s}.*dftsig{s},1)).^2./abs(sum(w{s}.*dfterr{s},1)).^2;
 end

@@ -1,72 +1,91 @@
-function S = tflab_tdpreprocess(S)
+function [In_,Out_] = tflab_tdpreprocess(In,Out,tdopts,loglevel)
 
-if isfield(S,'Options')
-    opts = S.Options;
-else
-    opts = tflab_options(0);
+if nargin == 1
+    % S = tflab_tdpreprocess(S) where S.{In_,Out_} gets added if any
+    % filter applied.
+    S = In;
+    [In_,Out_] = tflab_tdpreprocess(S.In,S.Out,S.Options.td,S.Options.tflab.loglevel);
+    if ~isempty(In_)
+        % No filter applied
+        S.In_ = In_;
+        S.Out_ = Out_;
+    end
+    In_ = S;
+    Out = [];
+    return;
 end
 
-B = S.In;
-E = S.Out;
+modified = 0;
 
-if ~isempty(opts.td.detrend.function)
-    if opts.tflab.loglevel > 0
-        logmsg('Detrending using %s\n',opts.td.detrend.functionstr);
+Inx = In;
+Outx = Out;
+
+if ~isempty(tdopts.detrend.function)
+    modified = 1;
+    if loglevel > 0
+        logmsg('Detrending using %s\n',tdopts.detrend.functionstr);
     end
-    B = opts.td.detrend.function(B, opts.td.detrend.functionargs{:});
-    E = opts.td.detrend.function(E, opts.td.detrend.functionargs{:});
-    S.In_.Detrended = B;
-    S.Out_.Detrended = E;
+    Inx = tdopts.detrend.function(Inx, tdopts.detrend.functionargs{:});
+    Outx = tdopts.detrend.function(Outx, tdopts.detrend.functionargs{:});
+    In_.Detrended = Inx;
+    Out_.Detrended = Outx;
 else
-    if opts.tflab.loglevel > 0
+    if loglevel > 0
         logmsg('No detrending b/c no function given.\n');
     end
 end
 
 % TODO?: Allow TD window and prewhiten to not be same for input and output
 % and then compute corrected Z.
-if ~isempty(opts.td.window.function)
-    if opts.tflab.loglevel > 0
-        logmsg('Windowing using %s\n',opts.td.window.functionstr);
+if ~isempty(tdopts.window.function)
+    modified = 1;
+    if loglevel > 0
+        logmsg('Windowing using %s\n',tdopts.window.functionstr);
     end
-    B = opts.td.window.function(B,opts.td.window.functionargs{:});
-    E = opts.td.window.function(E,opts.td.window.functionargs{:});
-    S.In_.Windowed = B;
-    S.Out_.Windowed = E;
+    Inx = tdopts.window.function(Inx,tdopts.window.functionargs{:});
+    Outx = tdopts.window.function(Outx,tdopts.window.functionargs{:});
+    In_.Windowed = Inx;
+    Out_.Windowed = Outx;    
 else
-    if opts.tflab.loglevel > 0
+    if loglevel > 0
         logmsg('No windowing applied b/c no function given.\n');
     end
 end
 
-if ~isempty(opts.td.prewhiten.function)
-    if opts.tflab.loglevel > 0
-        logmsg('Prewhitening using: %s\n',opts.td.prewhiten.functionstr);
+if ~isempty(tdopts.whiten.function)
+    modified = 1;
+    if loglevel > 0
+        logmsg('Prewhitening using: %s\n',tdopts.whiten.functionstr);
     end
-    B = opts.td.prewhiten.function(B,opts.td.prewhiten.functionargs{:});
-    E = opts.td.prewhiten.function(E,opts.td.prewhiten.functionargs{:});
-    S.In_.Whitened = B;
-    S.Out_.Whitened = E;
+    Inx = tdopts.whiten.function(Inx,tdopts.whiten.functionargs{:});
+    Outx = tdopts.whiten.function(Outx,tdopts.whiten.functionargs{:});
+    In_.Whitened = Inx;
+    Out_.Whitened = Outx;
 else
-    if opts.td.prewhiten.loglevel
-        logmsg('No prewhitening performed b/c no function given');
+    if loglevel > 0
+        logmsg('No prewhitening performed b/c no function given.\n');
     end
 end
 
-if ~isnan(opts.td.zeropad)
-    if opts.tflab.loglevel > 0
-        logmsg('Zero padding input and output with %d zeros\n',opts.td.zeropad);
+if ~isnan(tdopts.zeropad)
+    modified = 1;
+    if loglevel > 0
+        logmsg('Zero padding input and output with %d zeros\n',tdopts.zeropad);
     end
-    E = [E;zeros(opts.td.zeropad,1)];
-    B = [B;zeros(opts.td.zeropad,size(B,2))];
-    S.In_.Zeropadded = B;
-    S.Out_.Zeropadded = E;
+    Inx = [Out;zeros(tdopts.zeropad,1)];
+    Outx = [In;zeros(tdopts.zeropad,size(In,2))];
+    In_.Zeropadded = Inx;
+    Out_.Zeropadded = Outx;
 else
-    if opts.td.prewhiten.loglevel
-        logmsg('No zero padding performed b/c values given.');
+    if loglevel > 0
+        logmsg('No zero padding performed b/c no zeropad value given.\n');
     end
 end
 
-S.In_.Final  = B;
-S.Out_.Final = E;
-
+if modified
+    In_.Final  = Inx;
+    Out_.Final = Outx;
+else
+    In_ = [];
+    Out_ = [];
+end

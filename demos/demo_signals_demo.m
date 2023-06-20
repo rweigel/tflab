@@ -1,38 +1,43 @@
-S = demo_signals('powerlaw')
+
+
+%S = demo_signals('powerlaw')
+D = demo_signals('simple')
 
 dock on;figure(1);close all;
 
+opts = tflab_options(0);
+opts.td.window.width = 100;
+opts.td.window.shift = 100;
+opts.td.window.function = @tdwindow;
+opts.td.window.functionstr = 'Rectangle';
+opts.td.window.functionargs = {@rectwin};
+
+S = struct('In',D.In,'Out',D.Out,'Options',opts);
+
+S = tflab_preprocess(S);
+S.Z = D.Z;
+S.fe = D.fe;
+
+S = tflab_metrics(S);
+
 figure();
     tsplot(S);
-    % Or, manually
-    if 0
-        subplot(2,1,1)
-        plot(S.In)
-        subplot(2,1,2)
-        plot(S.Out)
-    end
 
-figure()
-    % Populate S with data needed for psdplot().
-    [PSDIn,~,f] = psd(S.In);
-    S.Metrics.PSD.Raw.fe = f;
-    S.Metrics.PSD.Raw.In = PSDIn;
-
-    PSDOut = psd(S.Out);
-    S.Metrics.PSD.Raw.Out = PSDOut;
-    psdplot(S, struct('type','raw'));
+figure();
+    tsplot(S, struct('type','error'));
     
-    % Or, manually
-    if 0
-        subplot(2,1,1)
-            loglog(f, PSDIn,'.');
-            grid on;
-            xlabel('f')
-            ylabel('$|\widetilde{\mbox{In}}|^2$','Interpreter','latex')
-        subplot(2,1,2)
-            loglog(f, PSDOut,'.');
-            grid on;
-            xlabel('f')
-            ylabel('$|\widetilde{\mbox{Out}}|^2$','Interpreter','latex')
-    end
+figure();
+    dftplot(S, struct('type','original'));
+
+figure();
+    dftplot(S, struct('type','original-averaged'));
+
+figure();
+    dftplot(S, struct('type','error'));
+
+figure();
+    dftplot(S, struct('type','error-averaged'));
+    
+figure();
+    snplot(S);
 

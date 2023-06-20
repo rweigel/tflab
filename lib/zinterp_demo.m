@@ -11,11 +11,13 @@ end
 opts = struct('interp1args',{args});
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+dock on;figure(1);close all;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [~,f] = fftfreq(7);
 Z = (1+1j)*[1:length(f)]';
 Z(1) = 3; % Make f = 0 value real (as it must be).
-[Zg,fi] = zinterp(f',Z,20,opts);
+[Zg,fi] = zinterp(f,Z,20,opts);
 
 figure();
     subplot(2,1,1)    
@@ -39,7 +41,7 @@ figure();
 [~,f] = fftfreq(7);
 Z = (1+1j)*[1:length(f)]';
 Z(1) = 3; % Make f = 0 value real (as it must be).
-[Zg,fi] = zinterp(f',Z,19,opts);
+[Zg,fi] = zinterp(f,Z,19,opts);
 
 figure();
     subplot(2,1,1)    
@@ -64,7 +66,7 @@ figure();
 Z = (1+1j)*[1:length(f)]';
 Z(1) = 3;   % Make f = 0 value real (as it must be).
 Z(end) = 2; % Make fe(end) value real (as it must be when fe(end)= +0.5).
-[Zg,fi] = zinterp(f',Z,20,opts);
+[Zg,fi] = zinterp(f,Z,20,opts);
 
 figure();
     subplot(2,1,1)    
@@ -89,7 +91,7 @@ figure();
 Z = (1+1j)*[1:length(f)]';
 Z(1) = 3;   % Make f = 0 value real (as it must be).
 Z(end) = 2; % Make fe(end) value real (as it must be when fe(end)= 0.5).
-[Zg,fi] = zinterp(f',Z,19,opts);
+[Zg,fi] = zinterp(f,Z,19,opts);
 
 figure();
     subplot(2,1,1)    
@@ -118,7 +120,7 @@ figure();
 Z = (1+1j)*[1:length(f)]';
 Z(1) = 3; % Make f = 0 value real (as it must be).
 
-Zg = zinterp(f',Z,fi',opts);
+Zg = zinterp(f,Z,fi,opts);
 
 figure();
     subplot(2,1,1)    
@@ -147,7 +149,7 @@ Z = (1+1j)*[1:length(f)]';
 Z(1) = 3; % Make fe = 0 value real.
 Z(end) = real(Z(end)); % Make fe = 0.5 value real.
 
-Zg = zinterp(f',Z,fi',opts);
+Zg = zinterp(f,Z,fi,opts);
 
 figure();
     subplot(2,1,1)
@@ -176,7 +178,7 @@ fi = fi(2:end); % Remove fi = 0 value.
 Z = (1+1j)*[1:length(f)]';
 Z(1) = 10; % Make f = 0 value real.
 
-Zg = zinterp(f',Z,fi',opts);
+Zg = zinterp(f,Z,fi,opts);
 
 figure();
     subplot(2,1,1)
@@ -205,7 +207,7 @@ fi = fi(2:end); % Remove fg = 0
 
 Z = (1+1j)*[1:length(f)]';
 
-Zg = zinterp(f',Z,fi',opts);
+Zg = zinterp(f,Z,fi,opts);
 
 figure();
     subplot(2,1,1)
@@ -233,7 +235,7 @@ f = f(2:end); % Remove fe = 0 value.
 
 Z = (1+1j)*[1:length(f)]';
 
-Zg = zinterp(f',Z,fi',opts);
+Zg = zinterp(f,Z,fi,opts);
 
 figure();
     subplot(2,1,1)

@@ -23,43 +23,12 @@ opts.tflab = struct();
     opts.tflab.loglevel = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Plot label options
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-opts.info = struct();
-
-    opts.info.instr = 'In'; % Cell array or string. 
-    % Or ,{'$B_x$', ...} (1 cell element per column in In)
-    
-    opts.info.outstr = 'Out'; % Cell array or string. 
-    % Or, {'$E_x$', ...} (1 cell element per column in Out)
-    
-    % Timestart is a time string of the form
-    %   'yyyy-mm-ddTHH:MM:SS.FFF'.
-    %   Example: 
-    %     opts.td.timestart = '2001-01-01T00:00:00.000';
-    % or an integer. 
-    opts.info.timestart = 1; 
-    
-    % Measurement cadence. Specify units using opt.info.timeunit.  
-    opts.info.timedelta = 1; 
-    
-    %opts.info.inunit= 'nT';
-    %opts.info.outunit= 'mV/km';
-    %opts.info.timeunit = 's';
-
-    opts.info.inunit    = '';
-    opts.info.outunit   = '';
-    opts.info.timeunit  = '';   % Unit for timedelta
-    opts.info.chainid   = '';   % Usualy over-arching project name
-    opts.info.stationid = '';   % Usually an abbreviation, e.g., VAQ58
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Time domain options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+
 % # of points at start and end to trim before computing metrics
 % (pe/cc/mse/sn/coherence). NaN => no trim.
-opts.td.Ntrim = 60*30;
+opts.td.Ntrim = NaN;
 
 % Number of zeros added to the end of all time series prior to computing
 % DFT. NaN => no pad.
@@ -91,16 +60,16 @@ opts.td.window = struct();
         %opts.td.window.functionargs = {@rectwin};
     end
 
-opts.td.prewhiten = struct();
+opts.td.whiten = struct();
     % Note: Same prewhitening filter applied to input and output
-    opts.td.prewhiten.function = '';
-    opts.td.prewhiten.loglevel = 0;
+    opts.td.whiten.function = '';
+    opts.td.whiten.loglevel = 0;
     
     % Example of prewhitening.
     if 0
-        opts.td.prewhiten.function = @prewhiten;
-        opts.td.prewhiten.functionstr = 'First difference';
-        opts.td.prewhiten.functionargs = {'diff'};
+        opts.td.whiten.function = @prewhiten;
+        opts.td.whiten.functionstr = 'First difference';
+        opts.td.whiten.functionargs = {'diff'};
     end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -175,22 +144,6 @@ opts.fd.regression = struct();
         %ropts.snstop = 1000;
         %ropts.verbose = 0;    
         %opts.fd.regression.functionargs = {ropts};
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Plot options
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-opts.plot = struct();
-    opts.plot.figprep = @figprep; % Function to call prior to plotting
-    opts.plot.figsave = @figsave; % Function to call for printing
-
-    opts.plot.tsplot.type = 'raw';
-    opts.plot.tsplot.title = '';
-    opts.plot.tsplot.print = 0;
-    opts.plot.tsplot.printname = 'tsplot';
-    opts.plot.tsplot.printdir = '';
-    opts.plot.tsplot.printfmt = {'pdf'};
-    % printfmt is one or more extensions allowed by export_fig()
-    % e.g. {'pdf'} or {'svg','png'}.
 
 if os == 0
     % When no noise, should get exact TF used to generate the output data

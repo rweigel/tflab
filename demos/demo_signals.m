@@ -15,11 +15,19 @@ tflab_setpaths();
 
 if strcmp(stype,'simple')
     
-    assert(nargin == 2,'Two inputs are required');
+    if nargin < 2
+        opts = struct();
+        opts.Nt = 1000;
+        opts.Z = [1+1j]/sqrt(2);
+        opts.k = 10;
+        opts.dB = 0;
+        opts.dE = 0;
+    end
     
     Nt = opts.Nt;
-    t = (0:Nt-1)';
     Z = opts.Z;
+
+    assert(~(isfield(opts,'f') && isfield(opts,'k')), 'Only k or f may be specified');
     if isfield(opts,'f')
         f = opts.f;
     end
@@ -27,6 +35,8 @@ if strcmp(stype,'simple')
         k = opts.k;
         f = k/Nt;
     end
+    t = (0:Nt-1)';
+    
     % Generate input/output using exact amplitude and phase
     % (A faster and less memory-intensive way to do this is with ifft() 
     % on a frequency domain representation of the signals being
@@ -64,8 +74,8 @@ if strcmp(stype,'powerlaw')
         opts.A.Z = [1];
         opts.alpha.Z = [1];
 
-        opts.A.dE = [0];
-        opts.alpha.dE = [0];
+        opts.A.dE = 0;     % Must be scalar
+        opts.alpha.dE = 0; % Must be scalar
     end
     
     assert(opts.N > 1, 'N > 1 is required');
@@ -116,18 +126,24 @@ if strcmp(stype,'powerlaw')
     PhidE = repmat(PhidE, length(t), 1);    
     dE = opts.A.dE.*(Ff.^opts.alpha.dE).*cos(2*pi*Ff.*tf + PhidE);
 
+    E = sum(E,2);
     if dE ~= 0
         S.OutNoise = sum(dE,2);
         E = E + dE;
     end
-    E = sum(E,2);          % Sum across frequencies
- 
+    for j = 1:size(E,2)
+        %E(:,j) = E(:,j)/std(E(:,j));
+    end
+    
+    B = squeeze(sum(B,2)); % Sum across frequencies
     if dB ~= 0
         S.InNoise = squeeze(sum(dB,2));
         B = B + dB;
     end
-    B = squeeze(sum(B,2)); % Sum across frequencies
-
+    for j = 1:size(B,2)
+        %B(:,j) = B(:,j)/std(B(:,j));
+    end
+    
     % Compute exact Z at n frequencies
     for k = 1:length(opts.A.B)
         Z(:,k) = opts.A.Z(k)*(f.^opts.alpha.Z(k));%*(cos(Phi(i)) + sqrt(-1)*sin(Phi(i)));

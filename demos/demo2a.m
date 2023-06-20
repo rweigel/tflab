@@ -17,6 +17,7 @@ Z  = (1+1j)/sqrt(2);
 
 Sa_opts = struct('Nt',Nt,'Z',Z,'f',f,'dB',dB,'dE',dE);
 Sa = demo_signals('simple',Sa_opts);
+Sa.Options.description = 'Actual';
 
 opts1 = tflab_options(0);
     opts1.tflab.loglevel = 1;
@@ -24,10 +25,6 @@ opts1 = tflab_options(0);
 
 S1 = tflab(Sa.In,Sa.Out,opts1);
 S1.Options.description = sprintf('wf = %.1f, dB = %.1f, dE = %0.1f',wf, dB, dE);
-
-% Use same variable labels from S1 for Sa
-Sa.Options.info = S1.Options.info; 
-Sa.Options.description = 'Actual';
 
 dock on;figure(1);close all;
 

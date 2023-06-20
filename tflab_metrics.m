@@ -1,22 +1,16 @@
 function S = tflab_metrics(S)
 
-if isfield(S,'Options')
-    opts = S.Options;
-else
-    opts = tflab_options(0);
-end
+opts = S.Options;
 
 In  = S.In;
 Out = S.Out;
 
-% Keep any row of Z without a NaN
-% TODO: This should be handled by zinterp.
-Ik = any(~isnan(S.Z),2);
+assert(size(S.Z,2) == size(In,2),'S.Z must have same number of columns as S.In');
 
-% TODO: Pass zinterp options
-[Zi,~] = zinterp(S.fe(Ik,:),S.Z(Ik,:),size(In,1));
+[Zi,~] = zinterp(S.fe,S.Z,size(In,1));
 
 OutPredicted = nan(size(Out));
+
 for k = 1:size(In,3) % Third dimension is segment
 
     OutPredicted(:,:,k) = zpredict(Zi,In(:,:,k));
@@ -25,12 +19,18 @@ for k = 1:size(In,3) % Third dimension is segment
     S.Metrics.MSE(1,:,k) = mse_nonflag(Out(:,:,k), OutPredicted(:,:,k));
     S.Metrics.CC(1,:,k)  = cc_nonflag(Out(:,:,k), OutPredicted(:,:,k));
  
-    [S.Metrics.Coherence(:,:,k), S.Metrics.f] = ...
-        coherence(Out(:,:,k), OutPredicted(:,:,k), opts, 1);
+    [S.Metrics.Coherence(:,:,k), S.Metrics.fe] = ...
+        coherence(Out(:,:,k), OutPredicted(:,:,k), 1, opts);
+
+    Error(:,:,k) = OutPredicted(:,:,k)-Out(:,:,k);
 
     S.Metrics.SN(:,:,k) = ...
-        signaltoerror(Out(:,:,k), OutPredicted(:,:,k)-Out(:,:,k), opts, 1);
-        
+        signaltoerror(Out(:,:,k), Error(:,:,k), 1, opts);
+
+    S.DFT.Out_.Error(:,:,k) = dftbands(Error(:,:,k), opts);    
+    S.DFT.Out_.Predicted(:,:,k) = dftbands(OutPredicted, opts);
+    
 end
 
+S.Out_.Error = Error;
 S.Out_.Predicted = OutPredicted;

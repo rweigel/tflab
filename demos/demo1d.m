@@ -16,6 +16,7 @@ wf = 1;
 
 Sa_opts = struct('Nt',Nt,'Z',Z,'k',k,'dB',0,'dE',0);
 Sa = demo_signals('simple',Sa_opts);
+Sa.Options.description = 'Actual';
 
 opts1 = tflab_options(0);
     opts1.tflab.loglevel = 1;
@@ -23,12 +24,7 @@ opts1 = tflab_options(0);
     opts1.td.zeropad = Nt;
     
 S1 = tflab(Sa.In,Sa.Out,opts1);
-
 S1.Options.description = 'Estimated';
-
-% Use same variable labels from S1 for Sa
-Sa.Options.info = S1.Options.info; 
-Sa.Options.description = 'Actual';
 
 dock on;figure(1);close all;
 

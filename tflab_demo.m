@@ -45,22 +45,21 @@ tf1 = tflab(B,E,opts);
 
 vs_period = 0; % (Default is to plot vs. period.)
 
-set(0,'DefaultFigureWindowStyle','docked')
+dock on;figure(1);close all;
 
-fn = 1;
-figure(fn);clf;fn = fn+1;
-    tsplot(tf1,struct('type','raw','vs_period',vs_period));
-figure(fn);clf;fn = fn+1;
+figure();
+    tsplot(tf1,struct('type','original','vs_period',vs_period));
+figure();
     tsplot(tf1,struct('type','error','vs_period',vs_period));
 
-figure(fn);clf;fn = fn+1;
-    psdplot(tf1,struct('type','raw','vs_period',vs_period));
-figure(fn);clf;fn = fn+1;
-    psdplot(tf1,struct('type','raw-phase','vs_period',vs_period));
-figure(fn);clf;fn = fn+1;
-    psdplot(tf1,struct('type','error','vs_period',vs_period));
+figure();
+    dftplot(tf1,struct('type','original','vs_period',vs_period));
+figure();
+    dftplot(tf1,struct('type','original-raw-phases','vs_period',vs_period));
+figure();
+    dftplot(tf1,struct('type','error','vs_period',vs_period));
 
-figure(fn);clf;fn = fn+1;
+figure();
     zplot(tf1,struct('vs_period',vs_period));
-figure(fn);clf;fn = fn+1;
+figure();
     zplot(tf1,struct('type',3,'vs_period',vs_period));

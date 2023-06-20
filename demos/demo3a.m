@@ -23,6 +23,7 @@ A = struct();
 
 Sx_opts = struct('N',N,'n',n,'alpha',alpha,'A',A);
 Sx = demo_signals('powerlaw',Sx_opts);
+Sx.Options.description = 'Actual';
 
 opts1 = tflab_options(0);
     opts1.tflab.loglevel = 1;
@@ -43,10 +44,6 @@ opts2 = tflab_options(0);
 S2 = tflab(Sx.In,Sx.Out,opts2);
 S2.Options.description = 'Stack Average';
 
-% Use same variable labels from S1 for Sa
-Sx.Options.info = S1.Options.info; 
-Sx.Options.description = 'Actual';
-
 if isfield(Sx,'OutNoise')
     S1.OutNoise = Sx.OutNoise;
     S1.OutNoisePSD = psd(S1.OutNoise);
@@ -66,7 +63,11 @@ figure();
     tsplot(S2,struct('type','error','title',S2.Options.description));
     
 figure();
-    dftplot(S1,struct('type','original'));
+    dftplot(S1,struct('type','original-raw-magnitudes'));
+figure();
+    dftplot(S1,struct('type','original-raw-phases'));
+figure();
+    dftplot(S1,struct('type','original-raw-phases'));
 figure();
     dftplot({S1,S2},struct('type','error-averaged'));
 

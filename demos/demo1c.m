@@ -23,6 +23,7 @@ wf = 0;
 
 Sx_opts = struct('Nt', Nt, 'Z',Z, 'f', f, 'dB', 0.0, 'dE', 0.0);
 Sx = demo_signals('simple',Sx_opts);
+Sx.Options.description = 'Actual';
 
 opts1 = tflab_options(0);
     opts1.tflab.loglevel = 1;
@@ -39,9 +40,6 @@ opts2 = tflab_options(0);
 S2 = tflab(Sx.In,Sx.Out,opts2);
 S2.Options.description = 'Diff whitened';
 
-% Use same variable labels from S1 for Sa
-Sx.Options.info = S1.Options.info; 
-Sx.Options.description = 'Actual';
 
 dock on;figure(1);close all;
 

@@ -10,7 +10,7 @@ function ax = dftplot(S,popts,comp)
 %
 %   a is one of: original, final, detrended, windowed, prewhitened, zeropadded
 %   b is one of: raw, averaged
-%   c is one of: magnitudes,phases
+%   c is one of: magnitudes,phases,reals,imaginaries
 %
 %   For prediction error related plots, popts.type has the form
 %   'error-b-c', where
@@ -28,89 +28,102 @@ end
 if nargin < 3
     comp = 1;
 end
-
-popts = tflabplot_options(S, popts, 'original', 'dftplot');
-
-
-tparts = split(popts.type,'-');
-tparts1 = {'error',...
-           'original','final','detrended','windowed','prewhitened','zeropadded'};
-if ~any(strcmp(tparts{1},tparts1))
-    list = join(tparts1,', ');
-    error('popts.ptype must start with one of: %s.',list{1});
-end
-
 if ~iscell(S)
     S = {S};
 end
 
-S = defaultinfo(S);
+% Apply default metadata for fields not specified in S.Metadata.
+S = tflab_metadata(S);
 
-if size(S{1}.In,2) ~= size(S{1}.Out,2)
-    error('Case of size(S.In,2) ~= size(S.Out,2) not handled');
-end
+popts = tflabplot_options(S, popts, 'original', 'dftplot');
+argcheck_(S, popts)
 
 % TODO: Check all same timeunit. If not convert to same.
-timeunit = S{1}.Options.info.timeunit;
-timedelta = S{1}.Options.info.timedelta;
+timeunit = S{1}.Metadata.timeunit;
+timedelta = S{1}.Metadata.timedelta;
 
-        
+tparts = split(popts.type,'-');
 for s = 1:length(S)
     opts = S{s}.Options;
     if strcmp(tparts{1},'error')
         % error-{raw,averaged}-{magphase,realimag}
-        Error = S{s}.Out_.Predicted - S{s}.Out;
-
+        segsError = S{s}.DFT.Out_.Error(:,comp);
         if strcmp(tparts{2},'averaged')
-            [segse, f, fe{s}] = dftsegments(Error, opts);
-            w = dftweights(f, [], [], opts);
-            dfte = dftaverage(segse, w);
+            dftError = dftaverage(segsError);
+            fe{s} = S{s}.DFT.fe;            
         else
-            [dfte,fe{s}] = fftu(Error(:,comp));
+            tmp = cat(1,S{s}.DFT.f{:});
+            fe{s,1} = tmp(:);
+            dftError = cat(1,segsError{:});
         end
 
         if strcmp(tparts{3},'magphase')
-            y1{s} = abs(dfte);
-            y2{s} = (180/pi)*angle(y1{s});
+            sf = (size(S{s}.Out_.Error,1)-1)/2;
+            y1{s} = abs(dftError)/sf;
+            y2{s} = (180/pi)*angle(dftError);
+            if fe{s}(end) == 0.5
+                y1{s}(end) = y1{s}(end)/2;
+            end
         else
-            y1{s} = real(dfte);
-            y2{s} = imag(dfte);
+            y1{s} = real(dftError);
+            y2{s} = imag(dftError);
         end
     else
         % {original,detrended,windowed,prewhitened,zeropadded,final}-{raw,averaged}-{magnitudes,phases}
-        if any(strcmp(tparts{1},{'detrended','windowed','prewhitened','zeropadded','final'}))
+        if any(strcmp(tparts{1},{'detrended','windowed','whitened','zeropadded','final'}))
             % Capatilize first letter
             tparts1uc = [upper(tparts{1}(1)),tparts{1}(2:end)];
-            if ~isfield(S{s}.In_,tparts1uc)
+            if ~isfield(S{s}.DFT,'In_') ||  ~isfield(S{s}.DFT.In_,tparts1uc)
                 error('Time series was not %s.',tparts{1});
             end
-            [segsIn, f, fc] = dftsegments(S{s}.In_.(tparts1uc), opts);
-            segsOut = dftsegments(S{s}.Out_.(tparts1uc), opts);
+            segsIn = S{s}.DFT.In_.(tparts1uc).DFT;
+            segsOut = S{s}.DFT.Out_.(tparts1uc).DFT;
+            f = S{s}.DFT.Out_.(tparts1uc).f;
         else
             % original
-            [segsIn, f, fc] = dftsegments(S{s}.In, opts);
-            segsOut = dftsegments(S{s}.Out, opts);
+            segsIn = S{s}.DFT.In;
+            segsOut = S{s}.DFT.Out;
+            f = S{s}.DFT.f;
         end
-        
+
         if strcmp(tparts{2},'averaged')
-            w = dftweights(f, segsOut, segsIn, popts);
-            DFTIn{s} = dftaverage(segsIn(:,comp), w);
-            DFTOut{s} = dftaverage(segsOut(:,comp), w);
-            fe{s} = fc;
+            [wIn,wOut] = dftweights(f, segsOut, segsIn, opts);
+            DFTIn{s}  = dftaverage(segsIn, wIn);
+            DFTOut{s} = dftaverage(segsOut, wOut);
+            fe{s} = S{s}.DFT.fe;
         else
             tmp = cat(1,f{:});
             fe{s,1} = tmp(:);
-            tmp = cat(1,segsIn{:});
-            DFTIn{s} = tmp(:,comp);
-            tmp = cat(1,segsOut{:});
-            DFTOut{s} = tmp(:,comp);
+            DFTIn{s} = cat(1,segsIn{:});
+            DFTOut{s} = cat(1,segsOut{:});
         end
+        
+        if length(S) > 1
+            % Compare mode. One plot per component.
+            DFTIn{s} = DFTIn{s}(:,comp);
+            DFTOut{s} = DFTOut{s}(:,comp);
+        end
+
         if strcmp(tparts{3},'phases')
             y1{s} = (180/pi)*angle(DFTIn{s});
             y2{s} = (180/pi)*angle(DFTOut{s});
-        else
-            y1{s} = abs(DFTIn{s});
-            y2{s} = abs(DFTOut{s});
+        end
+        if strcmp(tparts{3},'reals')
+            y1{s} = real(DFTIn{s});
+            y2{s} = real(DFTOut{s});
+        end
+        if strcmp(tparts{3},'imaginaries')
+            y1{s} = imag(DFTIn{s});
+            y2{s} = imag(DFTOut{s});
+        end
+        if strcmp(tparts{3},'magnitudes')
+            sf = (size(S{s}.In,1)-1)/2;
+            y1{s} = abs(DFTIn{s})/sf;
+            y2{s} = abs(DFTOut{s})/sf;
+            if fe{s}(end) == 0.5
+                y1{s}(end) = y1{s}(end)/2;
+                y2{s}(end) = y2{s}(end)/2;
+            end
         end
     end
     if popts.vs_period
@@ -118,13 +131,18 @@ for s = 1:length(S)
     else
         x{s} = fe{s}/(timedelta);
     end
+    if length(S) == 1
+        x = x{1};
+        y1 = y1{1};
+        y2 = y2{1};
+    end
 end
 
 figprep();
 if strcmp(tparts{1},'error')
 
-    [~,lg2] = legend_(S);
-    [yl1, yl2] = ylabelerror_(S,tparts{3});
+    lg = legend_(S,what,comp);
+    [yl1, yl2] = ylabelerror_(popts,tparts{3},comp);
 
     ax(1) = subplot('Position',popts.PositionTop);
         plot_(x,y1,popts);
@@ -134,10 +152,10 @@ if strcmp(tparts{1},'error')
         if popts.vs_period
             set(gca,'XScale','log');
         end
-        if ~isempty(lg2)
-            legend(lg2,popts.legend{:});
+        if ~isempty(lg)
+            legend(lg,popts.legend{:});
         else
-            titlestr(S,popts,'psd');
+            titlestr(S,popts,'dft');
         end
         ylabel(yl1);
         adjust_ylim('upper');
@@ -153,8 +171,8 @@ if strcmp(tparts{1},'error')
             set(gca,'XScale','log');
         end
         ylabel(yl2);
-        if ~isempty(lg2)
-            legend(lg2,popts.legend{:});
+        if ~isempty(lg)
+            legend(lg,popts.legend{:});
         end
         if strcmp(tparts{1},'magphase')
             set(gca,'YScale','linear');
@@ -166,28 +184,21 @@ if strcmp(tparts{1},'error')
 end
 
 if ~strcmp(tparts{1},'error')
-    
-    [lg1, lg2] = legend_(S);
-    [yl1, yl2] = ylabel_(S,tparts{3});
+
+    [lg1, lg2] = legend_(S,tparts{3},popts);
+    [yl1, yl2] = ylabel_(S,tparts{3},popts,comp);
     
     ax(1) = subplot('Position',popts.PositionTop);
         plot_(x,y1,popts);
         colororder_(ax(1),y1);
         grid on;box on;
-        if strcmp(tparts{3},'phases')
-            set(gca,'YScale','linear');
-            set(gca,'YTick',-180:45:180);
-        else
-            set(gca,'YScale','log');
-        end
-        if popts.vs_period
-            set(gca,'XScale','log');
-        end
+        setscales_(tparts{3},popts.vs_period)
         if ~isempty(lg1)
-            legend(lg1,popts.legend{:});
+            legend(lg,popts.legend{:});
+        else
+            titlestr(S{1},popts,'dft');
         end
         ylabel(yl1);
-        titlestr(S, popts, 'dft');
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
@@ -197,16 +208,7 @@ if ~strcmp(tparts{1},'error')
         plot_(x,y2,popts);
         colororder_(ax(2),y2);
         grid on;box on;
-        set(gca,'YScale','log');
-        if strcmp(tparts{3},'phases')
-            set(gca,'YScale','linear');
-            set(gca,'YTick',-180:45:180);
-        else
-            set(gca,'YScale','log');
-        end
-        if popts.vs_period
-            set(gca,'XScale','log');
-        end
+        setscales_(tparts{3},popts.vs_period)
         if ~isempty(lg2)
             legend(lg2,popts.legend{:});
         end
@@ -231,10 +233,10 @@ end
 
 if length(S) > 1 && comp < size(S{1}.In,2)
     figure();
-    psdplot(S,popts,comp+1);
+    dftplot(S,popts,comp+1);
 end
 
-end
+end % function
 
 function plot_(x,y,popts)
     if iscell(x) && iscell(y)
@@ -248,84 +250,157 @@ function plot_(x,y,popts)
     end
 end
 
-function [yl1, yl2] = ylabel_(S, what)
-    info = S{1}.Options.info;
-    if strcmp(what,'magnitudes')
-        inunit = unitstr(info.inunit);
-        outunit = unitstr(info.outunit);
-    else
-        inunit = '$[^\circ]$';
-        outunit = '$[^\circ]$';
+function setscales_(tparts3, vs_period)
+    if strcmp(tparts3,'magnitudes')
+        set(gca,'YScale','log');
     end
-    
-    if length(S) > 1
-        yl1 = [labelstr_(info.instr), ' ',inunit];
-        yl2 = [labelstr_(info.outstr),' ',outunit];
-    else
-        if size(S{1}.In,2) > 1
-            yl1 = unitstr(info.inunit);
-        else
-            yl1 = [labelstr_(info.instr),' ',inunit];
-        end
-        if size(S{1}.Out,2) > 1
-            yl2 = unitstr(info.outunit);
-        else
-            yl2 = [labelstr_(info.outstr),' ',outunit];
-        end
+    if strcmp(tparts3,'phases')
+        set(gca,'YScale','linear');
+        set(gca,'YTick',-180:45:180);
     end
-    if strcmp(what,'phases')
-        yl1 = ['$\angle$',' ',yl1];
-        yl2 = ['$\angle$',' ',yl2];
+    if vs_period
+        set(gca,'XScale','log');
     end
-
 end
 
-function s = labelstr_(labelstr, prefix, mag)
-    if nargin < 2, prefix = ''; end
-    if nargin < 3, mag = 1; end
-    if iscell(labelstr)
-        labelstr = labelstr{comp};
+function [lg1, lg2] = legend_(S,what,popts)
+
+    if length(S) > 1
+        % Comparing two tfs. Each plot will be for one component.
+        for s = 1:length(S)
+            lg1{s} = S{s}.Options.description;
+            lg2{s} = lg1{s};
+        end
+    else
+        if strcmp(what,'magnitudes')
+            what = 'magnitude';
+        end
+        if strcmp(what,'phases')
+            what = 'angle';
+        end
+        % Single tf. All components on same plot.
+        lg1 = '';
+        lg2 = '';
+        if size(S{1}.In) > 1
+            % One legend entry per per component.
+            for j = 1:length(popts.instr)
+                lg1{j} = labelstr_(popts.instr{j},'',what);
+            end
+        end
+        if size(S{1}.Out) > 1
+            for j = 1:length(popts.outstr)
+                lg2{j} = labelstr_(popts.outstr{j},'',what);
+            end
+        end
+    end    
+end
+
+function [yl1, yl2] = ylabel_(S,what,popts,comp)
+
+    meta = S{1}.Metadata;
+    
+    if length(S) > 1
+        if strcmp(what,'magnitudes')
+            yl1 = [labelstr_(popts.instr{comp}), ' ',meta.inunit];
+            yl2 = [labelstr_(popts.outstr{comp}),' ',meta.outunit];
+        end
+        if strcmp(what,'phases')
+            yl1 = labelstr_(popts.instr{comp},'','angle');
+            yl2 = labelstr_(popts.outstr{comp},'','angle');
+        end
+        if strcmp(what,'reals')
+            yl1 = [labelstr_(popts.instr{comp},'','real'), ' ',meta.inunit];
+            yl2 = [labelstr_(popts.outstr{comp},'','real'),' ',meta.outunit];
+        end
+        if strcmp(what,'imaginaries')
+            yl1 = [labelstr_(popts.instr{comp}),'','imaginary', ' ',meta.inunit];
+            yl2 = [labelstr_(popts.outstr{comp}),'','imaginary',' ',meta.outunit];
+        end
+    else
+        yl1 = single_(S{1}.In, what, comp, popts.instr, meta.inunit);
+        yl2 = single_(S{1}.Out, what, comp, popts.outstr, meta.outunit);
     end
+    
+    function yl = single_(X, what, comp, instr, inunit)
+        if size(X,2) > 1
+            if any(strcmp(what,{'magnitudes','reals','imaginaries'}))
+                yl = unitstr(inunit);
+            end
+            if strcmp(what,'phases')
+                yl = '$\angle$ $[^\circ]$';
+            end
+        else
+            if any(strcmp(what,{'magnitudes','reals','imaginaries'}))
+                yl = [labelstr_(instr{comp},' ',what),' ',inunit];
+            end
+            if strcmp(what,'phases')
+                yl = labelstr_(instr{comp},'','angle');
+            end
+        end
+    end
+end
+
+function [yl1, yl2] = ylabelerror_(popts,what,comp)
+    if strcmp(what,'magphase')
+        yl1 = [labelstr_(popts.outstr{comp},'\Delta','magnitude'),' ',unitstr(popts.outunit)];
+        yl2 = labelstr_(popts.outstr{comp},'\Delta','angle');
+    else
+        % Real and Imaginary
+        yl1 = [labelstr_(popts.outstr{comp},'\Delta','real'),' ',unitstr(popts.outunit)];
+        yl2 = [labelstr_(popts.outstr{comp},'\Delta','imaginary'),' ',unitstr(popts.outunit)];
+    end
+end
+
+function s = labelstr_(labelstr, prefix, ltype)
+
+    if nargin < 2, prefix = ''; end
+    if nargin < 3, ltype = 'magnitude'; end
     if contains(labelstr,'$')
         s = replace(labelstr,'$','');
     else
         s = ['\mbox{',labelstr,'}'];
     end
-    if mag
-        s = ['$|','\widetilde{',prefix, ' ', s, '}|$'];
-    else
-        s = ['$\angle$ of $','\widetilde{', prefix, ' ', s, '}\;[^\circ]$'];
+    s = ['\widetilde{',prefix,' ',s,'}'];
+    if startsWith(ltype,'magnitude')
+        s = ['$|',s,'|$'];
+    end
+    if startsWith(ltype,'angle')
+        s = ['$\angle$ of $',s,'$'];
+    end
+    if startsWith(ltype,'real')
+        s = ['Re of $',s,'$'];
+    end
+    if startsWith(ltype,'imag')
+        s = ['Im of $',s,'$'];
     end
 end
 
-function [yl1, yl2] = ylabelerror_(S,what)
-    info = S{1}.Options.info;
-    yl1 = [labelstr_(info.outstr,'\Delta',1), ' ',unitstr(info.outunit)];
-    yl2 = labelstr_(info.outstr,'\Delta',0);
-end
+function argcheck_(S,popts)
 
-function [lg1, lg2] = legend_(S)
+    if size(S{1}.In,2) ~= size(S{1}.Out,2)
+        error('Case of size(S.In,2) ~= size(S.Out,2) not handled');
+    end
 
-    if length(S) > 1
-        for s = 1:length(S)
-            info = S{s}.Options.info;
-            lg1{s} = S{s}.Options.description;
-            lg2{s} = S{s}.Options.description;
+    tparts = split(popts.type,'-');
+    tparts1 = {'error',...
+               'original','final','detrended','windowed','whitened','zeropadded'};
+    if ~any(strcmp(tparts{1},tparts1))
+        list = join(tparts1,', ');
+        error('popts.type must start with one of: %s (not %s)',list{1},tparts{1});
+    end
+    if strcmp(tparts{1},'error')
+        tparts3 = {'magphase','realimag'};
+        if ~any(strcmp(tparts{3},tparts3))
+            list = join(tparts3,', ');
+            error('pots.type must end with one of %s (not %s)',list{1},tparts{3});
         end
     else
-        lg1 = '';
-        lg2 = '';
-        if size(S{1}.In) > 1
-            for j = 1:length(info.instr)
-                lg1{j} = labelstr_(info.instr{j});
-            end
+        tparts3 = {'magnitudes','phases','reals','imaginaries'};
+        if ~any(strcmp(tparts{3},tparts3))
+            list = join(tparts3,', ');
+            error('pots.type must end with one of %s (not %s)',list{1},tparts{3});
         end
-        if size(S{1}.Out) > 1
-            for j = 1:length(info.outstr)
-                lg2{j} = labelstr_(info.outstr{j});
-            end
-        end
-    end    
+    end
 end
 
 function ls1 = plotnoise(ls1,comp,unit)
@@ -336,15 +411,17 @@ function ls1 = plotnoise(ls1,comp,unit)
         loglog(x,y,popts.line{:});
         jl = size(S.(comp),2);
         if strcmp(comp,'InNoisePSD')
-            compstrs = info.instr;
+            compstrs = popts.instr;
         else
-            compstrs = info.outstr;
+            compstrs = popts.outstr;
         end
         for j = 1:jl
-            if iscell(info.instr)
-                ls1{j+jl} = sprintf('%s(:,%d) Noise Amplitudes%s',compstrs{j},j,unit);
+            if iscell(meta.instr)
+                ls1{j+jl} = sprintf('%s(:,%d) Noise Amplitudes%s',...
+                                        compstrs{j},j,unit);
             else
-                ls1{j+jl} = sprintf('%s Noise Amplitudes%s',compstrs,unit);
+                ls1{j+jl} = sprintf('%s Noise Amplitudes%s',...
+                                        compstrs,unit);
             end
         end
     end

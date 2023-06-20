@@ -26,14 +26,13 @@ copts.print    = 0; % Set to 1 to print pdf of each figure created.
 copts.printdir = fullfile(scriptdir(),'data','Middelpos','figures');
 copts.printfmt = {'pdf'};
 
-figure(1); 
-close all;
+dock on;figure(1);close all;
 
 %% Time series plots
 % Plot raw time series data used for TF1 (will be same as that for TF2)
 figure();
     tsopts = copts;
-    tsopts.type = 'raw';
+    tsopts.type = 'original';
     tsplot(TF1,tsopts);
 
 % Plot error for S1 only
@@ -50,6 +49,27 @@ figure();
     tsopts.type  = 'error';
     tsplot({TF1,TF2},tsopts);
 
+
+%% DFT plots
+% Plot Fourier amplitudes for In/Out of TF1 (will be the same for both)
+figure();
+    dftopts = copts;
+    dftopts.type = 'original-averaged';    
+    dftplot(TF1,dftopts);
+
+% Plot Fourier phases for In/Out of TF1 (will be the same for both)
+figure();
+    dftopts = copts;
+    dftopts.type = 'original-averaged-phases';
+    dftplot(TF1,dftopts);
+
+% Compare TF1 and TF2
+figure();
+    dftopts = copts;
+    dftopts.type = 'error-averaged';
+    dftplot({TF1,TF2},dftopts);
+
+    
 %% SN plots
 if 0
     % Plot SN for S1 only
@@ -63,30 +83,13 @@ if 0
         snopts = copts;
         %snopts.period_range = [1, 86400];
         snplot(TF2,snopts);
+
+    % Compare SN between S1 and S2
+    figure();
+        snopts = copts;
+        %snopts.period_range = [1, 110*86400];
+        snplot({TF1,TF2},snopts);
 end
-
-% Compare SN between S1 and S2
-figure();
-    snopts = copts;
-    %snopts.period_range = [1, 110*86400];
-    snplot({TF1,TF2},snopts);
-
-
-%% PSD plots
-% Plot PSDs for S1 only (will be the same for both)
-figure();
-    psdopts = copts;
-    %psdopts.period_range = [1, 86400];
-    psdopts.type = 'smoothed';    
-    psdplot(TF1,psdopts);
-
-% Compare PSD between S1 and S2
-figure();
-    psdopts = copts;
-    psdopts.type = 'error-smoothed';
-    %psdopts.period_range = [1, 86400];
-    psdplot({TF1,TF2},psdopts);
-
 
 %% Z plots
 % Compare Z between S1 and S2
@@ -101,10 +104,10 @@ figure();
 % for one of the segments. (For S2, there is only one segment that was
 % used to compute Z.)
 
-fidx = 10; % frequency number
-comp = 1;  % component (Zxx=1, Zxy=2, Zyx=3, Zyy=4).
+fidx = 20; % frequency number
+comp = 2;  % component (Zxx=1, Zxy=2, Zyx=3, Zyy=4).
 sidx = 1;  % segment number
 
 figure();
-    qqplot_(TF1,fidx,comp,sidx);
+    qqplot_(TF2,fidx,comp,sidx);
     

@@ -7,7 +7,7 @@ function [Zi,fi,Zip,fip] = zinterp(f,Z,fi,opts)
 %  follows the convention of FFTFREQ (and FFT) and a given Z value at f =
 %  +0.5 will appear at fi = -0.5 if N is even.
 %
-%  [Zi,fi,Zip,fip] = ZINTERP(f,Z,N) returnz Zip for positive frequencies
+%  [Zi,fi,Zip,fip] = ZINTERP(f,Z,N) returns Zip for positive frequencies
 %  fip.
 %
 %  If f(1) = 0, it is not used for interpolation and if fi(1) = 0, Zi(1,:)
@@ -17,12 +17,9 @@ function [Zi,fi,Zip,fip] = zinterp(f,Z,fi,opts)
 %  using the given Z at frequencies f using INTERP1. fi >= 0 and f >= 0 are
 %  required and the f(1) = 0 case is handled as described above.
 %
-
 %  See also ZINTERP_DEMO, ZINTERP_TEST.
 
 % TODO: Allow interpolation in log space.
-
-addpath([fileparts(mfilename('fullpath')),'/../misc/']);
 
 if nargin < 4
     opts = struct('loglevel',0,'interp1args',{{'linear',0}});
@@ -36,11 +33,17 @@ else
     end
 end
 
-assert(ismatrix(Z),'Z can have at most two dimensions.');
 
+assert(ismatrix(Z),'Z can have at most two dimensions.');
 assert(iscolumn(f),'f must be a column vector (nx1)');
 assert(iscolumn(fi),'fi must be a column vector (nx1)');
 assert(size(Z,1) == size(f,1),'Z and f must have same number of rows');
+
+% Keep any row of Z without a NaN
+% TODO: Handle cases where too few values left for interpolation.
+Ik = any(~isnan(Z),2);
+f = f(Ik);
+Z = Z(Ik,:);
 
 N = NaN;
 if isscalar(fi) % Zinterp(f,Z,N) usage
@@ -49,6 +52,20 @@ if isscalar(fi) % Zinterp(f,Z,N) usage
     [fa,fi] = fftfreq(N);
     % fi contains unique DFT frequencies with f = -0.5 mapped to f = +0.5
     % when N is even so that fi(end) = +0.5.
+end
+
+if length(f) == 1
+    I = find(f == fi,1);
+    if ~isempty(I)
+        logmsg('Only one frequency that matches an interpolation frequency.\n');
+        logmsg('Setting Z = 0 at all interpolation frequencies execept matching frequency.\n');
+        Zo = Z;
+        Z = zeros(length(fi),size(Zo,2));
+        Z(I,:) = Zo;
+        f = fi;
+    else
+        error('Only one frequency and it does not equal any interpolation frequency. Cannot interpolate.');
+    end
 end
 
 if any(f < 0) || any(fi < 0)
@@ -62,9 +79,9 @@ if length(f) == length(fi) && all(f(:) == fi(:))
              'No interpolation will be performed.\n']);
     end
     if ~isnan(N)
+        % Zinterp(f,Z,N) usage.
         fir = fi;
         Zir = Z;
-        % Zinterp(f,Z,N) usage.
         % Create Z having negative frequency elements.
         [Zi,fi] = zfull(Z,N);
     else
@@ -74,10 +91,10 @@ if length(f) == length(fi) && all(f(:) == fi(:))
 end
 
 if opts.loglevel > 0
-    logmsg( 'First interp frequency: %.4f\n',fi(1));
-    logmsg( 'First given frequency : %.4f\n',f(1));
-    logmsg( 'Last interp frequency : %.4f\n',fi(end));
-    logmsg( 'Last given frequency  : %.4f\n',f(end));
+    logmsg('First interp frequency: %.4f\n',fi(1));
+    logmsg('First given frequency : %.4f\n',f(1));
+    logmsg('Last interp frequency : %.4f\n',fi(end));
+    logmsg('Last given frequency  : %.4f\n',f(end));
 end
 
 % Remove Z value for f = 0 if found.

@@ -1,4 +1,7 @@
-clear
+% https://dsp.stackexchange.com/a/22041
+% https://dsp.stackexchange.com/a/24426
+
+clear;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 N = 100;

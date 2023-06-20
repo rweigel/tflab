@@ -1,13 +1,13 @@
-function dfta = dftaverage(dftsegments, weights)
+function dfta = dftaverage(band, weights)
+%DFTAVERAGE
 
-for s = 1:length(dftsegments)
-    nc = size(dftsegments{s},2);
-    nr = size(dftsegments{s},1);
+for s = 1:length(band)
+    nc = size(band{s},2);
+    nr = size(band{s},1);
     if ~exist('weights','var')
-        dfta(s,:) = sum(dftsegments{s},1)/nr;
+        dfta(s,:) = sum(band{s},1)/nr;
     else
-        w = repmat(weights{s},1,nc);
-        dfta(s,:) = sum(w.*dftsegments{s},1);
+        dfta(s,:) = sum(weights{s}.*band{s},1);
     end
 end
 

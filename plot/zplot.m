@@ -12,23 +12,24 @@ if iscell(S) && length(S) == 1
     S = S{1};
 end
 
-ptype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re,Im
-opts = tflabplot_options(S, popts, ptype, 'zplot');
+S = tflab_metadata(S);
 
-S = defaultinfo(S);
+ptype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re,Im
 if iscell(S)
     % TODO: Check all same.
-    timeunit  = S{1}.Options.info.timeunit;
-    timedelta = S{1}.Options.info.timedelta;
-    Zstrs   = S{1}.Options.info.zstrs;
-    Rhostrs = S{1}.Options.info.rhostrs;
-    Phistrs = S{1}.Options.info.phistrs;
+    timeunit  = S{1}.Metadata.timeunit;
+    timedelta = S{1}.Metadata.timedelta;
+    opts = tflabplot_options(S, popts, ptype, 'zplot');
+    Zstrs   = opts.zstrs;
+    Rhostrs = opts.rhostrs;
+    Phistrs = opts.phistrs;
 else
-    timeunit  = S.Options.info.timeunit;
-    timedelta = S.Options.info.timedelta;
-    Zstrs   = S.Options.info.zstrs;
-    Rhostrs = S.Options.info.rhostrs;
-    Phistrs = S.Options.info.phistrs;
+    timeunit  = S.Metadata.timeunit;
+    timedelta = S.Metadata.timedelta;
+    opts = tflabplot_options(S, popts, ptype, 'zplot');
+    Zstrs   = opts.zstrs;
+    Rhostrs = opts.rhostrs;
+    Phistrs = opts.phistrs;
 end
 
 % Single transfer function
@@ -52,7 +53,7 @@ if isstruct(S)
     end
     
     figprep();
-    ax1 = subplot('Position', opts.PositionTop);
+    ax(1) = subplot('Position', opts.PositionTop);
         switch opts.type
             case 1
                 y = abs(S.Z);
@@ -89,21 +90,22 @@ if isstruct(S)
             idx = x <= opts.period_range(1) | x >= opts.period_range(2);
             y(idx) = NaN;
             if interp_Z_exists
-                idx = xi <= opts.period_range(1) | xi >= opts.period_range(2);
+                idx = xi < opts.period_range(1) | xi > opts.period_range(2);
                 yi(idx) = NaN;
             end
         end
         
         plot(x, y, opts.line{:}, 'markersize', 20);
+        colororder_(ax(1),y);
         hold on;grid on;box on;
         if interp_Z_exists
             plot(xi, yi, opts.line{:}, 'markersize', 15);
         end
         if length(ls) > 1
-            ylabel(unitstr_(S.Options.info));
+            ylabel(unitstr_(S.Metadata));
             legend(ls,opts.legend{:});
         else
-            ylabel(sprintf('%s %s',ls{1},unitstr_(S.Options.info)));
+            ylabel(sprintf('%s %s',ls{1},unitstr_(S.Metadata)));
         end
         titlestr(S,opts,'z');            
         if opts.vs_period
@@ -119,7 +121,7 @@ if isstruct(S)
         adjust_exponent('y');
         setx(opts,0,timeunit);
 
-    ax2 = subplot('Position', opts.PositionBottom);
+    ax(2) = subplot('Position', opts.PositionBottom);
         if opts.type ~= 3
             if opts.unwrap
                 y = (180/pi)*unwrap(atan2(imag(S.Z),real(S.Z)));
@@ -138,7 +140,7 @@ if isstruct(S)
             yl = '[$^\circ$]';
         else
             y = imag(S.Z);
-            yl = unitstr_(S.Options.info);
+            yl = unitstr_(S.Metadata);
             for j = 1:size(S.Z,2)
                 ls{j} = sprintf('Im$(%s)$ Estimated',Zstrs{j});
             end
@@ -158,8 +160,9 @@ if isstruct(S)
                 yi(idx) = NaN;
             end
         end
-        hold on;grid on;box on;
         plot(x, y, opts.line{:}, 'markersize', 20);
+        hold on;grid on;box on;
+        colororder_(ax(2),y);
         if interp_Z_exists
             plot(xi, yi, opts.line{:}, 'markersize', 15);
         end
@@ -176,7 +179,6 @@ if isstruct(S)
             set(gca,'YScale','linear');
             set(gca,'YTick',-180:45:180);
         end
-        legend(ls,opts.legend{:});
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
@@ -260,7 +262,7 @@ if iscell(S)
                 end
             end
             
-            yunitstr_ = unitstr_(S{1}.Options.info);
+            yunitstr_ = unitstr_(S{1}.Metadata);
             if opts.type == 1
                 yl = sprintf('$|%s|$%s',Zstrs{j},yunitstr_);
                 adjust_ylim('upper');
@@ -290,7 +292,7 @@ if iscell(S)
                 yebu = [];
                 if opts.type == 3
                     y = imag(S{s}.Z(:,j));
-                    yl = sprintf('Im$(%s)$ %s',Zstrs{j},unitstr_(S{1}.Options.info));
+                    yl = sprintf('Im$(%s)$ %s',Zstrs{j},unitstr_(S{1}.Metadata));
                     ls{s} = sprintf('%s',S{s}.Options.description);
                     if isfield(S{s},'ZCL')
                         yebl = squeeze(imag(S{s}.ZCL.Z.Normal.x_1sigma(:,j,1)));
@@ -369,17 +371,17 @@ function line = lineopts_(Nz, s)
     end
 end
 
-function str = unitstr_(info)
+function str = unitstr_(meta)
 
     str = '';
-    if isempty(info.inunit) || isempty(info.outunit)
+    if isempty(meta.inunit) || isempty(meta.outunit)
         return
     end
-    inunit = sprintf('%s',info.inunit);
+    inunit = sprintf('%s',meta.inunit);
     if contains(inunit,'/')
         inunit = sprintf('(%s)',inunit);
     end
-    outunit = sprintf('%s',info.outunit);
+    outunit = sprintf('%s',meta.outunit);
     if contains(outunit,'/')
         outunit = sprintf('(%s)',outunit);
     end

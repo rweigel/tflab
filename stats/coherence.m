@@ -1,33 +1,31 @@
-function [cxy,f] = coherence(x, y, opts, smoothed)
+function [cxy,f] = coherence(x, y, averaged, opts)
 
-if nargin < 3
-    [dftx, f] = fftu(x);
-    dfty = fftu(y);
-    dftxy = conj(dftx).*dfty;
-    cxy = abs(dftxy)./(abs(dftx).*abs(dfty));
-    return
+if ~exist('averaged', 'var')
+    averaged = 0;
 end
 
-[dftsegsx,f] = dftsegments(x, opts);
-dftsegsy = dftsegments(y, opts);
+if nargin < 3 || averaged == 0
+    [cxy,f] = mscohere(x,y);
+    return;
+end
+ 
+[dftsegsx,f,fe] = dftbands(x, opts);
+dftsegsy = dftbands(y, opts);
 
-if ~exist('smoothed', 'var')
-    smoothed = 0;
-end
-if smoothed == 1
-    w = dftweights(f, dftsegsx, dftsegsy, opts);
-end
+[wx,wy] = dftweights(f, dftsegsx, dftsegsy, opts);
 
 for s = 1:length(f)
-    dftx = dftsegsx{s};
-    dfty = dftsegsy{s};
-    dftxy  = dftx.*conj(dfty);
-    if smoothed == 0       
-        cxy{s,1} = abs(dftxy)/(abs(dftx).*abs(dfty));
-    else
-        dftx  = sum(w{s}.*dftsegsx{s});
-        dfty  = sum(w{s}.*dftsegsy{s});
-        dftxy = sum((w{s}.*dftsegsx{s}).*conj(w{s}.*dftsegsy{s}));
-        cxy(s,:) = abs(dftxy)/(abs(dftx).*abs(dfty));
+    if length(dftsegsx{s}) == 1
+        % If only one dft value, coherence is 1 by definition. This
+        % avoids cxy = NaN when either dftsegsx{s} or dftsegsy{s} are
+        % identically zero.
+        cxy(s,:) = 1;
+        continue;
     end
+    sxx = sum(abs(wx{s}.*dftsegsx{s}).^2,1);
+    syy = sum(abs(wy{s}.*dftsegsy{s}).^2,1);
+    sxy = sum(abs( conj(wx{s}.*dftsegsx{s}).*wy{s}.*dftsegsy{s} ),1);
+    cxy(s,:) = sxy.^2/(sxx*syy);
 end
+
+f = fe;

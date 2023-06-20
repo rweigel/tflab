@@ -14,106 +14,116 @@ if nargin < 2
     popts = struct();
 end
 
-opts = tflabplot_options(S, popts, 'original', 'tsplot');
+% Apply default metadata for fields not specified in S.Metadata.
+S = tflab_metadata(S);
+
+% Apply default plot options for fields in popts not specified.
+popts = tflabplot_options(S, popts, 'original', 'tsplot');
 
 if iscell(S) && length(S) == 1
     S = S{1};
 end
 
-S = defaultinfo(S);
 if iscell(S)
-    info = S{1}.Options.info;
-    timeunit  = S{1}.Options.info.timeunit;
-    timedelta = S{1}.Options.info.timedelta;
+    info = S{1}.Metadata;
+    timeunit  = S{1}.Metadata.timeunit;
+    timedelta = S{1}.Metadata.timedelta;
 
-    t = timeVector_(S{1});
+    t = timeVector_(S{1}, size(S{1}.In,1));
     timeunits = {};
     timestarts = {};
     for s = 1:length(S)
-        timeunits{s}  = S{s}.Options.info.timeunit;
-        timestarts{s} = S{s}.Options.info.timestart;
+        timeunits{s}  = S{s}.Metadata.timeunit;
+        timestarts{s} = S{s}.Metadata.timestart;
     end
     % TODO: Allow different timeunits and timestarts.
     if length(unique(timeunits)) > 1
+        timeunits
         error('Time units must all be the same');
     end
     if length(unique(timestarts)) > 1
         error('Time starts must all be the same');
     end
 else
-    info = S.Options.info;
-    timeunit  = S.Options.info.timeunit;
-    timedelta = S.Options.info.timedelta;
-    t = timeVector_(S);
+    info = S.Metadata;
+    timeunit  = S.Metadata.timeunit;
+    timedelta = S.Metadata.timedelta;
+    if strcmp(popts.type,'error')
+        y1{1} = S.Out;
+        y1{2} = S.Out_.Predicted;
+        t1 = timeVector_(S, size(y1{1},1));
+
+        y2 = S.Out_.Error;
+        t2 = timeVector_(S, size(y2,1));
+
+        lg1 = {'Measured', 'Predicted'};
+    else
+        if strcmp(popts.type,'original')
+            y1 = S.In;
+            y2 = S.Out;
+        elseif strcmp(popts.type,'final')
+            y1 = S.In_.Final;
+            y2 = S.Out_.Final;
+        else    
+            typeuc = [upper(popts.type(1)),popts.type(2:end)];
+            if ~isfield(S.In_,typeuc)
+                error('Data were not %s. No plot created.',popts.type);
+            end
+            y1 = S.In_.(typeuc);
+            y2 = S.Out_.(typeuc);
+        end
+        t1 = timeVector_(S, size(y1,1));
+        t2 = timeVector_(S, size(y2,1));
+        [yl1, yl2] = ylabel_(S);
+        [lg1, lg2] = legend_(popts);
+    end
 end
 
 figprep();
 
-if ~iscell(S) && ~strcmp(opts.type,'error')
-
-    if strcmp(opts.type,'original')
-        In = S.In;
-        Out = S.Out;
-    elseif strcmp(opts.type,'final')
-        In = S.In_.Final;
-        Out = S.Out_.Final;
-    else    
-        typeuc = [upper(opts.type(1)),opts.type(2:end)];
-        if ~isfield(S.In_,typeuc)
-            error('Data were not %s. No plot created.',opts.type);
-        end
-        In = S.In_.(typeuc);
-        Out = S.Out_.(typeuc);
-    end
+if ~iscell(S) && ~strcmp(popts.type,'error')
     
-    [yl1, yl2] = ylabel_(S);
-    [lg1, lg2] = legend_(S);
-    
-    ax(1) = subplot('Position',opts.PositionTop);
-        plot(t,In);
+    ax(1) = subplot('Position',popts.PositionTop);
+        plot(t1,y1);
         colororder_(ax(1), S.In);
         grid on;grid minor;box on;
-        titlestr(S,opts,'ts');
+        titlestr(S,popts,'ts');
         ylabel(yl1);
         if ~isempty(lg1)
-            [~, lo] = legend(lg1,opts.legend{:});
+            [~, lo] = legend(lg1,popts.legend{:});
             adjust_legend_lines(lo);
-        end
-        if isfield(S,'InNoise') && ~strcmp(opts.type,'windowed')
-            %hold on;
-            %plot(t,S.InNoise);
         end
         %adjust_ylim();
         adjust_exponent('y');
-        setx_(0,info,[t(1),t(end)]);
+        setx_(0,info,[t1(1),t1(end)]);
         
-    ax(2) = subplot('Position',opts.PositionBottom);
-        plot(t,Out);
+    ax(2) = subplot('Position',popts.PositionBottom);
+        plot(t1,y2);
         colororder_(ax(2), S.Out);
         grid on;grid minor;box on;    
         ylabel(yl2);
         if ~isempty(lg2)
-            [~, lo] = legend(lg2,opts.legend{:});
+            [~, lo] = legend(lg2,popts.legend{:});
             adjust_legend_lines(lo);
         end
-        if isfield(S,'OutNoise') && ~strcmp(opts.type,'windowed')
+        if isfield(S,'OutNoise') && ~strcmp(popts.type,'windowed')
             %hold on;
             %plot(t,S.OutNoise);
         end
         %adjust_ylim();
         adjust_exponent('y');
-        setx_(1,info,[t(1),t(end)]);  
+        setx_(1,info,[t2(1),t2(end)]);  
     
-    if opts.print
-        for i = 1:length(opts.printfmt)
+    if popts.print
+        for i = 1:length(popts.printfmt)
             fname = sprintf('%s_%s.%s',...
-                        opts.printname, opts.type, opts.printfmt{i});
-            figsave(fullfile(opts.printdir, fname), opts);
+                        popts.printname, popts.type, popts.printfmt{i});
+            figsave(fullfile(popts.printdir, fname), popts);
         end
     end
 end
 
-if ~iscell(S) && strcmp(opts.type,'error')
+if ~iscell(S) && strcmp(popts.type,'error')
     
     for j = 1:size(S.Out,2)
         if j > 1
@@ -124,12 +134,12 @@ if ~iscell(S) && strcmp(opts.type,'error')
         if ~isempty(info.outunit)
             outunit = sprintf(' [%s]', info.outunit);
         end
-        if iscell(info.outstr)
-            outstrerr = info.outstr{j};
-            outstr = sprintf('%s%s',info.outstr{j},outunit);
+        if iscell(popts.outstr)
+            outstrerr = popts.outstr{j};
+            outstr = sprintf('%s%s',popts.outstr{j},outunit);
         else
-            outstr = info.outstr;
-            outstrerr = info.outstr;
+            outstr = popts.outstr;
+            outstrerr = popts.outstr;
             if size(S.Out,2) > 1
                 outstr = sprintf('%s(:,%d)%s',outstr,j,outunit);
                 outstrerr = sprintf('%s(:,%d)',outstr,j);
@@ -139,37 +149,35 @@ if ~iscell(S) && strcmp(opts.type,'error')
                         S.Metrics.PE(j),...
                         S.Metrics.CC(j),...
                         S.Metrics.MSE(j));
-        desc = S.Options.description;
-        lg1{1} = 'Measured';
-        lg1{2} = 'Predicted';
+
         lg2 = sprintf('%s Error; %s',outstrerr,metrics);
 
-        ax(1,j) = subplot('Position',opts.PositionTop);
-            plot(t,S.Out(:,j));
+        ax(1,j) = subplot('Position',popts.PositionTop);
+            plot(t1,y1{1}(:,j));
             grid on;grid minor;box on;hold on;
-            plot(t,S.Out_.Predicted(:,j));
-            [~, lo] = legend(lg1(:),opts.legend{:});
+            plot(t1,y1{2}(:,j));
+            [~, lo] = legend(lg1(:),popts.legend{:});
             ylabel(outstr);
             adjust_legend_lines(lo);
             adjust_ylim();
             adjust_exponent('y');
-            setx_(0,info,[t(1),t(end)]);
-            titlestr(S,opts,'ts');
-        ax(2,j) = subplot('Position',opts.PositionBottom);
-            plot(t,S.Out_.Predicted(:,j)-S.Out(:,j));
+            setx_(0,info,[t1(1),t1(end)]);
+            titlestr(S,popts,'ts');
+        ax(2,j) = subplot('Position',popts.PositionBottom);
+            plot(t2,y2(:,j));
             grid on;grid minor;box on;
             ylabel(outunit);            
             %adjust_ylim();
             adjust_exponent('y')            
-            [~, lo] = legend(lg2,opts.legend{:});
+            [~, lo] = legend(lg2,popts.legend{:});
             adjust_legend_lines(lo);
-            setx_(1,info,[t(1),t(end)]);
+            setx_(1,info,[t2(1),t2(end)]);
 
-        if opts.print
-            for i = 1:length(opts.printfmt)
+        if popts.print
+            for i = 1:length(popts.printfmt)
                 fname = sprintf('%s_%s.%s',...
-                            opts.printname,opts.type, opts.printfmt{i});
-                figsave(fullfile(opts.printdir, fname));
+                            popts.printname,popts.type, popts.printfmt{i});
+                figsave(fullfile(popts.printdir, fname));
             end
         end
     end
@@ -180,24 +188,24 @@ c = {'k','r','g','b'}; % TODO: Define more colors
 
 % Compare
 if iscell(S)
-    if ~strcmp(opts.type,'error')
+    if ~strcmp(popts.type,'error')
         error('tsplot for cell array input must be ''error''');
     end
 
-    subplot('Position',opts.PositionTop);
+    subplot('Position',popts.PositionTop);
         plot(t,S{1}.Out(:,1),c{1});
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
-                    S{1}.Options.info.outstr{1},S{1}.Options.info.outunit));
-        lg0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
+                    popts.outstr{1},S{1}.Metadata.outunit));
+        lg0 = sprintf('Observed at %s\n', S{1}.Metadata.stationid);
 
         for j = 1:length(S)
             plot(t,S{j}.Out_.Predicted(:,1),c{j+1});
             lg{j} = sprintf('Predicted %s\n',...
                         S{j}.Options.description);
         end
-        if ~isempty(opts.title)
-            title(opts.title);
+        if ~isempty(popts.title)
+            title(popts.title);
         end
         [~, lo] = legend({lg0,lg{:}},...
                         'Location','NorthEast','Orientation','Vertical');
@@ -205,12 +213,12 @@ if iscell(S)
         adjust_ylim();
         adjust_exponent('y');
         setx_(0,info,[t(1),t(end)]);
-    subplot('Position',opts.PositionBottom);
+    subplot('Position',popts.PositionBottom);
         plot(t,S{1}.Out(:,2),c{1});
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
-                    S{1}.Options.info.outstr{2},S{1}.Options.info.outunit));
-        lg0 = sprintf('Observed at %s\n', S{1}.Options.info.stationid);
+                    popts.outstr{2},S{1}.Metadata.outunit));
+        lg0 = sprintf('Observed at %s\n', S{1}.Metadata.stationid);
 
         for j = 1:length(S)
             for j = 1:length(S)
@@ -226,11 +234,11 @@ if iscell(S)
         adjust_exponent('y');
         setx_(1,info,[t(1),t(end)]);
     
-    if opts.print
-        for i = 1:length(opts.printfmt)
+    if popts.print
+        for i = 1:length(popts.printfmt)
             fname = sprintf('%s_compare_%s.%s',...
-                        opts.printname, opts.type, opts.printfmt{i});
-            figsave(fullfile(opts.printdir, fname));
+                        popts.printname, popts.type, popts.printfmt{i});
+            figsave(fullfile(popts.printdir, fname));
         end
     end
 end
@@ -276,65 +284,59 @@ function setx_(last,info,tl)
         
 end
 
-function [lg1, lg2] = legend_(S)
+function [lg1, lg2] = legend_(opts)
 
-    info = S.Options.info;
     lg1 = '';
     lg2 = '';
-    if size(S.In) > 1
-        for j = 1:length(info.instr)
-            lg1{j} = info.instr{j};
-        end
+    if length(opts.instr) > 1
+        lg1 = opts.instr;
     end
-    if size(S.Out) > 1
-        for j = 1:length(info.outstr)
-            lg2{j} = info.outstr{j};
-        end
+    if length(opts.outstr) > 1
+        lg2 = opts.outstr;
     end    
 end
 
 function [yl1, yl2] = ylabel_(S)    
-    info = S.Options.info;
+    meta = S.Metadata;
     if size(S.In,2) > 1
-        yl1 = unitstr(info.inunit);
+        yl1 = unitstr(meta.inunit);
     else
-        yl1 = [info.instr,' ',unitstr(info.inunit)];
+        yl1 = [meta.instr,' ',unitstr(meta.inunit)];
     end
     if size(S.Out,2) > 1
-        yl2 = unitstr(info.outunit);
+        yl2 = unitstr(meta.outunit);
     else
-        yl2 = [info.outstr,' ',unitstr(info.outunit)];
+        yl2 = [meta.outstr,' ',unitstr(meta.outunit)];
     end
 end
 
-function t = timeVector_(S)
+function t = timeVector_(S, nt)
 
-    info = S.Options.info;
-    nt = size(S.In,1);
-    if ischar(info.timestart)
+    meta = S.Metadata;
+    if ischar(meta.timestart)
         try
             fmt = 'yyyy-mm-ddTHH:MM:SS.FFF';
-            to = datenum(info.timestart,fmt);
+            to = datenum(meta.timestart,fmt);
         catch
-            warning(['Could not parse Options.info.timestart. Format must be ',fmt]);
-            info.timestart = '';
+            warning(['Could not parse Metadata.timestart. Format must be ',fmt]);
+            meta.timestart = '';
         end
-        dt = info.timedelta;
-        % Determine ppd (point per day)
-        if strcmp(info.timeunit,'ms') || startsWith(info.timeunit,'millis')
+        dt = meta.timedelta;
+        % Determine ppd (points per day)
+        if strcmp(meta.timeunit,'ms') || startsWith(meta.timeunit,'millis')
             ppd = 86400000/dt;
-        elseif  startsWith(info.timeunit,'s')
+        elseif  startsWith(meta.timeunit,'s')
             ppd = 86400/dt;
-        elseif strcmp(info.timeunit,'m') || startsWith(info.timeunit,'min')
+        elseif strcmp(meta.timeunit,'m') || startsWith(meta.timeunit,'min')
             ppd = 1440/dt;
         else
-            error(['Options.td.timeunit = %s not recognized. ',...
+            error(['Metadata.timeunit = %s not recognized. ',...
                    'Must be "millseconds", "seconds", or "minutes".'],...
-                    info.timeunit);
+                    meta.timeunit);
         end
         t = to + (0:nt-1)'/ppd;
     else
-        t = (info.timestart:info.timedelta:nt)';
+        t = (meta.timestart:meta.timedelta:nt)';
     end
 end
 

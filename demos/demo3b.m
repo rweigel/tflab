@@ -32,6 +32,7 @@ A = struct();
     A.Z  = 1;
     
 Sx = demo_signals('powerlaw',struct('N',10*N,'n',10*n,'alpha',alpha,'A',A));
+Sx.Options.description = 'Actual';
 
 opts = tflab_options(1);
     opts.tflab.loglevel = 1;
@@ -60,9 +61,6 @@ if 0
     S1.Options = opts;
     S1 = tflab_metrics(S1, opts);
 end
-
-Sx.Options.info = S1.Options.info; % Use same variable labels from S1 for S0
-Sx.Options.description = 'Actual';
 
 dock on;figure(1);close all;
 

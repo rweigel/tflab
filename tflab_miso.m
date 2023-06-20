@@ -1,7 +1,7 @@
-function S = tflab_miso(S)
+function [Z,fe,Regression] = tflab_miso(DFT,opts)
 %TFLAB_MISO Frequency domain MISO transfer function estimate
 %
-%  S = TFLAB_MISO(B,E) returns a structure with an estimate of the
+%  S = TFLAB_MISO(DFT) returns a structure with an estimate of the
 %  transfer function Z in the expression
 %
 %    Ex(f) = Zxx(f)Bx(f) + Zxy(f)By(f) + ...
@@ -21,15 +21,19 @@ function S = tflab_miso(S)
 %
 %  See also TFLAB.
 
-if isfield(S,'Options')
-    opts = S.Options;
+Regression = struct();
+
+if isfield(DFT,'In_')
+    DFTIn = DFT.In_.Final.DFT;
+    DFTOut = DFT.Out_.Final.DFT;
+    f = DFT.Out_.Final.f;
+    fe = DFT.Out_.Final.fe;
 else
-    opts = tflab_options(0);
+    DFTIn = DFT.In;
+    DFTOut = DFT.Out;
+    f = DFT.f;
+    fe = DFT.fe;
 end
-
-S.Regression = struct();
-
-fe = S.fe;
 
 if opts.tflab.loglevel > 0
     logmsg(['Starting freq band and regression '...
@@ -39,62 +43,73 @@ if opts.tflab.loglevel > 0
             func2str(opts.fd.regression.function));
 end
 
+[WIn, WOut] = dftweights(f, DFTIn, DFTOut, opts);
+
+Regression.DFT.InWeights = WIn;
+Regression.DFT.OutWeights = WOut;
+
 for j = 1:length(fe)
 
-    ftB = S.DFT.In{j,1};
-    ftE = S.DFT.Out{j,1};
-    f = S.DFT.f{j,1};
-    W = S.DFT.Weights{j,1};
-    Wr = repmat(W,1,size(ftB,2));
+    ftIn = DFTIn{j,1};
+    ftOut = DFTOut{j,1};
+    wIn = WIn{j,1};
+    wOut = WOut{j,1};
 
     if opts.fd.window.loglevel > 0
         logmsg(['Band with center of fe = %.8f has %d '...
                 'points; fl = %.8f fh = %.8f\n'],...
-                 fe(j),length(f),f(1),f(end));
+                 fe(j),length(f),min(f),max(f));
     end
 
-    lastwarn('');
-    if size(ftB,2) == 1 && length(f) == 1
-        z = ftE./ftB;
+    if size(ftIn,2) == 1 && length(f) == 1
+        z = ftOut./ftIn;
         if isinf(z)
             z = nan;
         end
+        keyboard
         Z(j,1) = z;
-        S.Regression.Weights{j,1} = nan*W;
-        S.Regression.Residuals{j,1} = nan*W;
+        Regression.Weights{j,1} = nan(length(f),1);
+        Regression.Residuals{j,1} = nan(length(f),1);
         continue;
     end
-    if length(f) < size(ftB,2)
-        Z(j,:) = nan(1,size(ftB,2));
-        S.Regression.Weights{j,1} = nan*W;
-        S.Regression.Residuals{j,1} = nan*W;
+    
+    if length(f) < size(ftIn,2)
+        Z(j,:) = nan(1,size(ftIn,2));
+        Regression.Weights{j,1} = nan(length(f),1);
+        Regression.Residuals{j,1} = nan(length(f),1);
         logmsg(['!!! System is underdetermined for fe = %f. ',...
                 'Setting Z equal to NaN(s) for this frequency.'],fe(j));
         continue;
     end
 
+    lastwarn('');
     regressargs = opts.fd.regression.functionargs;
     regressfunc = opts.fd.regression.function;
     
     [Z(j,:),Residuals,Weights] = ...
-               regressfunc(W.*ftE,Wr.*ftB,regressargs{:});
+               regressfunc(wOut.*ftOut,wIn.*ftIn,regressargs{:});
+    
+    if ~isempty(lastwarn)
+        logmsg('Above is for eval. freq. #%d; fe = %f; Te = %f\n', ...
+            j,fe(j),1/fe(j));
+        logmsg(sprintf('ftE = \n'));
+        logmsg(sprintf('   %.16f\n',ftOut));
+        logmsg(sprintf('ftB = \n'));
+        logmsg(sprintf('   %.16f\n',ftIn));
+    end
+
 
     if any(isinf(Z(j,:)))
         logmsg(['!!! Z has Infs for fe = %f. ',...
                 'Setting Z equal to NaN(s) for this frequency.'],fe(j));
         Z(j,:) = nan;
+        Regression.Weights{j,1} = nan(length(f),1);
+        Regression.Residuals{j,1} = nan(length(f),1);
+        continue;
     end
-    if ~isempty(lastwarn)
-        logmsg('Above is for eval. freq. #%d; fe = %f; Te = %f\n', ...
-            j,fe(j),1/fe(j));
-        logmsg(sprintf('ftE = \n'));
-        logmsg(sprintf('   %.16f\n',ftE));
-        logmsg(sprintf('ftB = \n'));
-        logmsg(sprintf('   %.16f\n',ftB));
-    end
-
-    S.Regression.Weights{j,1} = Weights;
-    S.Regression.Residuals{j,1} = Residuals;
+           
+    Regression.Weights{j,1} = Weights;
+    Regression.Residuals{j,1} = Residuals;
 
 end
 
@@ -107,5 +122,3 @@ end
 if all(isnan(Z(:)))
     error('All Z values are NaN');
 end
-
-S.Z = Z;

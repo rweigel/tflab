@@ -1,13 +1,9 @@
-function logmsg(fmt, varargin)
+function logmsg(msg, varargin)
 %LOGMSG
 %
-%  LOGMSG(dbstack, FORMAT, ...) Creates a console log message with name of
+%  LOGMSG(msg, ...) Creates a console log message with name of the
 %  calling file, line number and link, and indentation depending on call
 %  stack depth.
-%
-%  The first argument must always be dbstack.
-%
-%  FORMAT is modified and the arguments after it are passed to FPRINTF.
 %
 %  See also LOGMSG_TEST.
 
@@ -28,13 +24,13 @@ if length(stack) > 1
             which(stack(1).file),...
             stack(1).line,...
             stack(1).line);
-    fmtx = fmt(end);
+    fmtx = msg(end);
     % Replace newlines not at end of string with a newline
     % and then indentation.
-    fmt = strrep(fmt(1:end-1), '\n',...
+    msg = strrep(msg(1:end-1), '\n',...
                 ['\n',repmat(' ', 1, length(str)+length(indent))]);
-    fprintf([link, ': ', fmt, fmtx], varargin{:});
+    fprintf([link, ': ', msg, fmtx], varargin{:});
 else
     % Called from command line.
-    fprintf(fmt, varargin{:});
+    fprintf(msg, varargin{:});
 end
