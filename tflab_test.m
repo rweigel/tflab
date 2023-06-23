@@ -391,7 +391,7 @@ fprintf('\n');
 logmsg('API Stack Regression; Test 3.11.\n');
 
 % Verify that get same answer when continuous and discontinuous segments
-% are used. Expecet identical results.
+% are used. Expect identical results.
 opts = tflab_options(1);
 opts.td.window.width = N;
 opts.td.window.shift = N;

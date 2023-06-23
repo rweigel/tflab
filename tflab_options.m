@@ -146,8 +146,8 @@ opts.fd.regression = struct();
         %opts.fd.regression.functionargs = {ropts};
 
 if os == 0
-    % When no noise, should get exact TF used to generate the output data
-    % (within limits of numerical precision).
+    % When no noise, should get exact TF used to generate the
+    % output data (within limits of numerical precision).
     fstr = '1 point per freq. band.';
     opts.description = ['OLS with ', fstr];
     opts.fd.evalfreq.functionargs = {[1,0], 'linear'};

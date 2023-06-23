@@ -20,7 +20,7 @@ A = struct();
     A.dB = 0.0;
     A.dE = 0.0;
     A.Z  = 1;
-
+    
 Sx_opts = struct('N',N,'n',n,'alpha',alpha,'A',A);
 Sx = demo_signals('powerlaw',Sx_opts);
 Sx.Options.description = 'Actual';
@@ -44,16 +44,7 @@ opts2 = tflab_options(0);
 S2 = tflab(Sx.In,Sx.Out,opts2);
 S2.Options.description = 'Stack Average';
 
-if isfield(Sx,'OutNoise')
-    S1.OutNoise = Sx.OutNoise;
-    S1.OutNoisePSD = psd(S1.OutNoise);
-end
-if isfield(Sx,'InNoise')
-    S1.InNoise = Sx.InNoise;
-    S1.InNoisePSD = psd(S1.InNoise);
-end
-
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(S1,struct('type','original'));

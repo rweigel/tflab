@@ -15,6 +15,8 @@ dB = 0.0;
 dE = 0.0;
 Z  = (1+1j)/sqrt(2);
 
+regstr = sprintf('OLS/$N_b=%d$',2*wf+1); 
+
 Sa_opts = struct('Nt',Nt,'Z',Z,'f',f,'dB',dB,'dE',dE);
 Sa = demo_signals('simple',Sa_opts);
 Sa.Options.description = 'Actual';
@@ -24,9 +26,10 @@ opts1 = tflab_options(0);
     opts1.fd.evalfreq.functionargs = {[1,wf], 'linear'};
 
 S1 = tflab(Sa.In,Sa.Out,opts1);
-S1.Options.description = sprintf('wf = %.1f, dB = %.1f, dE = %0.1f',wf, dB, dE);
+S1.Options.description = sprintf('%s/dIn=%.1f/dOut=%0.1f',...
+                                 regstr, dB, dE);
 
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(S1,struct('type','original'));

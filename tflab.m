@@ -48,7 +48,7 @@ end
 
 % For each matrix in B (and corresponding matrix in E), do TF calculations.
 if iscell(B)
-    S = tflab_intervals(B, E, opts);
+    S = intervals_(B, E, opts);
     return
 end
 
@@ -109,35 +109,45 @@ if isnan(opts.td.window.width) || size(E,1) == opts.td.window.width
     return
 end
 
-Sc = tflab_preprocess(B,E,opts);
+if isempty(opts.fd.stack.average.function)
 
-S = struct('In',B,'Out',E,'Options',opts);
+    logmsg('Computing Z using stack regression.\n');        
 
-if ~isempty(opts.fd.stack.average.function)
+    S = tflab_preprocess(B,E,opts,1);
+    S = stackregression_(S,opts);
 
-    logmsg('Computing average of segment Zs.\n');
-    [S.Z,S.fe,S.Segment] = stackAverage(Sc,opts);
+    logmsg('Computing metrics for full time series using computed Z.\n');
+    S = tflab_metrics(S);
 
+    logmsg('Computing metrics on segments using computed Z.\n');    
+    S = tflab_metrics(S,1);
+else
+
+    S = tflab_preprocess(B,E,opts,0);
+
+    S = stackaverage_(S,opts);
+    
     if opts.tflab.loglevel > 0
         logmsg('Computing metrics on unsegmented data using average Z.\n');
     end
-    S = tflab_metrics(S);
-    if opts.tflab.loglevel > 0
-        logmsg('Computed metrics on unsegmented data using average Z.\n');
-    end
-else
-
-    logmsg('Computing Z using stack regression.\n');        
-    [S.Z,S.fe,S.Segment,S.Regression] = stackRegression(Sc, opts);
-
-    logmsg('Computing metrics for full time series using computed Z.\n');
     S = tflab_metrics(S);
 end
 
 end % tflab()
 
-function [Z,fe,Segment] = stackAverage(Sc,opts)
+function S = stackregression_(S,opts)
+    if opts.tflab.loglevel > 0
+        logmsg('Computing Z using stack regression.\n');
+    end
+    DFT = dftcombine(S.Segment.DFT);
+    [S.Z,S.fe,S.Regression] = tflab_miso(DFT,opts);
+end
 
+function S = stackaverage_(S,opts)
+
+    logmsg('Computing Z using stack averaging segment Zs.\n');
+
+    Sc = S.Segment;
     for s = 1:length(Sc)
 
         if opts.tflab.loglevel > 0
@@ -151,13 +161,14 @@ function [Z,fe,Segment] = stackAverage(Sc,opts)
             logmsg('Starting computations on segment %d of %d\n',s,length(Sc));
             logmsg('Segment time index range = [%d:%d]\n',a,b);
         end
-
+        
         logmsg('Computing Z for segment %d of %d\n',s,length(Sc));
         [Sc{s}.Z,Sc{s}.fe,Sc{s}.Regression] = tflab_miso(Sc{s}.DFT,opts);
-
+        
         if opts.tflab.loglevel > 0
             logmsg('Computing metrics on segment using segment Z.\n');
         end
+        Sc{s}.fe = Sc{s}.DFT.fe;
         Sc{s} = tflab_metrics(Sc{s});
         if opts.tflab.loglevel > 0
             logmsg('Computed metrics on segment using segment Z.\n');
@@ -169,105 +180,19 @@ function [Z,fe,Segment] = stackAverage(Sc,opts)
         end
     end    
 
-    Segment = combineStructs(Sc,3);
-
-    Z = mean(Segment.Z,3);
-    fe = Segment.fe;
+    S.Segment = combineStructs(Sc,3);
+    S.Z = mean(S.Segment.Z,3);
+    S.fe = Sc{1}.fe;    
 
 end
 
-function [Z,fe,Segment,Regression] = stackRegression(Sc,opts)
-
-    Segment = combineStructs(Sc,3);
-
-    if opts.tflab.loglevel > 0
-        logmsg('Starting stack regression.\n');
-    end
-    
-    DFT = dftcombine(Segment.DFT);
-    [S.Z,S.fe,S.Regression] = tflab_miso(DFT,opts);
-    
-    if opts.tflab.loglevel > 0
-        logmsg('Finished stack regression.\n');
-    end
-   
-    % Temporarily insert Z computed using stack regression into Segment
-    % because it will be used to compute metrics for each segment.
-    Segment.Z = S.Z;
-    Segment.fe = S.fe;
-
-    if opts.tflab.loglevel > 0
-        logmsg('Computing metrics on segments.\n');
-    end
-
-    Segment = tflab_metrics(Segment);
-
-    % Remove inserted Z.
-    Segment = rmfield(Segment,'Z');
-    Segment = rmfield(Segment,'fe');
-
-    Z = S.Z;
-    fe = S.fe;
-    Regression = S.Regression;
-    
-end
-
-function S = tflab_intervals(B, E, opts)    
-
-    % Each cell contians an interval and an arbitrary gap in time is
-    % assumed between the end of one cell and the start of the next
-    % cell.
-
-    assert(all(size(B) == size(E)),'Required: size(B) == size(E)');
-    assert(isvector(B),'Required: B must be vector cell array');
-    assert(isvector(E),'Required: E must be vector cell array');
-    sE = size(E{1},2);
-    sB = size(B{1},2);
-
-    % Check that number of columns is same for all intervals.
-    for i = 2:length(B)
-        assert(size(B{i},2) == sB,...
-            'Number of columns in B{%d} must be the same as B{1}.',i);
-        assert(size(E{i},2) == sE,...
-            'Number of columns in E{%d} must be the same as E{1}.',i);
-        Nr(i) = size(B,1);
-    end
-    
-    if isnan(opts.td.window.width) && length(unique(Nr)) ~= 1
-        warning(['opts.td.window.width not given and intervals do not', ...
-                'all have the same length.\n', ...
-                'Using shortest interval length (%d) for width and shift'],...
-                min(Nr));
-        opts.td.window.width = min(Nr);
-        opts.td.window.shift = min(Nr);
-    end
-    
-    S = struct();
-    
-    c = 1;
-    for i = 1:length(B) % Number of intervals
-        Si = tflab_preprocess(B{i},E{i},opts);
-        if isstruct(Si)
-            Si = {Si};
-        end
-        for s = 1:length(Si)
-            Si{s}.SegmentNumber = i;
-            Sc{c} = Si{s};
-            c = c+1;
-        end
-    end
-
-    S.In = B;
-    S.Out = E;
-    S.Options = opts;
-
-    if ~isempty(opts.fd.stack.average.function)
-        logmsg('Computing average of segment Zs.\n');
-        [S.Z,S.fe,S.Segment] = stackAverage(Sc,opts);
-    end
+function S = intervals_(B, E, opts)
     
     if isempty(opts.fd.stack.average.function)
-        logmsg('Computing Z using stack regression.\n');        
-        [S.Z,S.fe,S.Segment,S.Regression] = stackRegression(Sc, opts);
+        S = tflab_preprocess(B,E,opts,1);
+        S = stackregression_(S,opts);
+    else
+        S = tflab_preprocess(B,E,opts,0);
+        S = stackaverage_(S,opts);
     end
 end

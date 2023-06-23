@@ -3,7 +3,7 @@
 %S = demo_signals('powerlaw')
 D = demo_signals('simple')
 
-dock on;figure(1);close all;
+dockreset();
 
 opts = tflab_options(0);
 opts.td.window.width = 100;

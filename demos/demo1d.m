@@ -14,6 +14,8 @@ k  = 25;
 Z  = (1+1j)/sqrt(2);
 wf = 1;
 
+regstr = sprintf('OLS/$N_b=%d$',2*wf+1); 
+
 Sa_opts = struct('Nt',Nt,'Z',Z,'k',k,'dB',0,'dE',0);
 Sa = demo_signals('simple',Sa_opts);
 Sa.Options.description = 'Actual';
@@ -24,9 +26,9 @@ opts1 = tflab_options(0);
     opts1.td.zeropad = Nt;
     
 S1 = tflab(Sa.In,Sa.Out,opts1);
-S1.Options.description = 'Estimated';
+S1.Options.description = sprintf('zeropadded/%s',regstr);
 
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(S1,struct('type','original'));

@@ -48,14 +48,14 @@ if ~isempty(tdopts.window.function)
     Out_.Windowed = Outx;    
 else
     if loglevel > 0
-        logmsg('No windowing applied b/c no function given.\n');
+        logmsg('No windowing applied b/c no window function given.\n');
     end
 end
 
 if ~isempty(tdopts.whiten.function)
     modified = 1;
     if loglevel > 0
-        logmsg('Prewhitening using: %s\n',tdopts.whiten.functionstr);
+        logmsg('Whitening using: %s\n',tdopts.whiten.functionstr);
     end
     Inx = tdopts.whiten.function(Inx,tdopts.whiten.functionargs{:});
     Outx = tdopts.whiten.function(Outx,tdopts.whiten.functionargs{:});
@@ -63,7 +63,7 @@ if ~isempty(tdopts.whiten.function)
     Out_.Whitened = Outx;
 else
     if loglevel > 0
-        logmsg('No prewhitening performed b/c no function given.\n');
+        logmsg('Whitening performed b/c no whiten function given.\n');
     end
 end
 

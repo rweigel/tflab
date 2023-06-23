@@ -48,7 +48,7 @@ if length(S) == 1
             legend(lg,popts.legend{:});
         end
         set(gca,'XTickLabel',[]);
-        titlestr(S,popts,'sn');
+        titlestr(S{1},popts,'sn');
         if popts.vs_period
             set(gca,'XScale','log');
         end

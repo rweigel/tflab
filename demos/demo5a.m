@@ -27,7 +27,7 @@ E = E + (mean(B)-mean(E));
 opts = tflab_options(0);
 S1 = tflab(B,E,opts);
 
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(S1,struct('type','original'));

@@ -66,7 +66,7 @@ else
             y2 = S.Out_.Final;
         else    
             typeuc = [upper(popts.type(1)),popts.type(2:end)];
-            if ~isfield(S.In_,typeuc)
+            if ~isfield(S,'In_') || ~isfield(S.In_,typeuc)
                 error('Data were not %s. No plot created.',popts.type);
             end
             y1 = S.In_.(typeuc);

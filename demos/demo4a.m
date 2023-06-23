@@ -56,7 +56,7 @@ if isfield(Sx,'InNoise')
     S1.InNoise = Sx.InNoise;
 end
 
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(S1,struct('type','original'));

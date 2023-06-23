@@ -9,6 +9,8 @@ Nt = 100;
 f  = 25.5/Nt;
 wf = 0;
 
+regstr = sprintf('OLS/$N_b=%d$',2*wf+1); 
+
 Sx_opts = struct('Nt',Nt,'Z',1+1j,'f',f,'dB',0.0,'dE',0.0);
 Sx = demo_signals('simple',Sx_opts);
 Sx.Options.description = 'Actual';
@@ -17,24 +19,24 @@ opts1 = tflab_options(0);
     opts1.tflab.loglevel = 1;
     opts1.fd.evalfreq.functionargs = {[1,wf], 'linear'};
     opts1.td.window.function = @tdwindow;
-    opts1.td.window.functionstr = 'Rectangle';
+    opts1.td.window.functionstr = 'rectwin';
     opts1.td.window.functionargs = {@rectwin};
 S1 = tflab(Sx.In,Sx.Out,opts1);
-S1.Options.description = 'Rectangle';
+S1.Options.description = sprintf('rectwin/%s',regstr);
 
 opts2 = tflab_options(0);
     opts2.tflab.loglevel = 1;
     opts2.fd.evalfreq.functionargs = {[1,wf], 'linear'};
     opts2.td.window.function = @tdwindow;
-    opts2.td.window.functionstr = 'Parzen';
+    opts2.td.window.functionstr = 'parzenwin';
     opts2.td.window.functionargs = {@parzenwin};
     %opts2.td.window.functionstr = 'DPSS; $N_w=2$, $K=1$';
     %opts2.td.window.functionargs = {@dpss, 2, 1};
     
 S2 = tflab(Sx.In,Sx.Out,opts2);
-S2.Options.description = opts2.td.window.functionstr;
+S2.Options.description = sprintf('%s/%s',regstr,opts2.td.window.functionstr);
 
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(S1,struct('type','original'));

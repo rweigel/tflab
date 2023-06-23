@@ -45,7 +45,7 @@ tf1 = tflab(B,E,opts);
 
 vs_period = 0; % (Default is to plot vs. period.)
 
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(tf1,struct('type','original','vs_period',vs_period));

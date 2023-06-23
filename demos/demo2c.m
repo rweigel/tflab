@@ -9,6 +9,8 @@ Nt = 100;
 f  = 25.5/Nt;
 wf = 0;
 
+regstr = sprintf('OLS/$N_b=%d$',2*wf+1); 
+
 Sa_opts = struct('Nt',Nt,'Z',1+1j,'f',f,'dB',0.0,'dE',0.0);
 Sa = demo_signals('simple',Sa_opts);
 Sa.Options.description = 'Actual';
@@ -17,7 +19,7 @@ opts1 = tflab_options(0);
     opts1.tflab.loglevel = 1;
     opts1.fd.evalfreq.functionargs = {[1,wf], 'linear'};
 S1 = tflab(Sa.In,Sa.Out,opts1);
-S1.Options.description = 'No prewhiten';
+S1.Options.description = sprintf('No whiten/%s',regstr);
 
 opts2 = tflab_options(0);
     opts2.tflab.loglevel = 1;
@@ -26,9 +28,9 @@ opts2 = tflab_options(0);
     opts2.td.whiten.functionstr = 'First difference';
     opts2.td.whiten.functionargs = {'diff'};
 S2 = tflab(Sa.In,Sa.Out,opts2);
-S2.Options.description = 'Diff prewhiten';
+S2.Options.description = sprintf('Diff whiten/%s',regstr);
 
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(S1,struct('type','original'));

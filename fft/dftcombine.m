@@ -1,5 +1,5 @@
 function DFTc = dftcombine(DFT)
-%DFTCOMBINE
+%DFTCOMBINE - Collapse 3-D DFT cell array along 3rd dimension.
 
 DFTc = struct();
 for i = 1:size(DFT.In,1)
@@ -13,11 +13,6 @@ for i = 1:size(DFT.In,1)
     tmp = squeeze(DFT.f(i,1,:));
     DFTc.f{i,1} = cat(1,tmp{:});
 
-    tmp = squeeze(DFT.InWeights(i,1,:));
-    DFTc.InWeights{i,1} = cat(1,tmp{:});
-
-    tmp = squeeze(DFT.OutWeights(i,1,:));
-    DFTc.OutWeights{i,1} = cat(1,tmp{:});
 end
 
 DFTc.fe = DFT.fe;

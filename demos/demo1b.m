@@ -11,6 +11,8 @@ Z  = (1+1j)/sqrt(2);
 f  = k/Nt;
 wf = 1;
 
+regstr = sprintf('OLS/$N_b=%d$',2*wf+1); 
+
 Sx_opts = struct('Nt',Nt,'Z',Z,'f',f,'dB',0.0,'dE',0.0);
 Sx = demo_signals('simple',Sx_opts);
 Sx.Options.description = 'Actual';
@@ -22,7 +24,7 @@ opts1 = tflab_options(0);
     opts1.td.window.functionstr = 'Rectangle';
     opts1.td.window.functionargs = {@rectwin};
 S1 = tflab(Sx.In,Sx.Out,opts1);
-S1.Options.description = 'Rectangle windowed';
+S1.Options.description = sprintf('rectwin/%s',regstr);
 
 opts2 = tflab_options(0);
     opts2.tflab.loglevel = 1;
@@ -31,10 +33,9 @@ opts2 = tflab_options(0);
     opts2.td.window.functionstr = 'Parzen';
     opts2.td.window.functionargs = {@parzenwin};
 S2 = tflab(Sx.In,Sx.Out,opts2);
-S2.Options.description = 'Parzen windowed';
+S2.Options.description = sprintf('parzenwin/%s',regstr);
 
-
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(S1,struct('type','original'));

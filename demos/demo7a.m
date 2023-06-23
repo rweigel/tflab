@@ -20,11 +20,9 @@ opts1 = tflab_options(0);
     opts1.td.detrend.functionstr = 'Bandpass';  % Optional descriptive name
     opts1.td.detrend.functionargs = {[1/20,0.5]}; % Arguments after first argument to fn.
 
-    
 tf1 = tflab(tfa.In, tfa.Out, opts1);
 
-
-dock on;figure(1);close all;
+dockreset();
 
 figure();clf;
     ax = tsplot(tf1,struct('type','original'));

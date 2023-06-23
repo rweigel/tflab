@@ -66,7 +66,7 @@ S.Options.fd.window.function = @rectwin;
 
 S = tflab_metrics(S);
 
-dock on;figure(1);close all;
+dockreset();
 
 figure();clf;
     tsplot(S,struct('type','original'));

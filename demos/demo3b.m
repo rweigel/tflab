@@ -62,7 +62,7 @@ if 0
     S1 = tflab_metrics(S1, opts);
 end
 
-dock on;figure(1);close all;
+dockreset();
 
 figure();
     tsplot(S1,struct('type','original'));

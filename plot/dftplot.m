@@ -8,7 +8,7 @@ function ax = dftplot(S,popts,comp)
 %   For non-prediction error related plots, popts.type has form 
 %   'a-b-c', where
 %
-%   a is one of: original, final, detrended, windowed, prewhitened, zeropadded
+%   a is one of: original, final, detrended, windowed, whitened, zeropadded
 %   b is one of: raw, averaged
 %   c is one of: magnitudes,phases,reals,imaginaries
 %
@@ -69,7 +69,7 @@ for s = 1:length(S)
             y2{s} = imag(dftError);
         end
     else
-        % {original,detrended,windowed,prewhitened,zeropadded,final}-{raw,averaged}-{magnitudes,phases}
+        % {original,detrended,windowed,whitened,zeropadded,final}-{raw,averaged}-{magnitudes,phases}
         if any(strcmp(tparts{1},{'detrended','windowed','whitened','zeropadded','final'}))
             % Capatilize first letter
             tparts1uc = [upper(tparts{1}(1)),tparts{1}(2:end)];
@@ -155,7 +155,7 @@ if strcmp(tparts{1},'error')
         if ~isempty(lg)
             legend(lg,popts.legend{:});
         else
-            titlestr(S,popts,'dft');
+            titlestr(S{1},popts,'dft');
         end
         ylabel(yl1);
         adjust_ylim('upper');
@@ -194,7 +194,7 @@ if ~strcmp(tparts{1},'error')
         grid on;box on;
         setscales_(tparts{3},popts.vs_period)
         if ~isempty(lg1)
-            legend(lg,popts.legend{:});
+            legend(lg1,popts.legend{:});
         else
             titlestr(S{1},popts,'dft');
         end

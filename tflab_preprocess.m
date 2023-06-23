@@ -1,30 +1,31 @@
-function S = tflab_preprocess(In,Out,opts)
+function S = tflab_preprocess(In,Out,opts,combineSegs)
 
-if nargin == 1
-    % tflab_preprocess(S)
-    S = In;
-    optso = S.Options;
-    optsx = optso;
-    optsx.td.window.width = NaN;
-    optsx.td.window.shift = NaN;
-    % Do calcs for full time series
-    S = tflab_preprocess(S.In, S.Out, optsx);
-    if ~isnan(optso.td.window.width)
-        % Do calcs for segments
-        Segments = tflab_preprocess(S.In, S.Out, optso);
-        S.Segment = combineStructs(Segments,3);
-        S.Segment = rmfield(S.Segment,'Options');
-    end
-    return
+if iscell(In)
+    S = intervals_(In,Out,opts,combineSegs);
+    return;
 end
 
 Tw = opts.td.window.width;
 Ts = opts.td.window.shift;
-assert(any(isnan([Tw,Ts])) == all(isnan([Tw,Ts])),...
-        'If one of window.width or window.shift is NaN, both must be NaN');
-    
-[a,b] = segmentidxs_(size(In,1),Tw,Ts);
 
+emsg = 'If one of window.width or window.shift is NaN, both must be NaN';
+assert(any(isnan([Tw,Ts])) == all(isnan([Tw,Ts])),emsg);
+  
+S = struct('In',In,'Out',Out,'Options',opts);
+
+if isnan(Tw) && isnan(Ts)
+    S = tflab_tdpreprocess(S);
+    S = tflab_fdpreprocess(S);
+    return
+else
+    optsx = S.Options;
+    optsx.td.window.width = NaN;
+    optsx.td.window.shift = NaN;
+    % Do calcs for full time series
+    S = tflab_preprocess(S.In, S.Out, optsx);
+end
+
+[a,b] = segmentidxs_(size(In,1),Tw,Ts);
 for s = 1:length(a)
 
     Iseg = a(s):b(s);
@@ -33,21 +34,24 @@ for s = 1:length(a)
         logmsg('Segment time index range = [%d:%d]\n',Iseg(1),Iseg(end));
     end
     
-    S{s} = struct();
-    S{s}.Options = opts;
-    S{s}.IndexRange = [a(s),b(s)]';
+    S.Segment{s} = struct();
+    S.Segment{s}.Options = opts;
+    S.Segment{s}.IndexRange = [a(s),b(s)]';
 
-    S{s}.In  = In(Iseg,:);
-    S{s}.Out = Out(Iseg);
+    S.Segment{s}.In  = In(Iseg,:);
+    S.Segment{s}.Out = Out(Iseg);
     
-    S{s} = tflab_tdpreprocess(S{s});
-    S{s} = tflab_fdpreprocess(S{s});
+    S.Segment{s} = tflab_tdpreprocess(S.Segment{s});
+    S.Segment{s} = tflab_fdpreprocess(S.Segment{s});
 
 end
-if length(S) == 1
-    S = S{1};
-    S = rmfield(S,'IndexRange');
+
+if combineSegs
+    S.Segment = combineStructs(S.Segment,3);
+    S.Segment = rmfield(S.Segment,'Options');
 end
+
+
 end % function
 
 function [a,b] = segmentidxs_(N,Tw,Ts)
@@ -80,4 +84,65 @@ function [a,b] = segmentidxs_(N,Tw,Ts)
                  '\n\t Last %d point(s) will not be used.\n'],...
                  Tw, Ts, N, N-b(end));
     end
+end
+
+function S = intervals_(In, Out, opts, combineSegs)    
+
+    % Each cell contians an interval and an arbitrary gap in time is
+    % assumed between the end of one cell and the start of the next
+    % cell.
+
+    assert(all(size(In) == size(Out)),'Required: size(B) == size(E)');
+    assert(isvector(In),'Required: B must be vector cell array');
+    assert(isvector(Out),'Required: E must be vector cell array');
+    sOut = size(Out{1},2);
+    sIn = size(In{1},2);
+
+    % Check that number of columns is same for all intervals.
+    for i = 2:length(In)
+        assert(size(In{i},2) == sIn,...
+            'Number of columns in In{%d} must be the same as Out{1}.',i);
+        assert(size(Out{i},2) == sOut,...
+            'Number of columns in In{%d} must be the same as Out{1}.',i);
+        Nr(i) = size(In,1);
+    end
+    
+    if isnan(opts.td.window.width) && length(unique(Nr)) ~= 1
+        warning(['opts.td.window.width not given and intervals do not', ...
+                'all have the same length.\n', ...
+                'Using shortest interval length (%d) for width and shift'],...
+                min(Nr));
+        opts.td.window.width = min(Nr);
+        opts.td.window.shift = min(Nr);
+    end
+    
+    for i = 1:length(In) % Number of intervals
+        Si{i} = tflab_preprocess(In{i},Out{i},opts,combineSegs);        
+    end
+
+    p = 1;
+    for i = 1:length(Si)
+        fns = fieldnames(Si{i}); 
+        for f = 1:length(fns)
+            if ~any(strcmp(fns{f},{'Options','Segment'}))
+                S.(fns{f}){i} = Si{i}.(fns{f});
+                S.(fns{f}){i} = Si{i}.(fns{f});
+            end
+        end
+        if combineSegs
+            Segment{p} = Si{i}.Segment;
+            p = p+1;            
+        else
+            for s = 1:length(Si{i}.Segment)
+                Segment{p} = Si{i}.Segment{s};
+                p = p+1;
+            end
+        end
+    end
+    
+    if combineSegs
+        S.Segment = combineStructs(Segment,3);
+    else
+        S.Segment = Segment;        
+    end    
 end

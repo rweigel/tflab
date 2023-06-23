@@ -21,7 +21,7 @@ Out = Out(length(H):end);
 opts = tflab_options(0);
 S1 = tflab(In,Out,opts);
 
-dock on;figure(1);close all;
+dockreset();
 
 figure()
     tsplot(S1,struct('type','original'));
