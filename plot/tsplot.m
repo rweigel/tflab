@@ -4,6 +4,10 @@ function ax = tsplot(S,popts)
 %  TSPLOT(S), where S is the output of TRANSFERFNFD.
 %  TSPLOT(S, opts)
 
+if ischar(S)
+    S = loadtf(S);
+end
+
 assert(isstruct(S) || iscell(S), ...
     'S must be a tflab struct or cell array of tflab structs');
 
@@ -50,7 +54,12 @@ else
     timedelta = S.Metadata.timedelta;
     if strcmp(popts.type,'error')
         y1{1} = S.Out;
+        if ~isfield(S,'Out_')
+            S = tflab_tdpreprocess(S);
+            S = tflab_metrics(S);
+        end
         y1{2} = S.Out_.Predicted;
+            
         t1 = timeVector_(S, size(y1{1},1));
 
         y2 = S.Out_.Error;
@@ -62,19 +71,29 @@ else
             y1 = S.In;
             y2 = S.Out;
         elseif strcmp(popts.type,'final')
+            if ~isfield(S,'In_')
+                S = tflab_tdpreprocess(S);
+            end
+            if ~isfield(S,'In_') || isfield(S.In,'Final')
+                error('Final data is the same as original b/c no filtering applied. Request plot for original instead');
+            end
             y1 = S.In_.Final;
             y2 = S.Out_.Final;
         else    
             typeuc = [upper(popts.type(1)),popts.type(2:end)];
+            if ~isfield(S,'In_')
+                S = tflab_tdpreprocess(S);
+            end
             if ~isfield(S,'In_') || ~isfield(S.In_,typeuc)
-                error('Data were not %s. No plot created.',popts.type);
+                error('Invalid plot type request of %s: data were not %s.',...
+                      popts.type,popts.type);
             end
             y1 = S.In_.(typeuc);
             y2 = S.Out_.(typeuc);
         end
         t1 = timeVector_(S, size(y1,1));
         t2 = timeVector_(S, size(y2,1));
-        [yl1, yl2] = ylabel_(S);
+        [yl1, yl2] = ylabel_(S,popts);
         [lg1, lg2] = legend_(popts);
     end
 end
@@ -284,29 +303,29 @@ function setx_(last,info,tl)
         
 end
 
-function [lg1, lg2] = legend_(opts)
+function [lg1, lg2] = legend_(popts)
 
     lg1 = '';
     lg2 = '';
-    if length(opts.instr) > 1
-        lg1 = opts.instr;
+    if length(popts.instr) > 1
+        lg1 = popts.instr;
     end
-    if length(opts.outstr) > 1
-        lg2 = opts.outstr;
+    if length(popts.outstr) > 1
+        lg2 = popts.outstr;
     end    
 end
 
-function [yl1, yl2] = ylabel_(S)    
+function [yl1, yl2] = ylabel_(S,popts)    
     meta = S.Metadata;
     if size(S.In,2) > 1
         yl1 = unitstr(meta.inunit);
     else
-        yl1 = [meta.instr,' ',unitstr(meta.inunit)];
+        yl1 = [popts.instr,' ',unitstr(meta.inunit)];
     end
     if size(S.Out,2) > 1
         yl2 = unitstr(meta.outunit);
     else
-        yl2 = [meta.outstr,' ',unitstr(meta.outunit)];
+        yl2 = [popts.outstr,' ',unitstr(meta.outunit)];
     end
 end
 

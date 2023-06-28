@@ -24,7 +24,7 @@ B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-if 0  
+if 1 
 % Trim for faster run
 B = B(1:10*pps,:);
 E = E(1:10*pps,:);
@@ -77,10 +77,10 @@ TF2.Metadata = meta;
 %TF2 = tflab_metrics(TF2,opts2,TF1.Segment.IndexRange);
 %TF2 = tflab_uncertainty(TF2);
 
-fname = fullfile(scriptdir(),'data','Middelpos',[filestr,'-tf2.mat']);
-savetf(TF2, fname);
+fname2 = fullfile(scriptdir(),'data','Middelpos',[filestr,'-tf2.mat']);
+savetf(TF2, fname2);
 
-Middelpos_plot;
+%Middelpos_plot;
 
 %% Third TF
 if (0)

@@ -3,14 +3,16 @@ addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 %% Load data if not already in memory.
-%daterange = '20120712-20120717';
-daterange = '20120712-20121031';
+daterange = '20120712-20120721';
+%daterange = '20120712-20121031';
 if ~exist('TF1','var')
     fname = fullfile('data','Middelpos',...
             sprintf('Middelpos-%s-tf1.mat',daterange));
     fnamefull = fullfile(scriptdir(),fname);
     logmsg(sprintf('Reading %s',fname));
     TF1 = load(fnamefull);
+    TF1 = tflab_preprocess(TF1,'both',0);
+    TF1 = tflab_metrics(TF1);
 end
 if ~exist('TF2','var')
     fname = fullfile('data','Middelpos',...
@@ -18,6 +20,8 @@ if ~exist('TF2','var')
     fnamefull = fullfile(scriptdir(),fname);
     logmsg(sprintf('Reading %s',fname));
     TF2 = load(fnamefull);
+    TF2 = tflab_preprocess(TF2,'both',0);
+    TF2 = tflab_metrics(TF2);
 end
 
 %% Set common print optionsx
@@ -57,6 +61,18 @@ figure();
     dftopts.type = 'original-averaged';    
     dftplot(TF1,dftopts);
 
+if 0    
+figure();
+    dftopts = copts;
+    dftopts.type = 'original-averaged-reals';
+    dftplot(TF1,dftopts);
+
+figure();
+    dftopts = copts;
+    dftopts.type = 'original-averaged-imaginaries';
+    dftplot(TF1,dftopts);
+end
+
 % Plot Fourier phases for In/Out of TF1 (will be the same for both)
 figure();
     dftopts = copts;
@@ -71,25 +87,20 @@ figure();
 
     
 %% SN plots
-if 0
-    % Plot SN for S1 only
-    figure();
-        snopts = copts;
-        %snopts.period_range = [1, 86400];
-        snplot(TF1,snopts);
+% Plot SN for TF1 only
+figure();
+    snopts = copts;
+    snplot(TF1,snopts);
 
-    % Plot SN for S2 only
-    figure();
-        snopts = copts;
-        %snopts.period_range = [1, 86400];
-        snplot(TF2,snopts);
+% Plot SN for TF2 only
+figure();
+    snopts = copts;
+    snplot(TF2,snopts);
 
-    % Compare SN between S1 and S2
-    figure();
-        snopts = copts;
-        %snopts.period_range = [1, 110*86400];
-        snplot({TF1,TF2},snopts);
-end
+% Compare SN between TF1 and TF2
+figure();
+    snopts = copts;
+    snplot({TF1,TF2},snopts);
 
 %% Z plots
 % Compare Z between S1 and S2

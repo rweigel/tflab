@@ -76,7 +76,7 @@ if size(E,2) > 1
             S = combineStructs(S,Sc,2);
         end
     end
-    return;
+    return
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,7 +102,7 @@ end
 if isnan(opts.td.window.width) || size(E,1) == opts.td.window.width
     % No segmenting
     S = struct('In',B,'Out',E,'Options',opts);
-    S = tflab_tdpreprocess(S);
+    S = tflab_tdpreprocess(S,opts.tflab.loglevel);
     S = tflab_fdpreprocess(S);
     [S.Z,S.fe,S.Regression] = tflab_miso(S.DFT,opts);
     S = tflab_metrics(S);
@@ -113,7 +113,7 @@ if isempty(opts.fd.stack.average.function)
 
     logmsg('Computing Z using stack regression.\n');        
 
-    S = tflab_preprocess(B,E,opts,1);
+    S = tflab_preprocess(B,E,opts,'both',1,1);
     S = stackregression_(S,opts);
 
     logmsg('Computing metrics for full time series using computed Z.\n');
@@ -123,7 +123,7 @@ if isempty(opts.fd.stack.average.function)
     S = tflab_metrics(S,1);
 else
 
-    S = tflab_preprocess(B,E,opts,0);
+    S = tflab_preprocess(B,E,opts,'both',1,0);
 
     S = stackaverage_(S,opts);
     
@@ -189,10 +189,10 @@ end
 function S = intervals_(B, E, opts)
     
     if isempty(opts.fd.stack.average.function)
-        S = tflab_preprocess(B,E,opts,1);
+        S = tflab_preprocess(B,E,opts,'both',1,1);
         S = stackregression_(S,opts);
     else
-        S = tflab_preprocess(B,E,opts,0);
+        S = tflab_preprocess(B,E,opts,'both',1,0);
         S = stackaverage_(S,opts);
     end
 end

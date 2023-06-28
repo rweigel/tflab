@@ -47,7 +47,7 @@ for s = 1:length(S)
     opts = S{s}.Options;
     if strcmp(tparts{1},'error')
         % error-{raw,averaged}-{magphase,realimag}
-        segsError = S{s}.DFT.Out_.Error(:,comp);
+        segsError = S{s}.DFT.Out_.Error;
         if strcmp(tparts{2},'averaged')
             dftError = dftaverage(segsError);
             fe{s} = S{s}.DFT.fe;            
@@ -56,6 +56,7 @@ for s = 1:length(S)
             fe{s,1} = tmp(:);
             dftError = cat(1,segsError{:});
         end
+        dftError = dftError(:,comp);
 
         if strcmp(tparts{3},'magphase')
             sf = (size(S{s}.Out_.Error,1)-1)/2;
@@ -142,7 +143,7 @@ figprep();
 if strcmp(tparts{1},'error')
 
     lg = legend_(S,what,comp);
-    [yl1, yl2] = ylabelerror_(popts,tparts{3},comp);
+    [yl1, yl2] = ylabelerror_(S,tparts{3},popts,comp);
 
     ax(1) = subplot('Position',popts.PositionTop);
         plot_(x,y1,popts);
@@ -340,14 +341,19 @@ function [yl1, yl2] = ylabel_(S,what,popts,comp)
     end
 end
 
-function [yl1, yl2] = ylabelerror_(popts,what,comp)
+function [yl1, yl2] = ylabelerror_(S,what,popts,comp)
+    meta = S{1}.Metadata;
+
     if strcmp(what,'magphase')
-        yl1 = [labelstr_(popts.outstr{comp},'\Delta','magnitude'),' ',unitstr(popts.outunit)];
+        l1 = labelstr_(popts.outstr{comp},'\Delta','magnitude');
+        yl1 = [l1,' ',unitstr(meta.outunit)];
         yl2 = labelstr_(popts.outstr{comp},'\Delta','angle');
     else
         % Real and Imaginary
-        yl1 = [labelstr_(popts.outstr{comp},'\Delta','real'),' ',unitstr(popts.outunit)];
-        yl2 = [labelstr_(popts.outstr{comp},'\Delta','imaginary'),' ',unitstr(popts.outunit)];
+        l1 = labelstr_(popts.outstr{comp},'\Delta','real');
+        yl1 = [l1,' ',unitstr(meta.outunit)];
+        l2 = labelstr_(popts.outstr{comp},'\Delta','imaginary');
+        yl2 = [l2,' ',unitstr(meta.outunit)];
     end
 end
 

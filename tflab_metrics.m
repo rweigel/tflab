@@ -13,31 +13,35 @@ else
     Out = S.Out;
 end
 
-assert(size(S.Z,2) == size(In,2),'S.Z must have same number of columns as S.In');
+assert(size(Out,2) == size(S.Z,2)/size(In,2),'size(Out,2) must equal size(Z,2)/size(In,2)');
 
 [Zi,~] = zinterp(S.fe,S.Z,size(In,1));
 
 OutPredicted = nan(size(Out));
 
-for k = 1:size(In,3) % Third dimension is segment
+for j = 1:size(Out,2) % Second dimension is component
 
-    OutPredicted(:,:,k) = zpredict(Zi,In(:,:,k));
+    zcols = (1:size(In,2)) + (j-1)*size(In,2);
 
-    Metrics.PE(1,:,k)  = pe_nonflag(Out(:,:,k), OutPredicted(:,:,k));
-    Metrics.MSE(1,:,k) = mse_nonflag(Out(:,:,k), OutPredicted(:,:,k));
-    Metrics.CC(1,:,k)  = cc_nonflag(Out(:,:,k), OutPredicted(:,:,k));
- 
-    [Metrics.Coherence(:,:,k), S.Metrics.fe] = ...
-        coherence(Out(:,:,k), OutPredicted(:,:,k), 1, opts);
+    for k = 1:size(In,3) % Third dimension is segment
 
-    Error(:,:,k) = OutPredicted(:,:,k)-Out(:,:,k);
+        OutPredicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k));
+        Metrics.PE(1,j,k)  = pe_nonflag(Out(:,j,k), OutPredicted(:,j,k));
+        Metrics.MSE(1,j,k) = mse_nonflag(Out(:,j,k), OutPredicted(:,j,k));
+        Metrics.CC(1,j,k)  = cc_nonflag(Out(:,j,k), OutPredicted(:,j,k));
 
-    Metrics.SN(:,:,k) = ...
-        signaltoerror(Out(:,:,k), Error(:,:,k), 1, opts);
+        [Metrics.Coherence(:,j,k), Metrics.fe] = ...
+            coherence(Out(:,j,k), OutPredicted(:,j,k), 1, opts);
 
-    DFTError(:,:,k) = dftbands(Error(:,:,k), opts);    
-    DFTPredicted(:,:,k) = dftbands(OutPredicted, opts);
-    
+        Error(:,j,k) = OutPredicted(:,j,k)-Out(:,j,k);
+
+        Metrics.SN(:,j,k) = ...
+            signaltoerror(Out(:,j,k), Error(:,j,k), 1, opts);
+
+        DFTError(:,j,k) = dftbands(Error(:,j,k), opts);    
+        DFTPredicted(:,j,k) = dftbands(OutPredicted, opts);
+
+    end
 end
 if onsegments
     S.Segment.Metrics = Metrics;

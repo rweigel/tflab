@@ -1,4 +1,4 @@
-function qqplot_(S,fidx,cidx,sidx)
+function qqplot_(S,popts,fidx,cidx,sidx)
 %QQPLOT_ Quantitle-Quantile plot
 %
 %   QQPLOT_(S)
@@ -9,76 +9,51 @@ function qqplot_(S,fidx,cidx,sidx)
 %   where freq_idx is index of S.fe, comp_idx is column of Z, and
 %   seg_idx, is the segment number (if applicable).
 
-opts = struct();
-    opts.title = '';
-    opts.print = 0;
-    opts.printname = 'qqplot';
-    opts.printdir = '';
-    opts.printfmt = {'pdf'};
+assert(isstruct(S) || iscell(S), ...
+    'S must be a tflab struct or cell array of tflab structs');
 
-if nargin == 1
-    fidx = 3;
+if nargin < 2
+    popts = struct();
 end
 if nargin < 3
-    cidx = 1;
+    fidx = 3;
 end
 if nargin < 4
+    cidx = 1;
+end
+if nargin < 5
     sidx = -1;
 end
 
-if iscell(S) && length(S) == 1
-    S = S{1};
+if ~iscell(S) && length(S) == 1
+    S = {S};
 end
 
-if iscell(S)
-    fe = S{1}.fe;
-    for i = 1:length(S)
-        if length(fe) ~= S{i}.fe | all(fe == S{i}.fe)
-            
-        end
-    end
-    fe = fe(fidx);
-else
-    fe = S.fe(fidx);
-end
+popts = tflabplot_options(S, popts, '', 'qqplot');
+timeunit  = S{1}.Metadata.timeunit;
+timedelta = S{1}.Metadata.timedelta;
+Zstrs   = popts.zstrs;
+Rhostrs = popts.rhostrs;
+Phistrs = popts.phistrs;
 
 legendstr = {};
 if iscell(S)
     for i = 1:length(S)
         if isfield(S{i},'Regression')
-            Residuals{i} = S{i}.Regression.Residuals{fidx,cidx};
+            Residuals{i} = S{i}.Regression.Residuals{fidx}(:,cidx);
+            fe{i} = S{i}.fe(fidx,1);
         else
             if sidx == -1
-                Residuals{i} = cat(2,S{i}.Segment.Regression.Residuals{fidx,cidx,:});
+                Residuals{i} = S{i}.Segment.Regression.Residuals{fidx}(:,cidx,:);
             else
-                Residuals{i} = S{i}.Segment.Regression.Residuals{fidx,cidx,sidx};
+                Residuals{i} = S{i}.Segment.Regression.Residuals{fidx}(:,cidx,sidx);
             end
+            Residuals{i} = Residuals{i}(:);
+            fe{i} = S{i}.Segment.fe(fidx,1);
         end
-        legendstr{i} = S{i}.Options.description;            
+        %legendstr{i} = S{i}.Options.description;            
     end
-    titlestr = sprintf('$f=$ %g; $T=$ %.3f',fe,1/fe);
-else
-    if isfield(S,'Regression')
-        Residuals = S.Regression.Residuals{fidx,cidx};
-    else
-        if sidx == -1
-            Residuals = cat(2,S.Segment.Regression.Residuals{fidx,cidx,:});
-        else
-            Residuals = S.Segment.Regression.Residuals{fidx,cidx,sidx};
-        end
-    end
-    titlestr = sprintf('%s\n$f=$ %g; $T=$ %.3f',S.Options.description,fe,1/fe);
-end
-
-% TODO: Code copied from zplot.m
-if (iscell(S) && size(S{1}.Z,2) > 1) || (isstruct(S) && size(S.Z,2) > 1)
-    Zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
-    Rhostrs = {'\rho^a_{xx}','\rho^a_{xy}','\rho^a_{yx}','\rho^a_{yy}'};
-    Phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{yx}','\phi_{yy}'};
-else
-    Zstrs = {'Z'};
-    Rhostrs = {'\rho^a'};
-    Phistrs = {'\phi'};
+    titlestr = sprintf('$f=$ %g; $T=$ %.3f',fe{1},1/fe{1});
 end
 
 if ~isfield(S,'Regression') && sidx ~= -1
@@ -96,7 +71,7 @@ PositionBottom = [0.1300 0.1100 0.7750 0.38];
 figprep();
 ax1 = subplot('Position',PositionTop);
     grid on;box on;hold on;axis square;
-    plotqq(Residuals,'real')
+    plotqq(Residuals{1},'real')
     hold on;grid on;box on;
     title(titlestr);
     xlabel('');
@@ -108,14 +83,14 @@ ax1 = subplot('Position',PositionTop);
     adjust_exponent();    
 ax2 = subplot('Position',PositionBottom);
     grid on;box on;hold on;axis square;
-    plotqq(Residuals,'imag');
+    plotqq(Residuals{1},'imag');
     hold on;grid on;box on;    
     xlabel('Standard Normal Quantiles');
     ylabel(sprintf('Im[$\\Delta %s$] Quantiles',Zstrs{cidx}));
     adjust_exponent()
     legend off;
 
-%return
+
 % Plot diagonal line    
 axes(ax1);hold on;
 xl1 = get(ax1,'XLim');    

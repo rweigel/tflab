@@ -1,35 +1,73 @@
-function S = tflab_preprocess(In,Out,opts,combineSegs)
+function S = tflab_preprocess(In,Out,opts,domain,includeSegs,combineSegs)
+%
+%  S = TFLAB_PREPROCESS(S)
+%  S = TFLAB_PREPROCESS(S, domain)
+%  S = TFLAB_PREPROCESS(S, domain, includeSegs)
+%
+%  S = TFLAB_PREPROCESS(In, Out, opts)
+%  S = TFLAB_PREPROCESS(In, Out, opts, domain)
+%  S = TFLAB_PREPROCESS(In, Out, opts, domain, includeSegs)
+%
+%  S = TFLAB_PREPROCESS(In, Out, opts, domain, 1, combineSegs)
 
-if iscell(In)
-    S = intervals_(In,Out,opts,combineSegs);
-    return;
+% _argcheck(varargin{:)
+
+if isstruct(In)
+    S = In;
+    domain = 'both';
+    if nargin > 1
+        domain = Out;
+    end
+    includeSegs = 0;
+    if nargin > 2
+        includeSegs = opts;
+    end
+    opts = S.Options;
+else
+    if nargin < 3
+        error('If In is a time series, at least 3 arguments are required.');
+    end
+    if nargin < 4
+        domain = 'both';
+    end
+    if nargin < 5
+        includeSegs = 0;
+    end
+    if nargin < 6
+        combineSegs = 0;
+    end
+    if nargin == 6 && includeSegs ~= 1
+        error('If combineSegs is given, includeSegs must be 1.');
+    end
+    if iscell(In)
+        S = intervals_(In,Out,opts,domain,includeSegs,combineSegs);
+        return;
+    end    
+    S = struct('In',In,'Out',Out,'Options',opts);
 end
+
+loglevel = opts.tflab.loglevel;
+
+% Process full time series
+S = tflab_tdpreprocess(S,loglevel);
+S = tflab_fdpreprocess(S);
 
 Tw = opts.td.window.width;
 Ts = opts.td.window.shift;
 
 emsg = 'If one of window.width or window.shift is NaN, both must be NaN';
 assert(any(isnan([Tw,Ts])) == all(isnan([Tw,Ts])),emsg);
-  
-S = struct('In',In,'Out',Out,'Options',opts);
 
-if isnan(Tw) && isnan(Ts)
-    S = tflab_tdpreprocess(S);
-    S = tflab_fdpreprocess(S);
+if (isnan(Tw) && isnan(Ts)) || ~includeSegs
+    % No segments to create or no segments desired.
     return
-else
-    optsx = S.Options;
-    optsx.td.window.width = NaN;
-    optsx.td.window.shift = NaN;
-    % Do calcs for full time series
-    S = tflab_preprocess(S.In, S.Out, optsx);
 end
 
-[a,b] = segmentidxs_(size(In,1),Tw,Ts);
+[a,b] = segmentidxs_(size(S.In,1),Tw,Ts);
 for s = 1:length(a)
 
     Iseg = a(s):b(s);
-    if opts.tflab.loglevel > 0
+    if loglevel > 0
         logmsg('Preprocessing segment %d of %d\n',s,length(a));
         logmsg('Segment time index range = [%d:%d]\n',Iseg(1),Iseg(end));
     end
@@ -38,10 +76,10 @@ for s = 1:length(a)
     S.Segment{s}.Options = opts;
     S.Segment{s}.IndexRange = [a(s),b(s)]';
 
-    S.Segment{s}.In  = In(Iseg,:);
-    S.Segment{s}.Out = Out(Iseg);
-    
-    S.Segment{s} = tflab_tdpreprocess(S.Segment{s});
+    S.Segment{s}.In  = S.In(Iseg,:);
+    S.Segment{s}.Out = S.Out(Iseg);
+
+    S.Segment{s} = tflab_tdpreprocess(S.Segment{s},loglevel);
     S.Segment{s} = tflab_fdpreprocess(S.Segment{s});
 
 end
@@ -86,7 +124,7 @@ function [a,b] = segmentidxs_(N,Tw,Ts)
     end
 end
 
-function S = intervals_(In, Out, opts, combineSegs)    
+function S = intervals_(In, Out, opts, domain, includeSegs, combineSegs)    
 
     % Each cell contians an interval and an arbitrary gap in time is
     % assumed between the end of one cell and the start of the next
@@ -117,7 +155,7 @@ function S = intervals_(In, Out, opts, combineSegs)
     end
     
     for i = 1:length(In) % Number of intervals
-        Si{i} = tflab_preprocess(In{i},Out{i},opts,combineSegs);        
+        Si{i} = tflab_preprocess(In{i},Out{i},opts,domain,includeSegs,combineSegs);        
     end
 
     p = 1;

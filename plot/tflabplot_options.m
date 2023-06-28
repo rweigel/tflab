@@ -1,12 +1,16 @@
 function opts = tflabplot_options(S,opts,dtype,plotfun)
 
-dopts = struct();
+dopts = struct(); % Defalt opts
 
 dopts.title = '';
 
 dopts.type = dtype;
 
-prefix = struct('tsplot','ts','dftplot','dft','zplot','tf','snplot','sn');
+prefix = struct('tsplot','ts',...
+                'dftplot','dft',...
+                'zplot','tf',...
+                'snplot','sn',...
+                'qqplot','qq');
 
 % Print options passed to tflab's figsave()
 dopts.print = 0;
@@ -62,7 +66,9 @@ if strcmp(plotfun,'zplot')
         case 3
             dopts.printname = [dopts.printname,'_real_imaginary'];            
     end
-    
+end
+
+if any(strcmp(plotfun,{'zplot','qqplot'}))
     if nOut == 1
         if nIn == 1
             dopts.zstrs = {'Z'};
@@ -107,36 +113,12 @@ if any(strcmp(plotfun,{'dftplot','zplot','snplot'}))
 end
 
 if iscell(S)
-    S = S{1};
+    dopts.instr = namestrs_(S{1}.Metadata.instr, nIn);
+    dopts.outstr = namestrs_(S{1}.Metadata.outstr, nOut);
+else
+    dopts.instr = namestrs_(S.Metadata.instr, nIn);
+    dopts.outstr = namestrs_(S.Metadata.outstr, nOut);
 end
-
-dopts.inunit = S.Metadata.inunit;
-dopts.instr = S.Metadata.instr;
-if nIn > 1
-    if ~iscell(S.Metadata.instr)
-        for j = 1:nIn
-            dopts.instr{j} = sprintf('%s(:,%d)',S.Metadata.instr,j);
-        end
-    else
-        % Check that length(S.Metadata.instr) = nIn
-    end
-else
-    dopts.instr = {S.Metadata.instr};
-end    
-
-dopts.outunit = S.Metadata.outunit;
-dopts.outstr = S.Metadata.outstr;
-if nOut > 1
-    if ~iscell(S.Metadata.instr)
-        for j = 1:nOut
-            dopts.outstr{j} = sprintf('%s(:,%d)',S.Metadata.outstr,j);
-        end
-    else
-        % Check that length(S.Metadata.outstr) = nOut
-    end
-else
-    dopts.outstr = {S.Metadata.outstr};
-end    
 
 % Replace default options with given options in opts
 fns = fieldnames(dopts);
@@ -147,3 +129,22 @@ for i = 1:length(fns)
 end
 
 opts = dopts;
+
+end
+
+function namestrs = namestrs_(namestrs, nc)
+    if nc > 1
+        if ~iscell(namestrs)
+            for j = 1:nc
+                namestrs_new{j} = sprintf('%s(:,%d)',namestrs,j);
+            end
+            namestrs = namestrs_new;
+        else
+            if length(namestrs) ~= nc
+                error('Metadata.instr or Metadata.outstr does not have the correct number of elements.');
+            end
+        end
+    else
+        namestrs = {namestrs};
+    end    
+end

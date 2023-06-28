@@ -1,24 +1,15 @@
-function [In_,Out_] = tflab_tdpreprocess(In,Out,tdopts,loglevel)
+function S = tflab_tdpreprocess(S,loglevel)
 
-if nargin == 1
-    % S = tflab_tdpreprocess(S) where S.{In_,Out_} gets added if any
-    % filter applied.
-    S = In;
-    [In_,Out_] = tflab_tdpreprocess(S.In,S.Out,S.Options.td,S.Options.tflab.loglevel);
-    if ~isempty(In_)
-        % No filter applied
-        S.In_ = In_;
-        S.Out_ = Out_;
-    end
-    In_ = S;
-    Out = [];
-    return;
+if nargin < 2
+    loglevel = 0;
 end
+
+tdopts = S.Options.td;
 
 modified = 0;
 
-Inx = In;
-Outx = Out;
+Inx = S.In;
+Outx = S.Out;
 
 if ~isempty(tdopts.detrend.function)
     modified = 1;
@@ -27,8 +18,8 @@ if ~isempty(tdopts.detrend.function)
     end
     Inx = tdopts.detrend.function(Inx, tdopts.detrend.functionargs{:});
     Outx = tdopts.detrend.function(Outx, tdopts.detrend.functionargs{:});
-    In_.Detrended = Inx;
-    Out_.Detrended = Outx;
+    S.In_.Detrended = Inx;
+    S.Out_.Detrended = Outx;
 else
     if loglevel > 0
         logmsg('No detrending b/c no function given.\n');
@@ -44,8 +35,8 @@ if ~isempty(tdopts.window.function)
     end
     Inx = tdopts.window.function(Inx,tdopts.window.functionargs{:});
     Outx = tdopts.window.function(Outx,tdopts.window.functionargs{:});
-    In_.Windowed = Inx;
-    Out_.Windowed = Outx;    
+    S.In_.Windowed = Inx;
+    S.Out_.Windowed = Outx;    
 else
     if loglevel > 0
         logmsg('No windowing applied b/c no window function given.\n');
@@ -59,8 +50,8 @@ if ~isempty(tdopts.whiten.function)
     end
     Inx = tdopts.whiten.function(Inx,tdopts.whiten.functionargs{:});
     Outx = tdopts.whiten.function(Outx,tdopts.whiten.functionargs{:});
-    In_.Whitened = Inx;
-    Out_.Whitened = Outx;
+    S.In_.Whitened = Inx;
+    S.Out_.Whitened = Outx;
 else
     if loglevel > 0
         logmsg('Whitening performed b/c no whiten function given.\n');
@@ -74,8 +65,8 @@ if ~isnan(tdopts.zeropad)
     end
     Inx = [Out;zeros(tdopts.zeropad,1)];
     Outx = [In;zeros(tdopts.zeropad,size(In,2))];
-    In_.Zeropadded = Inx;
-    Out_.Zeropadded = Outx;
+    S.In_.Zeropadded = Inx;
+    S.Out_.Zeropadded = Outx;
 else
     if loglevel > 0
         logmsg('No zero padding performed b/c no zeropad value given.\n');
@@ -83,9 +74,6 @@ else
 end
 
 if modified
-    In_.Final  = Inx;
-    Out_.Final = Outx;
-else
-    In_ = [];
-    Out_ = [];
+    S.In_.Final  = Inx;
+    S.Out_.Final = Outx;
 end

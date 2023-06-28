@@ -1,4 +1,4 @@
-function [ax1,ax2] = snplot(S,popts)
+function [ax1,ax2] = snplot(S,popts,comp)
 %SNPLOT
 
 assert(isstruct(S) || iscell(S), ...
@@ -6,6 +6,9 @@ assert(isstruct(S) || iscell(S), ...
 
 if nargin < 2
     popts = struct();
+end
+if nargin < 3
+    comp = 1;
 end
 
 % Apply default metadata for fields not specified in S.Metadata.
@@ -86,7 +89,6 @@ end
 
 if length(S) > 1
     % Multiple TFs
-    comp = 1;
     figprep();
     lg = legend_(S,popts,comp);
     ax1 = subplot('Position', popts.PositionTop);
@@ -130,7 +132,16 @@ if length(S) > 1
             figsave(fullfile(popts.printdir, fname), popts);
         end
     end
+    if comp < size(S{1}.In,2)
+        figure();
+        comp = comp + 1;
+        ax1 = {ax1};
+        ax2 = {ax2};
+        [ax1{comp},ax2{comp}] = snplot(S,popts,comp);
+    end
 end
+
+
 end % function
 
 function lg = legend_(S,popts,comp)
