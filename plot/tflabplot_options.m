@@ -37,8 +37,8 @@ else
 end
 
 if strcmp(plotfun,'dftplot')
-    if isempty(opts.type)
-        opts.type = 'original-raw-magphase';
+    if ~isfield(opts,'type') || isempty(opts.type)
+        opts.type = 'original-raw-magnitudes';
     end
     tparts = split(opts.type,'-');
     if length(tparts) == 1

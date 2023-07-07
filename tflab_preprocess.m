@@ -14,15 +14,23 @@ function S = tflab_preprocess(In,Out,opts,domain,includeSegs,combineSegs)
 
 if isstruct(In)
     S = In;
-    domain = 'both';
-    if nargin > 1
-        domain = Out;
+    combineSegs = 0;
+    if nargin > 3
+        combineSegs = domain;
     end
     includeSegs = 0;
     if nargin > 2
         includeSegs = opts;
     end
+    domain = 'both';
+    if nargin > 1
+        domain = Out;
+    end
     opts = S.Options;
+    if isfield(S,'Segment')
+        Segmento = S.Segment;
+        S = rmfield(S,'Segment');
+    end
 else
     if nargin < 3
         error('If In is a time series, at least 3 arguments are required.');
@@ -52,6 +60,10 @@ loglevel = opts.tflab.loglevel;
 S = tflab_tdpreprocess(S,loglevel);
 S = tflab_fdpreprocess(S);
 
+if ~isfield(S.Options,'td')
+    return
+end
+
 Tw = opts.td.window.width;
 Ts = opts.td.window.shift;
 
@@ -77,15 +89,21 @@ for s = 1:length(a)
     S.Segment{s}.IndexRange = [a(s),b(s)]';
 
     S.Segment{s}.In  = S.In(Iseg,:);
-    S.Segment{s}.Out = S.Out(Iseg);
+    S.Segment{s}.Out = S.Out(Iseg,:);
 
     S.Segment{s} = tflab_tdpreprocess(S.Segment{s},loglevel);
     S.Segment{s} = tflab_fdpreprocess(S.Segment{s});
-
+   
 end
 
 if combineSegs
     S.Segment = combineStructs(S.Segment,3);
+    fns = fieldnames(Segmento);
+    for i = 1:length(fns)
+        % If running preprocess on saved state, saved state
+        % may have results of regression. Here we recover them.
+        S.Segment.(fns{i}) = Segmento.(fns{i});
+    end
     S.Segment = rmfield(S.Segment,'Options');
 end
 

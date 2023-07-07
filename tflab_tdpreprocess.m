@@ -4,7 +4,13 @@ if nargin < 2
     loglevel = 0;
 end
 
-tdopts = S.Options.td;
+
+if isfield(S.Options,'td')
+    tdopts = S.Options.td;
+else
+    logmsg('No time domain preprocessing b/c no S.Options.td.\n');
+    return
+end
 
 modified = 0;
 

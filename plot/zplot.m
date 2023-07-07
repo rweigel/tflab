@@ -1,5 +1,14 @@
 function [ax1,ax2] = zplot(S,popts)
 %ZPLOT
+%
+%   ZPLOT(S)
+%   ZPLOT(S, popts)
+%
+%   popts.type is one of, 1, 2, or 3
+%
+%   1 => Z,phase
+%   2 => rho,phase (assumes Z in (mV/km)/nT and frequencies in Hz).
+%   3 => Real,Imaginary
 
 assert(isstruct(S) || iscell(S), ...
     'S must be a tflab struct or cell array of tflab structs');
@@ -64,11 +73,10 @@ if isstruct(S)
                     ls{j} = sprintf('$%s$',Zstrs{j});
                 end
             case 2
-                dt = S.Options.info.timedelta;
                 % TODO: Assumes Z in (mV/km)/nT and dt in seconds.
-                y = z2rho(S.fe/dt, S.Z);
+                y = z2rho(S.fe/timedelta, S.Z);
                 if interp_Z_exists
-                    yi = z2rho(S.fi/dt, S.Zi);
+                    yi = z2rho(S.fi/timedelta, S.Zi);
                 end
                 for j = 1:size(S.Z,2)
                     ls{j} = sprintf('$%s$',Rhostrs{j});
@@ -76,7 +84,7 @@ if isstruct(S)
             case 3
                 y = real(S.Z);
                 for j = 1:size(S.Z,2)
-                    ls{j} = sprintf('Re$(%s)$ Estimated',Zstrs{j});
+                    ls{j} = sprintf('Re$(%s)$',Zstrs{j});
                 end
                 if interp_Z_exists
                     yi = real(S.Zi);
@@ -226,9 +234,8 @@ if iscell(S)
                             yebu = -y+squeeze(S{s}.ZCL.Magnitude.Bootstrap.x_1sigma(:,j,2));
                         end
                     case 2
-                        dt = S{s}.Options.info.timedelta;
-                        % TODO: Assumes Z in (mV/km)/nT and dt in seconds.
-                        y = z2rho(S{s}.fe/dt, S{s}.Z(:,j));
+                        % TODO: Assumes Z in (mV/km)/nT
+                        y = z2rho(S{s}.fe/timedelta, S{s}.Z(:,j));
                     case 3
                         y = real(S{s}.Z(:,j));
                         if isfield(S{s},'ZCL')
@@ -261,14 +268,13 @@ if iscell(S)
                     %end
                 end
             end
-            
             yunitstr_ = unitstr_(S{1}.Metadata);
             if opts.type == 1
                 yl = sprintf('$|%s|$%s',Zstrs{j},yunitstr_);
                 adjust_ylim('upper');
             end
             if opts.type == 2
-                yl = sprintf('$%s% [$\Omega\cdot$m]',Rhostrs{j});
+                yl = sprintf('$%s$ [$\\Omega\\cdot$m]',Rhostrs{j});
                 adjust_ylim('upper');            
             end
             if opts.type == 3

@@ -1,5 +1,5 @@
 function sdir = scriptdir()
-%SCRIPTDIR - Directory of calling script or PWD if called on command line
+%SCRIPTDIR - Directory of calling script or pwd() if called on command line
 %
 %   SCRIPTDIR() 
 

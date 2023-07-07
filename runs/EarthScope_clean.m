@@ -16,6 +16,7 @@ end
 
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
+addpath(fullfile(scriptdir(),'readers'));
 
 infile  = fullfile(scriptdir(),'data','EarthScope',id,[id,'_raw.mat']); 
 outfile = strrep(infile,'_raw','_clean');
@@ -54,12 +55,13 @@ if strcmp(id,'VAQ58')
     t = t(1) + (0:Ni-1)'/86400;
 
     % Fill gaps with NaNs.
-    Bi = nan(Ni,3);
-    Bi(tidx,:) = B;
-    B = Bi;
     Ei = nan(Ni,2);
     Ei(tidx,:) = E;
     E = Ei;
+
+    Bi = nan(Ni,3);
+    Bi(tidx,:) = B;
+    B = Bi;
     
     Ir = (1123950:size(B,1))'; % Values to remove
     Ik = 1:Ir(1)-1;            % Values to keep    
@@ -83,18 +85,19 @@ end
 
 logmsg('Cleaning E');
 E1 = E;
-E2 = removemean(E1(Ik,:));
+E1(Ir,:) = NaN;
+E2 = removemean(E1);
 E3 = despike(E2, despike_E{:});
-E3(Ir,:) = NaN;
 E4 = naninterp1(E3);
 
 logmsg('Cleaning B');    
 B1 = B;
-B2 = removemean(B1(Ik,:));
+B1(Ir,:) = NaN;
+B2 = removemean(B1);
 B3 = despike(B2, despike_B{:});
-B3(Ir,:) = NaN;
 B4 = naninterp1(B3);
 
+to = t;
 [B, E, t] = trimnans(B4, E4, t);
 
 infile = relpath(infile);
@@ -108,7 +111,7 @@ if plot_ || print_
     figure(1);figprep();clf;
 
     subplot(4,1,1)
-        plot(t,E1);
+        plot(to,E1);
         datetick();
         grid minor;
         title('Raw $\mathbf{E}$');
@@ -120,10 +123,10 @@ if plot_ || print_
         zoominfo('E raw');
 
     subplot(4,1,2)
-        plot(t,E2)
+        plot(to,E2)
         datetick();
         grid minor;
-        title('Mean removed');
+        title('Mean subtracted');
         grid on;
         ylabel(unitsE);
         axis tight;
@@ -132,7 +135,7 @@ if plot_ || print_
         zoominfo('E after mean subtraction');
         
     subplot(4,1,3)
-        plot(t,E3);
+        plot(to,E3);
         datetick();
         grid minor;
         title('Despiked and chunk(s) removed');
@@ -142,9 +145,9 @@ if plot_ || print_
         set(gca,'XLim',xlim);
         legend('$E_x$','$E_y$');
         zoominfo('E after despiking and chunk removal');
-        
+
     subplot(4,1,4)
-        plot(t,E4)
+        plot(to,E4)
         datetick();
         grid minor;
         title('Interpolated over NaNs');
@@ -153,7 +156,7 @@ if plot_ || print_
         axis tight;
         set(gca,'XLim',xlim);
         legend('$E_x$','$E_y$');
-        zoominfo('E after interpolation');        
+        zoominfo('E after interpolating over NaNs');        
         xlabel(['Month/Day of ',datestr(t(1),'yyyy')])
 end
 
@@ -161,7 +164,7 @@ if plot_
     figure(2);figprep();clf;
     
     subplot(4,1,1)
-        plot(t,B1(:,1:2))
+        plot(to,B1(:,1:2))
         datetick();
         grid minor;
         title('Raw $\mathbf{B}$');
@@ -173,7 +176,7 @@ if plot_
         xlim = get(gca,'XLim');
 
     subplot(4,1,2)
-        plot(t,B2(:,1:2))
+        plot(to,B2(:,1:2))
         datetick();
         grid minor;
         title('Mean subtracted');
@@ -185,7 +188,7 @@ if plot_
         zoominfo('B after mean subtraction');
         
     subplot(4,1,3)
-        plot(t,B3(:,1:2));
+        plot(to,B3(:,1:2));
         datetick();
         grid minor;
         title('Desiked and chunk(s) removed');
@@ -197,7 +200,7 @@ if plot_
         zoominfo('B after despiking and chunk removal');
 
     subplot(4,1,4)
-        plot(t,B4(:,1:2))
+        plot(to,B4(:,1:2))
         datetick();
         grid minor;        
         title('Interpolated');

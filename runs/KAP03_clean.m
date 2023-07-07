@@ -1,20 +1,20 @@
-function [B,E,t,infile,outfile,timedelta] = KAP103_clean()
+function [B,E,t,infile,outfile,timedelta] = KAP03_clean(sta)
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
 addpath(fullfile(fileparts(mfilename('fullpath')),'readers'));
 
 % Dir of data file
-outfile = fullfile(scriptdir(),'data','KAP03','KAP103',['KAP103','_cleaned.mat']); 
+outfile = fullfile(scriptdir(),'data','KAP03',sta,[sta,'_cleaned.mat']); 
 
 if exist(outfile,'file')
     logmsg('Reading %s\n',outfile);
     load(outfile)
-    return
+    %return
 end
 
 % Read input/output data
-[B,E,t,infile,Header] = KAP03_read('KAP103');
+[B,E,t,infile,Header] = KAP03_read(sta);
 
 timedelta = str2num(Header.DELTA_T);
 
@@ -30,7 +30,7 @@ subplot(3,1,1)
     grid on
     set(gca,'XTickLabels',[])
 subplot(3,1,2)
-    E = despikeE(E);
+    E = despikeE(E, sta);
     plot(t,E)
     title('Despiked');
     datetick()
@@ -45,13 +45,21 @@ subplot(3,1,3)
     xlabel('Month/Day of 2003')
 figsave([outfile(1:end-3),'png']);
 
-function X = despikeE(X)
-    % From visual inspection
-    Ibad = [242900, 242910;...
-            308981, 309282;...
-            341328, 341950;...
-            419932, 422771];
+logmsg('Interpolating over NaNs in B\n');
+B = naninterp1(B);
 
+function X = despikeE(X, sta)
+    Ibad = [];
+    if strcmp(sta,'KAP103')
+        % From visual inspection
+        Ibad = [242900, 242910;...
+                308981, 309282;...
+                341328, 341950;...
+                419932, 422771];
+    end
+    if strcmp(sta,'KAP163')
+        Ibad = [188720, 188760];
+    end
     for i = 1:size(Ibad,1)
         X(Ibad(i,1):Ibad(i,2),:) = nan;
     end

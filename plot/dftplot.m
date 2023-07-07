@@ -47,17 +47,15 @@ for s = 1:length(S)
     opts = S{s}.Options;
     if strcmp(tparts{1},'error')
         % error-{raw,averaged}-{magphase,realimag}
-        segsError = S{s}.DFT.Out_.Error;
         if strcmp(tparts{2},'averaged')
-            dftError = dftaverage(segsError);
+            dftError = dftaverage(S{s}.DFT.Out_.Error);
             fe{s} = S{s}.DFT.fe;            
         else
             tmp = cat(1,S{s}.DFT.f{:});
             fe{s,1} = tmp(:);
-            dftError = cat(1,segsError{:});
+            dftError = cat(1,S{s}.DFT.Out_.Error{:});
         end
         dftError = dftError(:,comp);
-
         if strcmp(tparts{3},'magphase')
             sf = (size(S{s}.Out_.Error,1)-1)/2;
             y1{s} = abs(dftError)/sf;
@@ -392,19 +390,19 @@ function argcheck_(S,popts)
                'original','final','detrended','windowed','whitened','zeropadded'};
     if ~any(strcmp(tparts{1},tparts1))
         list = join(tparts1,', ');
-        error('popts.type must start with one of: %s (not %s)',list{1},tparts{1});
+        error('popts.type must start with one of: %s (not "%s")',list{1},tparts{1});
     end
     if strcmp(tparts{1},'error')
         tparts3 = {'magphase','realimag'};
         if ~any(strcmp(tparts{3},tparts3))
             list = join(tparts3,', ');
-            error('pots.type must end with one of %s (not %s)',list{1},tparts{3});
+            error('pots.type must end with one of %s (not "%s")',list{1},tparts{3});
         end
     else
         tparts3 = {'magnitudes','phases','reals','imaginaries'};
         if ~any(strcmp(tparts{3},tparts3))
             list = join(tparts3,', ');
-            error('pots.type must end with one of %s (not %s)',list{1},tparts{3});
+            error('popts.type must end with one of %s (not "%s")',list{1},tparts{3});
         end
     end
 end

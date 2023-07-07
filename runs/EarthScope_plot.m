@@ -3,16 +3,6 @@ tflab_setpaths();
 
 id = 'VAQ58';
 
-%% Load data if not already in memory.
-daterange = '20160610-20160624';
-daterange = '20160610-20160620';
-if ~exist('TF1','var')
-    fname = fullfile('data','EarthScope',id,...
-            sprintf('%s-%s-tf1.mat',id,daterange));
-    fnamefull = fullfile(scriptdir(),fname);
-    logmsg(sprintf('Reading %s\n',fname));
-    TF1 = load(fnamefull);
-end
 
 %% Set common print options
 copts.print    = 0; % Set to 1 to print pdf of each figure created.
@@ -23,10 +13,10 @@ figure(1);close all;
 
 %% Time series plots
 
-% Plot raw time series data used for TF1 (will be same as that for TF2)
+% Plot original time series data used for TF1 (will be same as that for TF2)
 figure();
     tsopts = copts;
-    tsopts.type = 'raw';
+    tsopts.type = 'original';
     tsplot(TF1,tsopts);
 
 % Plot error for TF1 only
@@ -47,39 +37,22 @@ figure();
     tsopts.type  = 'error';
     tsplot({TF1,TF2},tsopts);
 
+%% DFT plots
+% Plot DFTs for TF1 only (will be same for both)
+figure();
+    dftopts = copts;
+    dftopts.type = 'original-averaged';
+    dftplot(TF1,dftopts);
+
 %% SN plots
-
-% Plot SN for TF1 only
-figure();
-    snopts = copts;
-    snopts.period_range = [3, 86400];
-    snplot(TF1,snopts);
-
-% Plot SN for TF2 only
-figure();
-    snopts = copts;
-    snopts.period_range = [3, 86400];
-    snplot(TF2,snopts);
-
 % Compare SN between TF1 and TF2
 figure();
     snopts = copts;
-    snopts.period_range = [3, 86400];
     snplot({TF1,TF2},snopts);
-
-%% PSD plots
-% Plot PSDs for TF1 only
-figure();
-    psdopts = copts;
-    psdopts.period_range = [3, 86400];
-    psdopts.type = 'smoothed';
-    psdplot(TF1,psdopts);
-
 
 %% Z plots
 figure();
     zopts = copts;
-    zopts.period_range = [3, 86400];
     zopts.type = 1;
     zplot(TF1,zopts);
 

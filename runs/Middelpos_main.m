@@ -24,7 +24,7 @@ B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-if 1 
+if 1
 % Trim for faster run
 B = B(1:10*pps,:);
 E = E(1:10*pps,:);

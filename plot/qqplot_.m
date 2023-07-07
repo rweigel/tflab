@@ -56,7 +56,7 @@ if iscell(S)
     titlestr = sprintf('$f=$ %g; $T=$ %.3f',fe{1},1/fe{1});
 end
 
-if ~isfield(S,'Regression') && sidx ~= -1
+if 0 && ~isfield(S,'Regression') && sidx ~= -1
     norm = std(S.Segment.Regression.Residuals{fidx,cidx,sidx});
     titlestr = sprintf('%s\nSeg. = %d/%d; SN = %.1f; Coh = %.2f; $\\sigma_{\\Delta %s}$ = %.1e',...
         titlestr,sidx,size(S.Segment.Regression.Residuals,3),...

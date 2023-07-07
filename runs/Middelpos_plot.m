@@ -5,13 +5,14 @@ tflab_setpaths();
 %% Load data if not already in memory.
 daterange = '20120712-20120721';
 %daterange = '20120712-20121031';
+%daterange = '20120712-20121106';
 if ~exist('TF1','var')
     fname = fullfile('data','Middelpos',...
             sprintf('Middelpos-%s-tf1.mat',daterange));
     fnamefull = fullfile(scriptdir(),fname);
     logmsg(sprintf('Reading %s',fname));
     TF1 = load(fnamefull);
-    TF1 = tflab_preprocess(TF1,'both',0);
+    TF1 = tflab_preprocess(TF1,'both',1,1);
     TF1 = tflab_metrics(TF1);
 end
 if ~exist('TF2','var')
@@ -20,7 +21,7 @@ if ~exist('TF2','var')
     fnamefull = fullfile(scriptdir(),fname);
     logmsg(sprintf('Reading %s',fname));
     TF2 = load(fnamefull);
-    TF2 = tflab_preprocess(TF2,'both',0);
+    TF2 = tflab_preprocess(TF2,'both',0,1);
     TF2 = tflab_metrics(TF2);
 end
 
@@ -120,5 +121,5 @@ comp = 2;  % component (Zxx=1, Zxy=2, Zyx=3, Zyy=4).
 sidx = 1;  % segment number
 
 figure();
-    qqplot_(TF2,fidx,comp,sidx);
+    qqplot_(TF1,struct(),fidx,comp,sidx);
     

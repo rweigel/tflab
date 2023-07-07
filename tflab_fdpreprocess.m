@@ -9,18 +9,12 @@ all = 1;
 if all && isfield(S,'In_')
     fns = fieldnames(S.In_);
     for i = 1:length(fns)
-        [dft, f, fe] = dftbands(S.In_.(fns{i}), opts);
-        S.DFT.In_.(fns{i}).DFT = dft;
-        S.DFT.In_.(fns{i}).f = f;
-        S.DFT.In_.(fns{i}).fe = fe;
+        [S.DFT.In_.(fns{i}),S.DFT.f,S.DFT.fe] = dftbands(S.In_.(fns{i}), opts);
     end
 end
 if all && isfield(S,'Out_')    
     fns = fieldnames(S.Out_);
     for i = 1:length(fns)
-        [dft, f, fe] = dftbands(S.Out_.(fns{i}), opts);
-        S.DFT.Out_.(fns{i}).DFT = dft;
-        S.DFT.Out_.(fns{i}).f = f;
-        S.DFT.Out_.(fns{i}).fe = fe;
+        S.DFT.Out_.(fns{i}).DFT = dftbands(S.Out_.(fns{i}), opts);
     end
 end

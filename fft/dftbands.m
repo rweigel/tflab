@@ -1,7 +1,7 @@
 function [bands, f, fe] = dftbands(x, Ic, Ne)
 %DFTBANDS Compute DFT and split into bands
 %
-%   [bands, f] = DFTBANDS(x, [fc, Ic, Ne]) computes xdft = fftu(x)
+%   [bands, f, fe] = DFTBANDS(x, [fc, Ic, Ne]) computes xdft = fftu(x)
 %   and splits the result into bands determined 
 %   bands{j,1} = xdft(Ic(j)-Ne(j):Ic(j)+Ne(j),:)
 %

@@ -4,7 +4,7 @@ addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
 
 % Dir of data file
-datapath = fullfile(scriptdir(),'data','KAP03',id); 
+datapath = fullfile(scriptdir(),'../data','KAP03',id); 
 
 % Content of data file
 matfile = fullfile(datapath,'/',[id,'_raw.mat']);
@@ -18,6 +18,7 @@ end
 fname = fullfile(datapath,'measurements',[lower(id),'as.ts']);
 fid = fopen(fname);
 i = 1;
+
 while 1
     line = fgetl(fid);
     if ~ischar(line)
@@ -44,7 +45,7 @@ Header.headerlines = headerlines;
 
 logmsg(sprintf('Reading %s\n',fname));
 fid = fopen(fname);
-data = textscan(fid,'%f %f %f %f %f','CollectOutput',1,'HeaderLines',113) ;
+data = textscan(fid,'%f %f %f %f %f','CollectOutput',1,'HeaderLines',i);
 fclose(fid);
 
 MIS_DATA = str2num(Header.MIS_DATA);
