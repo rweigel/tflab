@@ -150,7 +150,7 @@ if isstruct(S)
             y = imag(S.Z);
             yl = unitstr_(S.Metadata);
             for j = 1:size(S.Z,2)
-                ls{j} = sprintf('Im$(%s)$ Estimated',Zstrs{j});
+                ls{j} = sprintf('Im$(%s)$',Zstrs{j});
             end
             if interp_Z_exists
                 yi = imag(S.Zi);

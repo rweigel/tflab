@@ -1,4 +1,10 @@
 function [wE,wB] = dftweights(f, dftE, dftB, opts)
+%DFTWEIGHTS  Compute weights for DFT coefficients
+%
+%  [wE,wB] = DFTWEIGHTS(f, dftE, dftB, opts) computes weights using
+%  opts.fd.window.function. f, dftE, and dftB are cell arrays.
+%
+%  See also TDWINDOW.
 
 winfn = opts.fd.window.function;
 
@@ -11,5 +17,3 @@ for s = 1:length(f)
         wB{s,1}(:,j) = w/sum(w);
     end
 end
-
-
