@@ -13,6 +13,9 @@ meta = struct();
 
 meta.timedelta = 1;  % Measurement cadence.
 meta.timeunit  = ''; % Unit for timedelta
+meta.frequnit  = ''; % Unit for frequency
+meta.freqsf    = '';   % Multiply frequencies by this scale factor (sf) to get frequnit
+meta.zunit     = ''; % Unit for Z
 
 % Needed for all plots.
 

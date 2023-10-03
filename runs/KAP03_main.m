@@ -11,28 +11,22 @@ stationid = 'KAP163';
 % Get input/output data
 [B,E,t,infile,outfile,timedelta] = KAP03_clean(stationid);
 
-if 0
-    %% Band pass
-    addpath(fullfile(scriptdir(),'..','fft'));
-    Tm = (86400/5)/4;
-    band = [1/Tm,0.5];
-    B = bandpass_(B,band);
-    E = bandpass_(E,band);
-    %Eb = E(Tm+1:end-Tm,:);
-    %Bb = B(Tm+1:end-Tm,:);
-end
+I1a = [1:(86400/5)]*3; % First 3 days
+B1a = B(I1a,:);
+E1a = E(I1a,:);
+t1a = t(I1a);
 
-% Make length an integer number of segments.
-pps = 86400; % Points per segment
-%I = pps*floor(size(B,1)/pps);
-I = [1:86400];
-B = B(I,:);
-E = E(I,:);
-t = t(I);
+filestr1a = sprintf('%s-%s-%s',...
+            stationid,datestr(t1a(1),'yyyymmdd'),datestr(t1a(end),'yyyymmdd'));
+
+I1b = [I1a(end)+1:I1a(end)+(86400/5)*3]; % Second 3 days
+B1b = B(I1b,:);
+E1b = E(I1b,:);
+t1b = t(I1b);
 
 % Base file name for saved results
-filestr = sprintf('%s-%s-%s',...
-            stationid,datestr(t(1),'yyyymmdd'),datestr(t(end),'yyyymmdd'));
+filestr1b = sprintf('%s-%s-%s',...
+            stationid,datestr(t1b(1),'yyyymmdd'),datestr(t1b(end),'yyyymmdd'));
 
 % Set variable information (used for plots)
 meta = struct();
@@ -42,7 +36,9 @@ meta = struct();
     meta.outunit   = 'mV/km';
     meta.timeunit  = 's';
     meta.timedelta = timedelta;
-    meta.timestart = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');
+    meta.frequnit  = 'Hz';
+    meta.freqsf    = 1/timedelta; % Multiply frequencies by this to get frequnit
+    meta.timestart = datestr(t1a(1),'yyyy-mm-ddTHH:MM:SS.FFF');
     meta.chainid   = chainid;
     meta.stationid = stationid;
 
@@ -50,25 +46,45 @@ meta = struct();
 %% Compute transfer functions
 
 %% First TF
-opts1 = tflab_options(1);
-    opts1.tflab.loglevel = 1;
-    opts1.td.window.width = NaN;
-    opts1.td.window.shift = NaN;
-    opts1.filestr = sprintf('%s-tf1',filestr);
+opts1a = tflab_options(1);
+    opts1a.tflab.loglevel = 1;
+    opts1a.td.window.width = NaN;
+    opts1a.td.window.shift = NaN;
+    opts1a.filestr = sprintf('%s-tf1a',filestr1a);
     
 % Execute run
-TF1 = tflab(B(:,1:2),E,opts1);
-TF1.Metadata = meta;
+TF1a = tflab(B1a(:,1:2),E1a,opts1a);
+TF1a.Metadata = meta;
 
 % Compute uncertainties
 %TF1 = tflab_uncertainty(TF1);
 
 % Save results
-fname = fullfile(scriptdir(),'data',chainid,stationid,[TF1.Options.filestr,'.mat']);
-savetf(TF1,fname);
+fname = fullfile(scriptdir(),'data',chainid,stationid,[TF1a.Options.filestr,'.mat']);
+savetf(TF1a,fname);
+
+%% Second TF
+meta.timestart = datestr(t1b(1),'yyyy-mm-ddTHH:MM:SS.FFF');
+opts1b = tflab_options(1);
+    opts1b.tflab.loglevel = 1;
+    opts1b.td.window.width = NaN;
+    opts1b.td.window.shift = NaN;
+    opts1b.filestr = sprintf('%s-tf1b',filestr1b);
+    
+% Execute run
+TF1b = tflab(B1b(:,1:2),E1b,opts1b);
+TF1b.Metadata = meta;
+
+% Compute uncertainties
+%TF1 = tflab_uncertainty(TF1);
+
+% Save results
+fname = fullfile(scriptdir(),'data',chainid,stationid,[TF1b.Options.filestr,'.mat']);
+savetf(TF1b,fname);
 
 %% Read TF computed using BIRP
 if strcmp(chainid,'KAP03')
+
     zread_dir = [fileparts(mfilename('fullpath')),'/zread'];
     if ~exist(zread_dir,'dir')
         url = 'https://github.com/rweigel/zread';
@@ -84,15 +100,27 @@ if strcmp(chainid,'KAP03')
 
     TF2 = read_edi([scriptdir(),'/data/KAP03/edi/',lower(stationid),'.edi']);
     TF2.Z(TF2.Z > 1e31) = NaN;
+
+    filestr = sprintf('%s-unknown-unknown',stationid);
+    if strcmp(stationid,'KAP163')
+        % edi file read has filenam=kap163/kap163as.{ex,ey,...}
+        % and the file we read is kap163as.ts. edi file also nas
+        % nread = 463807 and kap163as.ts has 464969 lines, so it appears
+        % edi file was based on about full range of data. 
+        filestr = sprintf('%s-%s-%s',...
+                  stationid,datestr(t(1),'yyyymmdd'),datestr(t(end),'yyyymmdd'));
+    end
     
     % Set options and data needed for metrics and plotting
     TF2.Metadata = meta;
+    TF2.Metadata.freqsf = 1;
     TF2.Options.filestr = sprintf('%s-tf2',filestr);
     TF2.Options.description = 'BIRP';
-    TF2.Options.fd = opts1.fd;
-    TF2.Options.tflab.loglevel = opts1.tflab.loglevel;
-    TF2.In  = TF1.In;
-    TF2.Out = TF1.Out;
+    TF2.Options.fd = opts1a.fd;
+    TF2.Options.tflab.loglevel = opts1a.tflab.loglevel;
+    TF2.In  = TF1a.In;
+    TF2.Out = TF1a.Out;
+    TF2.Z = TF2.Z;
     TF2 = tflab_metrics(TF2);
 end
 

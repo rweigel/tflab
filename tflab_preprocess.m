@@ -1,33 +1,24 @@
 function S = tflab_preprocess(In,Out,opts,domain,includeSegs,combineSegs)
 %
 %  S = TFLAB_PREPROCESS(S)
-%  S = TFLAB_PREPROCESS(S, domain)
-%  S = TFLAB_PREPROCESS(S, domain, includeSegs)
 %
 %  S = TFLAB_PREPROCESS(In, Out, opts)
 %  S = TFLAB_PREPROCESS(In, Out, opts, domain)
 %  S = TFLAB_PREPROCESS(In, Out, opts, domain, includeSegs)
-%
 %  S = TFLAB_PREPROCESS(In, Out, opts, domain, 1, combineSegs)
 
 % _argcheck(varargin{:)
 
 if isstruct(In)
     S = In;
-    combineSegs = 0;
-    if nargin > 3
-        combineSegs = domain;
-    end
-    includeSegs = 0;
-    if nargin > 2
-        includeSegs = opts;
-    end
-    domain = 'both';
-    if nargin > 1
-        domain = Out;
-    end
     opts = S.Options;
+    domain = 'both';
+    combineSegs = 1;
+    includeSegs = 1;
     if isfield(S,'Segment')
+        % If running preprocess on saved state, saved state
+        % may have results of regression. S.Segment will
+        % be over-written and then fields of Segmento are recovered.
         Segmento = S.Segment;
         S = rmfield(S,'Segment');
     end
@@ -54,6 +45,11 @@ else
     S = struct('In',In,'Out',Out,'Options',opts);
 end
 
+if combineSegs && ~includeSegs
+    % TODO: Fix awkward API
+    error('If combineSegs = 1, includeSegs must be 1');
+end
+
 loglevel = opts.tflab.loglevel;
 
 % Process full time series
@@ -70,7 +66,7 @@ Ts = opts.td.window.shift;
 emsg = 'If one of window.width or window.shift is NaN, both must be NaN';
 assert(any(isnan([Tw,Ts])) == all(isnan([Tw,Ts])),emsg);
 
-if (isnan(Tw) && isnan(Ts)) || ~includeSegs
+if (isnan(Tw) && isnan(Ts)) || ~includeSegs %|| Tw == Ts
     % No segments to create or no segments desired.
     return
 end
@@ -98,11 +94,13 @@ end
 
 if combineSegs
     S.Segment = combineStructs(S.Segment,3);
-    fns = fieldnames(Segmento);
-    for i = 1:length(fns)
-        % If running preprocess on saved state, saved state
-        % may have results of regression. Here we recover them.
-        S.Segment.(fns{i}) = Segmento.(fns{i});
+    if exist('Segmento','var')
+        fns = fieldnames(Segmento);
+        for i = 1:length(fns)
+            % If running preprocess on saved state, saved state
+            % may have results of regression. Here we recover them.
+            S.Segment.(fns{i}) = Segmento.(fns{i});
+        end
     end
     S.Segment = rmfield(S.Segment,'Options');
 end

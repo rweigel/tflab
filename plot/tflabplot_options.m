@@ -1,10 +1,8 @@
-function opts = tflabplot_options(S,opts,dtype,plotfun)
+function opts = tflabplot_options(S,opts,plotfun)
 
 dopts = struct(); % Defalt opts
 
 dopts.title = '';
-
-dopts.type = dtype;
 
 prefix = struct('tsplot','ts',...
                 'dftplot','dft',...
@@ -36,6 +34,10 @@ else
     nIn = size(S.In,2);
 end
 
+if strcmp(plotfun,'tsplot')
+    opts.dtype = 'original';
+end
+
 if strcmp(plotfun,'dftplot')
     if ~isfield(opts,'type') || isempty(opts.type)
         opts.type = 'original-raw-magnitudes';
@@ -55,10 +57,20 @@ if strcmp(plotfun,'dftplot')
     opts.type = opts.type{:};
 end
 
+%if strcmp(plotfun,'tsplot')
+    %if strcmp(type,'original')
+    %end
+%end
+
 if strcmp(plotfun,'zplot')
+    if ~isfield(opts,'type') || isempty(opts.type)
+        ptype = 1;
+    else
+        ptype = opts.type;
+    end
     
     dopts.unwrap = 0;
-    switch dtype
+    switch ptype
         case 1
             dopts.printname = [dopts.printname,'_magnitude_phase'];
         case 2
@@ -123,12 +135,12 @@ end
 % Replace default options with given options in opts
 fns = fieldnames(dopts);
 for i = 1:length(fns)
-    if isfield(opts, fns{i})
-        dopts.(fns{i}) = opts.(fns{i});
+    if ~isfield(opts, fns{i})
+        opts.(fns{i}) = dopts.(fns{i});
     end
 end
 
-opts = dopts;
+%opts = dopts;
 
 end
 

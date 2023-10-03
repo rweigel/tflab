@@ -14,7 +14,6 @@ end
 [dftsig,f] = dftbands(sig, opts);
 dfterr = dftbands(err, opts);
 
-w = dftweights(f, dftsig, dftsig, opts);
 for s = 1:length(f)
-    se(s,:) = abs(sum(w{s}.*dftsig{s},1)).^2./abs(sum(w{s}.*dfterr{s},1)).^2;
+    se(s,:) = sum(dftsig{s}.*conj(dftsig{s}),1)./sum(dfterr{s}.*conj(dfterr{s}),1);
 end

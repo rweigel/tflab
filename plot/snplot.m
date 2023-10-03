@@ -14,23 +14,24 @@ end
 % Apply default metadata for fields not specified in S.Metadata.
 S = tflab_metadata(S);
 
-popts = tflabplot_options(S, popts, '', 'snplot');
+popts = tflabplot_options(S,popts,'snplot');
 
 if ~iscell(S)
     S = {S};
 end
 
 % TODO: Check all same. This assumes 1s.
-timeunit = S{1}.Metadata.timeunit;
+frequnit = S{1}.Metadata.frequnit;
+freqsf = S{1}.Metadata.freqsf;
 
 for s = 1:length(S)
     fe{s} = S{s}.Metrics.fe;
     y1{s} = S{s}.Metrics.SN;
     y2{s} = S{s}.Metrics.Coherence;
     if popts.vs_period
-        x{s} = S{s}.Metadata.timedelta./fe{s};
+        x{s} = 1./(fe{s}*S{s}.Metadata.freqsf);
     else
-        x{s} = fe{s}/S{s}.Metadata.timedelta;
+        x{s} = fe{s}*S{s}.Metadata.freqsf;
     end
 end
 
@@ -63,7 +64,7 @@ if length(S) == 1
         adjust_ylim('upper');
         adjust_yticks();
         adjust_exponent();
-        setx(popts,0,timeunit);
+        setx(popts,0,frequnit,freqsf);
 
     ax2 = subplot('Position', popts.PositionBottom);
         semilogx(x,y2,popts.line{:});
@@ -77,7 +78,7 @@ if length(S) == 1
         yline(1,'k');
         adjust_ylim('upper');
         adjust_exponent('x');
-        setx(popts,1,timeunit);
+        setx(popts,1,frequnit,freqsf);
         
     if popts.print
         for i = 1:length(popts.printfmt)
@@ -108,7 +109,7 @@ if length(S) > 1
         adjust_yticks();
         adjust_exponent();
         yline(1,'k');
-        setx(popts,0,timeunit);
+        setx(popts,0,frequnit,freqsf);
 
     ax2 = subplot('Position', popts.PositionBottom);
         grid on;box on;hold on;
@@ -123,7 +124,7 @@ if length(S) > 1
         set(gca,'YLim',[0,1]);
         adjust_ylim('upper');
         adjust_exponent('x');            
-        setx(popts,1,timeunit);
+        setx(popts,1,frequnit,freqsf);
 
     if popts.print
         ext = regexprep(S{1}.Options.info.outstr{comp},'\$','');        

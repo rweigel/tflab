@@ -18,11 +18,21 @@ if nargin < 2
     popts = struct();
 end
 
+if isfield(popts,'time_range')
+    try
+        fmt = 'yyyy-mm-ddTHH:MM:SS.FFF';
+        popts.mldatenum_range(1) = datenum(popts.time_range{1},fmt);
+        popts.mldatenum_range(2) = datenum(popts.time_range{2},fmt);
+    catch
+        warning(['Could not parse one or more elements in popts.time_range. Format must be ',fmt]);
+    end
+end
+
 % Apply default metadata for fields not specified in S.Metadata.
 S = tflab_metadata(S);
 
 % Apply default plot options for fields in popts not specified.
-popts = tflabplot_options(S, popts, 'original', 'tsplot');
+popts = tflabplot_options(S, popts, 'tsplot');
 
 if iscell(S) && length(S) == 1
     S = S{1};
@@ -33,7 +43,9 @@ if iscell(S)
     timeunit  = S{1}.Metadata.timeunit;
     timedelta = S{1}.Metadata.timedelta;
 
-    t = timeVector_(S{1}, size(S{1}.In,1));
+    t = frequnit_(S{1}, size(S{1}.In,1));
+    trange = [t(1),t(end)];
+    
     timeunits = {};
     timestarts = {};
     for s = 1:length(S)
@@ -60,11 +72,12 @@ else
         end
         y1{2} = S.Out_.Predicted;
             
-        t1 = timeVector_(S, size(y1{1},1));
+        t1 = frequnit_(S, size(y1{1},1));
 
         y2 = S.Out_.Error;
-        t2 = timeVector_(S, size(y2,1));
+        t2 = frequnit_(S, size(y2,1));
 
+        trange = [t1(1),t1(end)];
         lg1 = {'Measured', 'Predicted'};
     else
         if strcmp(popts.type,'original')
@@ -91,11 +104,16 @@ else
             y1 = S.In_.(typeuc);
             y2 = S.Out_.(typeuc);
         end
-        t1 = timeVector_(S, size(y1,1));
-        t2 = timeVector_(S, size(y2,1));
+        t1 = frequnit_(S, size(y1,1));
+        t2 = frequnit_(S, size(y2,1));
+        trange = [t1(1),t1(end)];        
         [yl1, yl2] = ylabel_(S,popts);
         [lg1, lg2] = legend_(popts);
     end
+end
+
+if isfield(popts,'mldatenum_range')
+    trange = popts.mldatenum_range;
 end
 
 figprep();
@@ -104,7 +122,10 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
     
     ax(1) = subplot('Position',popts.PositionTop);
         plot(t1,y1);
-        colororder_(ax(1), S.In);
+        if size(y1,2) == 1
+            % If single line, make black
+            colororder(ax(1), {'k'})
+        end
         grid on;grid minor;box on;
         titlestr(S,popts,'ts');
         ylabel(yl1);
@@ -114,11 +135,14 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
         end
         %adjust_ylim();
         adjust_exponent('y');
-        setx_(0,info,[t1(1),t1(end)]);
+        setx_(0,info,trange);
         
     ax(2) = subplot('Position',popts.PositionBottom);
         plot(t1,y2);
-        colororder_(ax(2), S.Out);
+        if size(y2,2) == 1
+            % If single line, make black
+            colororder(ax(1), {'k'})
+        end
         grid on;grid minor;box on;    
         ylabel(yl2);
         if ~isempty(lg2)
@@ -131,13 +155,16 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
         end
         %adjust_ylim();
         adjust_exponent('y');
-        setx_(1,info,[t2(1),t2(end)]);  
+        setx_(1,info,trange);
     
     if popts.print
+        if isfield(info,'timestart')
+        else
+        end
         for i = 1:length(popts.printfmt)
             fname = sprintf('%s_%s.%s',...
                         popts.printname, popts.type, popts.printfmt{i});
-            figsave(fullfile(popts.printdir, fname), popts);
+            figsave(fullfile(popts.printdir, fname));
         end
     end
 end
@@ -180,7 +207,7 @@ if ~iscell(S) && strcmp(popts.type,'error')
             adjust_legend_lines(lo);
             adjust_ylim();
             adjust_exponent('y');
-            setx_(0,info,[t1(1),t1(end)]);
+            setx_(0,info,trange);
             titlestr(S,popts,'ts');
         ax(2,j) = subplot('Position',popts.PositionBottom);
             plot(t2,y2(:,j));
@@ -190,7 +217,7 @@ if ~iscell(S) && strcmp(popts.type,'error')
             adjust_exponent('y')            
             [~, lo] = legend(lg2,popts.legend{:});
             adjust_legend_lines(lo);
-            setx_(1,info,[t2(1),t2(end)]);
+            setx_(1,info,trange);
 
         if popts.print
             for i = 1:length(popts.printfmt)
@@ -203,23 +230,24 @@ if ~iscell(S) && strcmp(popts.type,'error')
 
 end
 
-c = {'k','r','g','b'}; % TODO: Define more colors
-
 % Compare
 if iscell(S)
     if ~strcmp(popts.type,'error')
         error('tsplot for cell array input must be ''error''');
     end
 
-    subplot('Position',popts.PositionTop);
-        plot(t,S{1}.Out(:,1),c{1});
+    ax(1) = subplot('Position',popts.PositionTop);
+        plot(t,S{1}.Out(:,1));
+        % Force first line to be black so color order
+        % of compared data matches later plots.
+        colororder(ax(1), [0,0,0;colororder()]);
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     popts.outstr{1},S{1}.Metadata.outunit));
         lg0 = sprintf('Observed at %s\n', S{1}.Metadata.stationid);
 
         for j = 1:length(S)
-            plot(t,S{j}.Out_.Predicted(:,1),c{j+1});
+            plot(t,S{j}.Out_.Predicted(:,1));
             lg{j} = sprintf('Predicted %s\n',...
                         S{j}.Options.description);
         end
@@ -231,27 +259,35 @@ if iscell(S)
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
-        setx_(0,info,[t(1),t(end)]);
-    subplot('Position',popts.PositionBottom);
-        plot(t,S{1}.Out(:,2),c{1});
+        setx_(0,info,trange);
+        
+    ax(2) = subplot('Position',popts.PositionBottom);
+        plot(t,S{1}.Out(:,2));
+        % Force first line to be black so color order
+        % of compared data matches later plots.
+        colororder(ax(2), [0,0,0;colororder()]);
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     popts.outstr{2},S{1}.Metadata.outunit));
         lg0 = sprintf('Observed at %s\n', S{1}.Metadata.stationid);
 
         for j = 1:length(S)
-            for j = 1:length(S)
-                plot(t,S{j}.Out_.Predicted(:,2),c{j+1});
-                lg{j} = sprintf('Predicted %s\n',...
-                            S{j}.Options.description);
-            end
+            plot(t,S{j}.Out_.Predicted(:,2));
+            lg{j} = sprintf('Predicted %s\n',...
+                        S{j}.Options.description);
         end
-        [lh, lo] = legend({lg0,lg{:}},...
+        
+        [~, lo] = legend({lg0,lg{:}},...
                         'Location','NorthEast','Orientation','Vertical');
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
-        setx_(1,info,[t(1),t(end)]);
+        setx_(1,info,trange);
+    
+    % Force "Observed" line to be black.
+    % Other lines follow default color order.
+    %co = [0,0,0;colororder()];
+    %colororder(gcf,co);
     
     if popts.print
         for i = 1:length(popts.printfmt)
@@ -280,8 +316,13 @@ function setx_(last,info,tl)
                 io = 2; 
             end
             xtl = cellstr(get(gca,'XTickLabel'));
+            if xt(2)-xt(1) < 1
+                labl = datestr(tl(1),'yyyy/mm/dd');            
+            else
+                labl = datestr(tl(1),'yyyy');
+            end
             xtl{io} = sprintf('$$\\begin{array}{c}\\mbox{%s} \\\\ %s\\end{array}$$',...
-                                xtl{io},datestr(tl(1),'yyyy'));
+                                xtl{io},labl);
             set(gca,'XTickLabel',xtl, 'TickLabelInterpreter', 'latex');
         end
     end
@@ -315,7 +356,7 @@ function [lg1, lg2] = legend_(popts)
     end    
 end
 
-function [yl1, yl2] = ylabel_(S,popts)    
+function [yl1, yl2] = ylabel_(S,popts)
     meta = S.Metadata;
     if size(S.In,2) > 1
         yl1 = unitstr(meta.inunit);
@@ -329,7 +370,7 @@ function [yl1, yl2] = ylabel_(S,popts)
     end
 end
 
-function t = timeVector_(S, nt)
+function t = frequnit_(S, nt)
 
     meta = S.Metadata;
     if ischar(meta.timestart)

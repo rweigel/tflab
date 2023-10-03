@@ -23,19 +23,18 @@ end
 
 S = tflab_metadata(S);
 
-ptype = 1; % 1 = Z,phi, 2 = rho,phi; 3 = Re,Im
 if iscell(S)
     % TODO: Check all same.
-    timeunit  = S{1}.Metadata.timeunit;
-    timedelta = S{1}.Metadata.timedelta;
-    opts = tflabplot_options(S, popts, ptype, 'zplot');
+    frequnit = S{1}.Metadata.frequnit;
+    freqsf   = S{1}.Metadata.freqsf;
+    opts = tflabplot_options(S, popts, 'zplot');
     Zstrs   = opts.zstrs;
     Rhostrs = opts.rhostrs;
     Phistrs = opts.phistrs;
 else
-    timeunit  = S.Metadata.timeunit;
-    timedelta = S.Metadata.timedelta;
-    opts = tflabplot_options(S, popts, ptype, 'zplot');
+    frequnit = S.Metadata.frequnit;
+    freqsf   = S.Metadata.freqsf;
+    opts = tflabplot_options(S, popts, 'zplot');
     Zstrs   = opts.zstrs;
     Rhostrs = opts.rhostrs;
     Phistrs = opts.phistrs;
@@ -50,14 +49,14 @@ if isstruct(S)
     end
     
     if opts.vs_period
-        x = timedelta./S.fe;
+        x = 1./(S.fe*S.Metadata.freqsf);
         if interp_Z_exists
-            xi = timedelta./S.fi;
+            xi = 1./(S.fi*S.Metadata.freqsf);
         end
     else
-        x = timedelta*S.fe;
+        x = S.fe*S.Metadata.freqsf;
         if interp_Z_exists
-            xi = timedelta*S.fi;
+            xi = S.fi*S.Metadata.freqsf;
         end
     end
     
@@ -73,10 +72,10 @@ if isstruct(S)
                     ls{j} = sprintf('$%s$',Zstrs{j});
                 end
             case 2
-                % TODO: Assumes Z in (mV/km)/nT and dt in seconds.
-                y = z2rho(S.fe/timedelta, S.Z);
+                % TODO: Assumes Z in (mV/km)/nT and f in Hz.
+                y = z2rho(x, S.Z);
                 if interp_Z_exists
-                    yi = z2rho(S.fi/timedelta, S.Zi);
+                    yi = z2rho(x, S.Zi);
                 end
                 for j = 1:size(S.Z,2)
                     ls{j} = sprintf('$%s$',Rhostrs{j});
@@ -127,7 +126,7 @@ if isstruct(S)
         end
         adjust_yticks(1e-4);
         adjust_exponent('y');
-        setx(opts,0,timeunit);
+        setx(opts,0,frequnit,freqsf);
 
     ax(2) = subplot('Position', opts.PositionBottom);
         if opts.type ~= 3
@@ -190,7 +189,7 @@ if isstruct(S)
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(opts,1,timeunit);
+        setx(opts,1,frequnit,freqsf);
 
     if opts.print
         for i = 1:length(opts.printfmt)
@@ -215,9 +214,9 @@ if iscell(S)
         ax1(j) = subplot('Position', opts.PositionTop);
             for s = 1:length(S)
                 if opts.vs_period
-                    x = timedelta./S{s}.fe;
+                    x = 1./(S{s}.fe*S{s}.Metadata.freqsf);
                 else
-                    x = S{s}.fe/timedelta;
+                    x = S{s}.fe*S{s}.Metadata.freqsf;
                 end
                 
                 ls{s} = sprintf('%s',S{s}.Options.description);
@@ -235,7 +234,7 @@ if iscell(S)
                         end
                     case 2
                         % TODO: Assumes Z in (mV/km)/nT
-                        y = z2rho(S{s}.fe/timedelta, S{s}.Z(:,j));
+                        y = z2rho(x, S{s}.Z(:,j));
                     case 3
                         y = real(S{s}.Z(:,j));
                         if isfield(S{s},'ZCL')
@@ -287,11 +286,8 @@ if iscell(S)
             ylabel(yl);
             legend(h,ls,opts.legend{:});
             adjust_yticks(1e-4);
-            if ~isempty(timeunit) && opts.vs_period
-                period_lines();
-            end
             adjust_exponent('y');
-            setx(opts,0,timeunit);
+            setx(opts,0,frequnit,freqsf);
         ax2(j) = subplot('Position', opts.PositionBottom);
             for s = 1:length(S)
                 yebl = [];
@@ -315,9 +311,9 @@ if iscell(S)
                 end
                 
                 if opts.vs_period
-                    x = timedelta./S{s}.fe;
+                    x = 1./(S{s}.fe*S{s}.Metadata.freqsf);
                 else
-                    x = S{s}.fe/timedelta;
+                    x = S{s}.fe*S{s}.Metadata.freqsf;
                 end
                 if opts.vs_period && ~isempty(opts.period_range)
                     idx = x <= opts.period_range(1) | x >= opts.period_range(2);
@@ -353,7 +349,7 @@ if iscell(S)
             legend(ls,opts.legend{:});
             adjust_yticks(1e-4);
             adjust_exponent();
-            setx(opts,1,timeunit);
+            setx(opts,1,frequnit,freqsf);
 
         if opts.print
             comp = regexprep(Zstrs{j},'\{|\}','');

@@ -1,7 +1,7 @@
 function rho = z2rho(f, Z)
 %Z2RHO
 %
-%   rho = Z2RHO(f, Z) returns apparent resistivity assuming
+%   rho = Z2RHO(f, Z) returns apparent resistivity in Ohm·m assuming
 %   f in Hz and Z in (mV/km)/nT so that rho = |Z|^2/(5*f).
 %
 %   By definition,

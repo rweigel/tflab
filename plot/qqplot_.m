@@ -2,11 +2,11 @@ function qqplot_(S,popts,fidx,cidx,sidx)
 %QQPLOT_ Quantitle-Quantile plot
 %
 %   QQPLOT_(S)
-%   QQPLOT_(S,freq_idx)
-%   QQPLOT_(S,freq_idx,comp_idx)
-%   QQPLOT_(S,freq_idx,comp_idx,seg_idx)
+%   QQPLOT_(S,opts,freq_idx)
+%   QQPLOT_(S,opts,freq_idx,comp_idx)
+%   QQPLOT_(S,opts,freq_idx,comp_idx,seg_idx)
 %
-%   where freq_idx is index of S.fe, comp_idx is column of Z, and
+%   where freq_idx is the index of fe, comp_idx is column of Z, and
 %   seg_idx, is the segment number (if applicable).
 
 assert(isstruct(S) || iscell(S), ...
@@ -53,6 +53,7 @@ if iscell(S)
         end
         %legendstr{i} = S{i}.Options.description;            
     end
+    % TODO: Check that all fes are the same.
     titlestr = sprintf('$f=$ %g; $T=$ %.3f',fe{1},1/fe{1});
 end
 
@@ -71,7 +72,7 @@ PositionBottom = [0.1300 0.1100 0.7750 0.38];
 figprep();
 ax1 = subplot('Position',PositionTop);
     grid on;box on;hold on;axis square;
-    plotqq(Residuals{1},'real')
+    plotqq(Residuals,'real')
     hold on;grid on;box on;
     title(titlestr);
     xlabel('');
@@ -83,13 +84,12 @@ ax1 = subplot('Position',PositionTop);
     adjust_exponent();    
 ax2 = subplot('Position',PositionBottom);
     grid on;box on;hold on;axis square;
-    plotqq(Residuals{1},'imag');
+    plotqq(Residuals,'imag');
     hold on;grid on;box on;    
     xlabel('Standard Normal Quantiles');
     ylabel(sprintf('Im[$\\Delta %s$] Quantiles',Zstrs{cidx}));
     adjust_exponent()
     legend off;
-
 
 % Plot diagonal line    
 axes(ax1);hold on;

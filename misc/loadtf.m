@@ -1,7 +1,13 @@
 function tf = loadtf(fname,variable)
-%SAVETF - Load output of tflab.
+%LOADTF   Load output of tflab.
 %
-%   tf = LOADTF(filename) load the output.
+%   tf = LOADTF(filename) load all output of a tflab run.
+%
+%   var = LOADTF(filename, varstring) load a top-level structure variable.
+%
+%   Example:
+%       In  = LOADTF(filename, 'In');
+%       Out = LOADTF(filename, 'Out');
 %
 %   See also TFLAB.
 
@@ -13,8 +19,10 @@ end
 logmsg(sprintf('Reading: %s\n',fnamefull));
 if exist('variable','var')
     tf = load(fname,variable);
+    tf = tf.(variable);
+    logmsg(sprintf('Read:    ''%s'' from %s\n',variable,fnamefull));
 else
     tf = load(fname);
+    logmsg(sprintf('Read:    %s\n',fnamefull));
 end
-logmsg(sprintf('Read:    %s\n',fnamefull));
 

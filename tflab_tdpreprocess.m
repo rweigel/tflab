@@ -60,7 +60,7 @@ if ~isempty(tdopts.whiten.function)
     S.Out_.Whitened = Outx;
 else
     if loglevel > 0
-        logmsg('Whitening performed b/c no whiten function given.\n');
+        logmsg('No whitening performed b/c no whiten function given.\n');
     end
 end
 

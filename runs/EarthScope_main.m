@@ -2,6 +2,8 @@ addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 id = 'VAQ58';
+edifile = 'VAQ58bc_FRDcoh.xml';
+
 % http://ds.iris.edu/spud/emtf/15014571
 % http://ds.iris.edu/spudservice/data/15014570
 
@@ -18,9 +20,13 @@ B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-B = B(1:6*86400,:);
-E = E(1:6*86400,:);
-t = t(1:6*86400);
+%B = B(1:6*86400,:);
+%E = E(1:6*86400,:);
+%t = t(1:6*86400);
+
+B = B(1:8*86400,:);
+E = E(1:8*86400,:);
+t = t(1:8*86400);
 
 %% Set output file base name using start/stop times of input data
 filestr = sprintf('%s-%s-%s',id,...
@@ -57,6 +63,7 @@ TF1.Metadata = meta; % Attach metadata used in plots
 savetf(TF1, fullfile(outdir, opts1.filestr));
 
 %% Compute second TF
+tfn = 2;
 Ns = 1;
 pps = size(B,1);
 desc2 = sprintf('OLS; %d %d-day segment%s',Ns,pps/86400,plural(Ns));
@@ -71,3 +78,40 @@ TF2 = tflab(B(:,1:2),E,opts2);
 TF2.Metadata = meta; % Attach metadata used in plots
 
 savetf(TF2, fullfile(outdir, opts2.filestr));
+
+
+%% Read TF computed using BIRP
+zread_dir = [fileparts(mfilename('fullpath')),'/zread'];
+if ~exist(zread_dir,'dir')
+    url = 'https://github.com/rweigel/zread';
+    com = sprintf('cd %s; git clone %s; cd zread; git checkout master; git checkout 1519ed4',...
+                  fileparts(mfilename('fullpath')),url);
+    fprintf('Calling system with command: %s\n',com);
+    [status,msg] = system(com);
+    if status ~= 0
+        fprintf(['Command failed. Download and unzip '...
+                 'github.com/rweigel/zread/archive/refs/heads/master.zip'...
+                 'in this directory\n']);
+        error('System command failed: %s\nMessage:\n%s\n',com,msg);            
+    end
+end
+addpath(zread_dir);
+
+edifilefull = fullfile(scriptdir(),'data','EarthScope',id,'edi',edifile);
+TF3 = read_edixml(edifilefull);
+
+% Set options and data needed for metrics and plotting
+TF3.Metadata = meta;
+TF3.Options.filestr = sprintf('%s-tf3',filestr);
+% EMTF is listed as software at http://ds.iris.edu/spud/emtf/15014571
+TF3.Options.description = 'EMTF';
+TF3.Options.fd = opts1.fd;
+TF3.Options.tflab.loglevel = opts1.tflab.loglevel;
+TF3.Z = -transpose(TF3.Z); % Negative due to e^{+iwt} convention
+TF3.fe = 1./transpose(TF3.PERIOD);
+TF3.In  = TF1.In; 
+TF3.Out = TF1.Out;
+TF3 = tflab_metrics(TF3);
+
+fname = fullfile(scriptdir(),'data','EarthScope',id,[TF3.Options.filestr,'.mat']);
+savetf(TF3,fname);

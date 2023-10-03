@@ -35,12 +35,12 @@ end
 % Apply default metadata for fields not specified in S.Metadata.
 S = tflab_metadata(S);
 
-popts = tflabplot_options(S, popts, 'original', 'dftplot');
+popts = tflabplot_options(S, popts, 'dftplot');
 argcheck_(S, popts)
 
-% TODO: Check all same timeunit. If not convert to same.
-timeunit = S{1}.Metadata.timeunit;
-timedelta = S{1}.Metadata.timedelta;
+% TODO: Check all same. If not convert to same.
+frequnit = S{1}.Metadata.frequnit;
+freqsf = S{1}.Metadata.freqsf;
 
 tparts = split(popts.type,'-');
 for s = 1:length(S)
@@ -126,9 +126,9 @@ for s = 1:length(S)
         end
     end
     if popts.vs_period
-        x{s} = (timedelta)./fe{s};
+        x{s} = 1./(fe{s}*S{s}.Metadata.freqsf);
     else
-        x{s} = fe{s}/(timedelta);
+        x{s} = fe{s}*S{s}.Metadata.freqsf;
     end
     if length(S) == 1
         x = x{1};
@@ -140,7 +140,10 @@ end
 figprep();
 if strcmp(tparts{1},'error')
 
-    lg = legend_(S,what,comp);
+    lg = '';
+    if length(S) > 1
+        [lg,~] = legend_(S,tparts{3},popts);
+    end
     [yl1, yl2] = ylabelerror_(S,tparts{3},popts,comp);
 
     ax(1) = subplot('Position',popts.PositionTop);
@@ -160,7 +163,7 @@ if strcmp(tparts{1},'error')
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts,0,timeunit);
+        setx(popts,0,frequnit,freqsf);
 
     ax(2) = subplot('Position',popts.PositionBottom);
         plot_(x,y2,popts);
@@ -179,7 +182,7 @@ if strcmp(tparts{1},'error')
         end
         adjust_ylim();
         adjust_exponent('y');
-        setx(popts,1,timeunit);
+        setx(popts,1,frequnit,freqsf);
 end
 
 if ~strcmp(tparts{1},'error')
@@ -201,7 +204,7 @@ if ~strcmp(tparts{1},'error')
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts, 0, timeunit);
+        setx(popts,0,frequnit,freqsf);
 
     ax(2) = subplot('Position',popts.PositionBottom);
         plot_(x,y2,popts);
@@ -215,7 +218,7 @@ if ~strcmp(tparts{1},'error')
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts, 1, timeunit);
+        setx(popts,1,frequnit,freqsf);
 end
 
 if popts.print
@@ -230,9 +233,16 @@ if popts.print
     end
 end
 
-if length(S) > 1 && comp < size(S{1}.In,2)
-    figure();
-    dftplot(S,popts,comp+1);
+if strcmp(tparts{1},'error')
+    if comp < size(S{1}.In,2)
+        figure();
+        dftplot(S,popts,comp+1);
+    end
+else
+    if length(S) > 1 && comp < size(S{1}.In,2)
+        figure();
+        dftplot(S,popts,comp+1);
+    end
 end
 
 end % function
