@@ -98,19 +98,23 @@ end
 addpath(zread_dir);
 
 edifilefull = fullfile(scriptdir(),'data','EarthScope',id,'edi',edifile);
-TF3 = read_edixml(edifilefull);
+EDI = read_edixml(edifilefull);
 
 % Set options and data needed for metrics and plotting
 TF3.Metadata = meta;
+TF3.Metadata.EDI = EDI;
+TF3.Metadata.timestart = [TF3.Metadata.EDI.Start,'.000'];
 TF3.Options.filestr = sprintf('%s-tf3',filestr);
+
 % EMTF is listed as software at http://ds.iris.edu/spud/emtf/15014571
 TF3.Options.description = 'EMTF';
 TF3.Options.fd = opts1.fd;
 TF3.Options.tflab.loglevel = opts1.tflab.loglevel;
-TF3.Z = -transpose(TF3.Z); % Negative due to e^{+iwt} convention
-TF3.fe = 1./transpose(TF3.PERIOD);
+TF3.Z = -transpose(TF3.Metadata.EDI.Z); % Negative due to e^{+iwt} convention
+TF3.fe = 1./transpose(TF3.Metadata.EDI.PERIOD);
 TF3.In  = TF1.In; 
 TF3.Out = TF1.Out;
+
 TF3 = tflab_metrics(TF3);
 
 fname = fullfile(scriptdir(),'data','EarthScope',id,[TF3.Options.filestr,'.mat']);

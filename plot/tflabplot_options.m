@@ -64,13 +64,13 @@ end
 
 if strcmp(plotfun,'zplot')
     if ~isfield(opts,'type') || isempty(opts.type)
-        ptype = 1;
+        dopts.type = 1;
     else
-        ptype = opts.type;
+        dopts.type = opts.type;
     end
     
     dopts.unwrap = 0;
-    switch ptype
+    switch dopts.type
         case 1
             dopts.printname = [dopts.printname,'_magnitude_phase'];
         case 2
@@ -109,27 +109,32 @@ if any(strcmp(plotfun,{'dftplot','zplot','snplot'}))
     dopts.vs_period = 1;
     if iscell(S)
         for s = 1:length(S)
-            timedeltas(s) = S{s}.Metadata.timedelta;
-            T = timedeltas(s)./S{s}.fe;
-            Tmaxes(s) = max(T(~isnan(T)));
+            freqsfs(s) = S{s}.Metadata.freqsf;
+            T = 1./(S{s}.fe*freqsfs(s));
+            Tmaxes(s) = max(T(isfinite(T)));
         end
-        timedelta = min(timedeltas);
-        dopts.period_range = [2*timedelta, max(Tmaxes)];
+        freqsf = min(freqsfs);
+        dopts.period_range = [2/freqsf, max(Tmaxes)];
     else
-        timedelta = S.Metadata.timedelta;
+        % TODO: Duplicate code.
+        freqsf = S.Metadata.freqsf;
         T = 1./S.fe;
-        Tmax = max(T(~isnan(T)));
-        dopts.period_range = [2, Tmax]*timedelta;
+        Tmax = max(T(isfinite(T)));
+        dopts.period_range = [2, Tmax]*(1/freqsf);
     end
-    dopts.frequency_range = [0, 0.5]/timedelta;     
+    dopts.frequency_range = [0, 0.5]*freqsf;
 end
 
 if iscell(S)
-    dopts.instr = namestrs_(S{1}.Metadata.instr, nIn);
-    dopts.outstr = namestrs_(S{1}.Metadata.outstr, nOut);
+    if isfield(S{1},'Metadata')
+        dopts.instr = namestrs_(S{1}.Metadata.instr, nIn);
+        dopts.outstr = namestrs_(S{1}.Metadata.outstr, nOut);
+    end
 else
-    dopts.instr = namestrs_(S.Metadata.instr, nIn);
-    dopts.outstr = namestrs_(S.Metadata.outstr, nOut);
+    if isfield(S,'Metadata')
+        dopts.instr = namestrs_(S.Metadata.instr, nIn);
+        dopts.outstr = namestrs_(S.Metadata.outstr, nOut);
+    end
 end
 
 % Replace default options with given options in opts

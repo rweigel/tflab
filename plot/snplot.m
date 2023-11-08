@@ -64,7 +64,7 @@ if length(S) == 1
         adjust_ylim('upper');
         adjust_yticks();
         adjust_exponent();
-        setx(popts,0,frequnit,freqsf);
+        setx(popts,0,frequnit);
 
     ax2 = subplot('Position', popts.PositionBottom);
         semilogx(x,y2,popts.line{:});
@@ -78,7 +78,7 @@ if length(S) == 1
         yline(1,'k');
         adjust_ylim('upper');
         adjust_exponent('x');
-        setx(popts,1,frequnit,freqsf);
+        setx(popts,1,frequnit);
         
     if popts.print
         for i = 1:length(popts.printfmt)
@@ -109,7 +109,7 @@ if length(S) > 1
         adjust_yticks();
         adjust_exponent();
         yline(1,'k');
-        setx(popts,0,frequnit,freqsf);
+        setx(popts,0,frequnit);
 
     ax2 = subplot('Position', popts.PositionBottom);
         grid on;box on;hold on;
@@ -124,7 +124,7 @@ if length(S) > 1
         set(gca,'YLim',[0,1]);
         adjust_ylim('upper');
         adjust_exponent('x');            
-        setx(popts,1,frequnit,freqsf);
+        setx(popts,1,frequnit);
 
     if popts.print
         ext = regexprep(S{1}.Options.info.outstr{comp},'\$','');        

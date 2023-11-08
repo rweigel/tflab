@@ -11,22 +11,25 @@ stationid = 'KAP163';
 % Get input/output data
 [B,E,t,infile,outfile,timedelta] = KAP03_clean(stationid);
 
-I1a = [1:(86400/5)]*3; % First 3 days
+Nr = (86400/5)*3; % Number of records
+I1a = [1:Nr]; % First 3 days
 B1a = B(I1a,:);
 E1a = E(I1a,:);
 t1a = t(I1a);
 
 filestr1a = sprintf('%s-%s-%s',...
-            stationid,datestr(t1a(1),'yyyymmdd'),datestr(t1a(end),'yyyymmdd'));
+            stationid,datestr(t1a(1),'yyyymmdd'),...
+            datestr(t1a(end),'yyyymmdd'));
 
-I1b = [I1a(end)+1:I1a(end)+(86400/5)*3]; % Second 3 days
+I1b = [Nr+1:2*Nr]; % Second Nd days
 B1b = B(I1b,:);
 E1b = E(I1b,:);
 t1b = t(I1b);
 
 % Base file name for saved results
 filestr1b = sprintf('%s-%s-%s',...
-            stationid,datestr(t1b(1),'yyyymmdd'),datestr(t1b(end),'yyyymmdd'));
+            stationid,datestr(t1b(1),'yyyymmdd'),...
+            datestr(t1b(end),'yyyymmdd'));
 
 % Set variable information (used for plots)
 meta = struct();
@@ -50,6 +53,7 @@ opts1a = tflab_options(1);
     opts1a.tflab.loglevel = 1;
     opts1a.td.window.width = NaN;
     opts1a.td.window.shift = NaN;
+    opts1a.description = 'OLS/3-day storm';
     opts1a.filestr = sprintf('%s-tf1a',filestr1a);
     
 % Execute run
@@ -69,6 +73,7 @@ opts1b = tflab_options(1);
     opts1b.tflab.loglevel = 1;
     opts1b.td.window.width = NaN;
     opts1b.td.window.shift = NaN;
+    opts1b.description = 'OLS/3-day quiet';
     opts1b.filestr = sprintf('%s-tf1b',filestr1b);
     
 % Execute run
@@ -100,6 +105,9 @@ if strcmp(chainid,'KAP03')
 
     TF2 = read_edi([scriptdir(),'/data/KAP03/edi/',lower(stationid),'.edi']);
     TF2.Z(TF2.Z > 1e31) = NaN;
+    TF2.Metadata = meta;
+    TF2a = TF2;
+    TF2b = TF2;
 
     filestr = sprintf('%s-unknown-unknown',stationid);
     if strcmp(stationid,'KAP163')
@@ -112,19 +120,30 @@ if strcmp(chainid,'KAP03')
     end
     
     % Set options and data needed for metrics and plotting
-    TF2.Metadata = meta;
-    TF2.Metadata.freqsf = 1;
-    TF2.Options.filestr = sprintf('%s-tf2',filestr);
-    TF2.Options.description = 'BIRP';
-    TF2.Options.fd = opts1a.fd;
-    TF2.Options.tflab.loglevel = opts1a.tflab.loglevel;
-    TF2.In  = TF1a.In;
-    TF2.Out = TF1a.Out;
-    TF2.Z = TF2.Z;
-    TF2 = tflab_metrics(TF2);
+    TF2a.Options.filestr = sprintf('%s-tf2a',filestr);
+    TF2b.Options.filestr = sprintf('%s-tf2b',filestr);
+    TF2a.Options.description = 'BIRP/All/3-day storm';
+    TF2b.Options.description = 'BIRP/All/3-day quiet';
+    TF2a.Options.fd = opts1a.fd;
+    TF2b.Options.fd = opts1a.fd;
+    TF2a.Options.tflab.loglevel = opts1a.tflab.loglevel;
+    TF2b.Options.tflab.loglevel = opts1a.tflab.loglevel;
+    % Convert frequencies to be consistent with cadence of time series
+    % New frequency has units of 1/sample
+    TF2a.fe = TF2.fe*timedelta;
+    TF2b.fe = TF2.fe*timedelta;
+    TF2a.In  = B(I1a(1):I1a(end),1:2);
+    TF2b.In  = B(I1b(1):I1b(end),1:2);
+    TF2a.Out = E(I1a(1):I1a(end),:);
+    TF2b.Out = E(I1b(1):I1b(end),:);
+    %TF2.Z = TF2.Z;
+    TF2a = tflab_metrics(TF2a);
+    TF2b = tflab_metrics(TF2b);
 end
 
-fname = fullfile(scriptdir(),'data',chainid,stationid,[TF2.Options.filestr,'.mat']);
-savetf(TF2,fname);
+fnamea = fullfile(scriptdir(),'data',chainid,stationid,[TF2a.Options.filestr,'.mat']);
+savetf(TF2a,fnamea);
+fnameb = fullfile(scriptdir(),'data',chainid,stationid,[TF2b.Options.filestr,'.mat']);
+savetf(TF2b,fnameb);
 
 KAP03_plot;

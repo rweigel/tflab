@@ -14,7 +14,7 @@ meta = struct();
 meta.timedelta = 1;  % Measurement cadence.
 meta.timeunit  = ''; % Unit for timedelta
 meta.frequnit  = ''; % Unit for frequency
-meta.freqsf    = '';   % Multiply frequencies by this scale factor (sf) to get frequnit
+meta.freqsf    = 1;  % Multiply frequencies by this scale factor (sf) to get frequnit
 meta.zunit     = ''; % Unit for Z
 
 % Needed for all plots.
@@ -30,7 +30,11 @@ meta.outstr = 'Out'; % Cell array or string.
 %   Example: 
 %     timestart = '2001-01-01T00:00:00.000';
 % or an integer. 
-meta.timestart = 1; 
+meta.timestart = 1;
+if ~iscell(S.In)
+    % TODO: If S.In is cell array, so should time{start/stop}
+    meta.timestop = size(S.In,1);
+end
 
 meta.inunit    = '';
 meta.outunit   = '';
@@ -46,4 +50,12 @@ if exist('S','var')
     end
 else
     S = meta;
+end
+
+if ischar(S.Metadata.timestart) && ischar(S.Metadata.timeunit)
+    if strcmp(S.Metadata.timeunit,'s')
+        startdn = datenum(S.Metadata.timestart,'yyyy-mm-ddTHH:MM:SS.FFF');
+        stopdn  = startdn + S.Metadata.timedelta*size(S.In,1)/86400;
+        S.Metadata.timestop = datestr(stopdn,'yyyy-mm-ddTHH:MM:SS.FFF');
+    end
 end

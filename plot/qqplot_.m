@@ -29,12 +29,8 @@ if ~iscell(S) && length(S) == 1
     S = {S};
 end
 
-popts = tflabplot_options(S, popts, '', 'qqplot');
-timeunit  = S{1}.Metadata.timeunit;
-timedelta = S{1}.Metadata.timedelta;
+popts = tflabplot_options(S, popts, 'qqplot');
 Zstrs   = popts.zstrs;
-Rhostrs = popts.rhostrs;
-Phistrs = popts.phistrs;
 
 legendstr = {};
 if iscell(S)
@@ -42,16 +38,19 @@ if iscell(S)
         if isfield(S{i},'Regression')
             Residuals{i} = S{i}.Regression.Residuals{fidx}(:,cidx);
             fe{i} = S{i}.fe(fidx,1);
-        else
+        elseif isfield(S{i},'Segment')
             if sidx == -1
                 Residuals{i} = S{i}.Segment.Regression.Residuals{fidx}(:,cidx,:);
             else
                 Residuals{i} = S{i}.Segment.Regression.Residuals{fidx}(:,cidx,sidx);
             end
-            Residuals{i} = Residuals{i}(:);
             fe{i} = S{i}.Segment.fe(fidx,1);
+        else
+             Residuals{i} = S{i}.Metrics.Residuals{fidx}(:,cidx);
+             Residuals{i} = Residuals{i}(:);
+             fe{i} = S{i}.Metrics.fe(fidx,1);
         end
-        %legendstr{i} = S{i}.Options.description;            
+        legendstr{i} = S{i}.Options.description;            
     end
     % TODO: Check that all fes are the same.
     titlestr = sprintf('$f=$ %g; $T=$ %.3f',fe{1},1/fe{1});
@@ -72,19 +71,21 @@ PositionBottom = [0.1300 0.1100 0.7750 0.38];
 figprep();
 ax1 = subplot('Position',PositionTop);
     grid on;box on;hold on;axis square;
-    plotqq(Residuals,'real')
+    plotqq(Residuals,'real');
+    colororder_(ax1,Residuals);
     hold on;grid on;box on;
     title(titlestr);
     xlabel('');
     set(gca,'XTickLabels','');
     ylabel(sprintf('Re[$\\Delta %s$] Quantiles',Zstrs{cidx}));
     if ~isempty(legendstr)
-        legend(legendstr,'Location','SouthEast');
+        legend(legendstr,'Location','NorthWest','box','off','color','none');
     end
     adjust_exponent();    
 ax2 = subplot('Position',PositionBottom);
     grid on;box on;hold on;axis square;
     plotqq(Residuals,'imag');
+    colororder_(ax2,Residuals);
     hold on;grid on;box on;    
     xlabel('Standard Normal Quantiles');
     ylabel(sprintf('Im[$\\Delta %s$] Quantiles',Zstrs{cidx}));
@@ -111,17 +112,14 @@ function plotqq(Residuals,comp)
         compdata = @(x) imag(x);
     end
     if iscell(Residuals)
-        colors = [0,0,0; lines(length(Residuals))];
         for i = 1:length(Residuals)
             % Hack to get correct legend symbol colors.
-            plot(NaN, NaN,'Color',colors(i,:),...
-                'LineStyle','none','Marker','.','MarkerSize', 10);
+            %plot(NaN, NaN,'LineStyle','none','Marker','.','MarkerSize', 10);
         end
         for i = 1:length(Residuals)
             %qqplot(compdata(Residuals{i}));
             [x,y] = qqdata(compdata(Residuals{i}));
-            plot(x,y,'Color',colors(i,:),...
-                'LineStyle','none','Marker','.','MarkerSize', 10);
+            plot(x,y,'LineStyle','none','Marker','.','MarkerSize', 10);
         end
     else
         %qqplot(compdata(Residuals));

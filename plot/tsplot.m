@@ -1,8 +1,16 @@
 function ax = tsplot(S,popts)
 %TSPLOT - Plot timeseries in output of TRANSFERFNFD.
 %
-%  TSPLOT(S), where S is the output of TRANSFERFNFD.
-%  TSPLOT(S, opts)
+%  TSPLOT(S), where S is the output of TRANSFERFNFD or a cell array of such
+%  outputs.
+%
+%  TSPLOT(S, opts) creates a plot using options in structure opts.
+%  
+%   mldatenum_range
+%   time_range
+%
+%   Use tflabplot_options(S, struct(), 'tsplot') to determine
+%   defaults.
 
 if ischar(S)
     S = loadtf(S);

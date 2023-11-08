@@ -119,11 +119,4 @@ sidx = 1;  % segment number
 
 figure();
     qopts = copts;
-    qqplot_({TF1,TF2},qopts,fidx,comp,sidx);
-    
-figure();
-    qopts = copts;
-    % Need to compute residuals
-    %qqplot_(TF3,qopts,fidx,comp,sidx);
-
-    
+    qqplot_({TF1,TF2, TF3},qopts,fidx,comp,sidx);

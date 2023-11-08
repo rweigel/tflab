@@ -13,11 +13,13 @@ else
     Out = S.Out;
 end
 
-assert(size(Out,2) == size(S.Z,2)/size(In,2),'size(Out,2) must equal size(Z,2)/size(In,2)');
+assert(size(Out,2) == size(S.Z,2)/size(In,2),...
+       'size(Out,2) must equal size(Z,2)/size(In,2)');
 
 [Zi,~] = zinterp(S.fe,S.Z,size(In,1));
 
 OutPredicted = nan(size(Out));
+Error = nan(size(Out));
 
 for j = 1:size(Out,2) % Second dimension is component
 
@@ -41,9 +43,27 @@ for j = 1:size(Out,2) % Second dimension is component
     end
 end
 
+
 for k = 1:size(In,3)
     [DFTError(:,:,k),f,fe] = dftbands(Error(:,:,k), opts);
     DFTPredicted(:,:,k) = dftbands(OutPredicted(:,:,k), opts);
+end
+
+if ~isfield(S,'DFT')
+    S = tflab_fdpreprocess(S);
+end
+if length(S.fe) ~= length(S.DFT.fe) || any(S.fe ~= S.DFT.fe)
+    % This will occur if metrics were computed using fe and Z
+    % that was not computed by TFLAB. 
+    Zix = zinterp(S.fe,S.Z,S.DFT.fe);
+    for j = 1:size(Out,2) % Second dimension is component
+
+        zcols = (1:size(In,2)) + (j-1)*size(In,2);
+
+        for i = 1:length(S.DFT.In) % First dimension is frequency
+            Metrics.Residuals{i}(:,j) = S.DFT.Out{i}(:,j) -  S.DFT.In{i}*transpose(Zix(i,zcols));
+        end
+    end
 end
 
 if onsegments

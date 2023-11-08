@@ -50,5 +50,5 @@ figure();
 if wf > 0    
     figure();
         [~,Ik] = min(abs(1./S1.fe-Nt/k));
-        qqplot_(S1,Ik);
+        qqplot_(S1,struct(),Ik);
 end

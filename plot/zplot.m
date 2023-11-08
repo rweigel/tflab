@@ -1,4 +1,4 @@
-function [ax1,ax2] = zplot(S,popts)
+function [ax1,ax2] = zplot(S,popts,comp)
 %ZPLOT
 %
 %   ZPLOT(S)
@@ -16,7 +16,9 @@ assert(isstruct(S) || iscell(S), ...
 if nargin < 2
     popts = struct();
 end
-
+if nargin < 3
+    comp = 1;
+end
 if iscell(S) && length(S) == 1
     S = S{1};
 end
@@ -24,16 +26,14 @@ end
 S = tflab_metadata(S);
 
 if iscell(S)
-    % TODO: Check all same.
+    % TODO: Check all same units and sfs or allow different.
     frequnit = S{1}.Metadata.frequnit;
-    freqsf   = S{1}.Metadata.freqsf;
     opts = tflabplot_options(S, popts, 'zplot');
     Zstrs   = opts.zstrs;
     Rhostrs = opts.rhostrs;
     Phistrs = opts.phistrs;
 else
     frequnit = S.Metadata.frequnit;
-    freqsf   = S.Metadata.freqsf;
     opts = tflabplot_options(S, popts, 'zplot');
     Zstrs   = opts.zstrs;
     Rhostrs = opts.rhostrs;
@@ -61,7 +61,7 @@ if isstruct(S)
     end
     
     figprep();
-    ax(1) = subplot('Position', opts.PositionTop);
+    ax1 = subplot('Position', opts.PositionTop);
         switch opts.type
             case 1
                 y = abs(S.Z);
@@ -103,7 +103,7 @@ if isstruct(S)
         end
         
         plot(x, y, opts.line{:}, 'markersize', 20);
-        colororder_(ax(1),y);
+        colororder_(ax1,y);
         hold on;grid on;box on;
         if interp_Z_exists
             plot(xi, yi, opts.line{:}, 'markersize', 15);
@@ -126,9 +126,9 @@ if isstruct(S)
         end
         adjust_yticks(1e-4);
         adjust_exponent('y');
-        setx(opts,0,frequnit,freqsf);
+        setx(opts,0,frequnit);
 
-    ax(2) = subplot('Position', opts.PositionBottom);
+    ax2 = subplot('Position', opts.PositionBottom);
         if opts.type ~= 3
             if opts.unwrap
                 y = (180/pi)*unwrap(atan2(imag(S.Z),real(S.Z)));
@@ -169,7 +169,7 @@ if isstruct(S)
         end
         plot(x, y, opts.line{:}, 'markersize', 20);
         hold on;grid on;box on;
-        colororder_(ax(2),y);
+        colororder_(ax2,y);
         if interp_Z_exists
             plot(xi, yi, opts.line{:}, 'markersize', 15);
         end
@@ -189,7 +189,7 @@ if isstruct(S)
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(opts,1,frequnit,freqsf);
+        setx(opts,1,frequnit);
 
     if opts.print
         for i = 1:length(opts.printfmt)
@@ -201,167 +201,183 @@ end % if isstruct(S)
 
 % Multiple transfer functions
 if iscell(S)
-    
-    % TODO: Assumes units are the same for all Zs.
-    %       Check this before plotting.
-    for j = 1:size(S{1}.Z,2)
-        % Creates new figure for each column.
-        figprep();
-        if j > 1
-            figure();
-            figprep();
+
+    if nargin < 3
+        for comp = 1:size(S{1}.Z,2)
+            if comp > 1
+                figure;
+            end
+            [ax1(comp),ax2(comp)] = zplot(S,popts,comp);
         end
-        ax1(j) = subplot('Position', opts.PositionTop);
-            for s = 1:length(S)
-                if opts.vs_period
-                    x = 1./(S{s}.fe*S{s}.Metadata.freqsf);
-                else
-                    x = S{s}.fe*S{s}.Metadata.freqsf;
-                end
-                
-                ls{s} = sprintf('%s',S{s}.Options.description);
-        
-                yebl = [];
-                yebu = [];
-                switch opts.type
-                    case 1
-                        y = abs(S{s}.Z(:,j));
-                        if isfield(S{s},'ZCL')
-                            %yebl =  y-squeeze(S{s}.ZCL.Magnitude.Normal.x_1sigma(:,j,1));
-                            %yebu = -y+squeeze(S{s}.ZCL.Magnitude.Normal.x_1sigma(:,j,2));
-                            yebl =  y-squeeze(S{s}.ZCL.Magnitude.Bootstrap.x_1sigma(:,j,1));
-                            yebu = -y+squeeze(S{s}.ZCL.Magnitude.Bootstrap.x_1sigma(:,j,2));
-                        end
-                    case 2
-                        % TODO: Assumes Z in (mV/km)/nT
-                        y = z2rho(x, S{s}.Z(:,j));
-                    case 3
-                        y = real(S{s}.Z(:,j));
-                        if isfield(S{s},'ZCL')
-                            yebl =  y-squeeze(real(S{s}.ZCL.Z.Normal.x_1sigma(:,j,1)));
-                            yebu = -y+squeeze(real(S{s}.ZCL.Z.Normal.x_1sigma(:,j,2)));
-                        end
-                end
-                if opts.vs_period && ~isempty(opts.period_range)
-                    idx = x <= opts.period_range(1) | x >= opts.period_range(2);
-                    y(idx) = NaN;
-                end
-                
-                opts.line = lineopts_(size(S{s}.Z,1), s);
-                h(s) = plot(x, y, opts.line{:});
-                if opts.type < 3
-                    set(gca,'YScale','log');
-                end
-                if opts.vs_period
-                    set(gca,'XScale','log');
-                end
-                if s == 1
-                    grid on;hold on;box on;
-                end
-                if ~isempty(yebl)
-                    errorbars(x,y,yebl,yebu);
-                    %return
-                    %b = squeeze(S{s}.Segment.Z(:,j,:));
-                    %for k = 2:length(x)
-                    %    plot(x(k),abs(b(k,:)),'k.','MarkerSize',1);
-                    %end
-                end
-            end
-            yunitstr_ = unitstr_(S{1}.Metadata);
-            if opts.type == 1
-                yl = sprintf('$|%s|$%s',Zstrs{j},yunitstr_);
-                adjust_ylim('upper');
-            end
-            if opts.type == 2
-                yl = sprintf('$%s$ [$\\Omega\\cdot$m]',Rhostrs{j});
-                adjust_ylim('upper');            
-            end
-            if opts.type == 3
-                yl = sprintf('Re$(%s)$ %s',Zstrs{j},yunitstr_);
-                adjust_ylim('both');            
-            end
-            if ~isempty(opts.period_range)
-                set(gca,'XLim',opts.period_range);
-            end
-            ylabel(yl);
-            legend(h,ls,opts.legend{:});
-            adjust_yticks(1e-4);
-            adjust_exponent('y');
-            setx(opts,0,frequnit,freqsf);
-        ax2(j) = subplot('Position', opts.PositionBottom);
-            for s = 1:length(S)
-                yebl = [];
-                yebu = [];
-                if opts.type == 3
-                    y = imag(S{s}.Z(:,j));
-                    yl = sprintf('Im$(%s)$ %s',Zstrs{j},unitstr_(S{1}.Metadata));
-                    ls{s} = sprintf('%s',S{s}.Options.description);
-                    if isfield(S{s},'ZCL')
-                        yebl = squeeze(imag(S{s}.ZCL.Z.Normal.x_1sigma(:,j,1)));
-                        yebu = squeeze(imag(S{s}.ZCL.Z.Normal.x_1sigma(:,j,2)));
-                    end
-                else
-                    if opts.unwrap
-                        y = (180/pi)*unwrap(atan2(imag(S{s}.Z(:,j)),real(S{s}.Z(:,j))));
-                    else
-                        y = (180/pi)*atan2(imag(S{s}.Z(:,j)),real(S{s}.Z(:,j)));
-                    end
-                    yl = sprintf('$%s$ [$^\\circ]$',Phistrs{j});
-                    ls{s} = sprintf('%s',S{s}.Options.description);
-                end
-                
-                if opts.vs_period
-                    x = 1./(S{s}.fe*S{s}.Metadata.freqsf);
-                else
-                    x = S{s}.fe*S{s}.Metadata.freqsf;
-                end
-                if opts.vs_period && ~isempty(opts.period_range)
-                    idx = x <= opts.period_range(1) | x >= opts.period_range(2);
-                    y(idx) = NaN;
-                end
-                
-                opts.line = lineopts_(size(S{s}.Z,1), s);
-                if opts.vs_period
-                    semilogx(x, y, opts.line{:});
-                else
-                    plot(x, y, opts.line{:});
-                end
-                
-                if s == 1
-                    grid on;box on;hold on;
-                end
-                
-                if ~isempty(yebl)
-                    errorbars(x,y,yebl,yebu);
-                end
-                
-            end
+        return;
+    end
+    
+    figprep();
 
-            ylabel(yl);
-            if opts.type ~= 3 && ~opts.unwrap
-                set(gca,'YScale','linear');
-                set(gca,'YLim',[-180,180]);
-                set(gca,'YTick',[-180:45:180]);
-                adjust_ylim();
+    ax1 = subplot('Position', opts.PositionTop);
+        [x,y,yebu,yebl] = xycell(S,opts,comp,'top');
+        for s = 1:length(S)
+            ls{s} = sprintf('%s',S{s}.Options.description);
+            opts.line = lineopts_(size(S{s}.Z,1), s);
+            h(s) = plot(x{s}, y{s}, opts.line{:});
+            if s == 1
+                grid on;hold on;box on;
+            end
+            if ~isempty(yebl{s})
+                errorbars(x{s},y{s},yebl{s},yebu{s});
+                %return
+                %b = squeeze(S{s}.Segment.Z(:,j,:));
+                %for k = 2:length(x)
+                %    plot(x(k),abs(b(k,:)),'k.','MarkerSize',1);
+                %end
+            end
+        end
+        if opts.type < 3
+            set(gca,'YScale','log');
+        end
+        if opts.vs_period
+            set(gca,'XScale','log');
+        end
+        yunitstr_ = unitstr_(S{1}.Metadata);
+        if opts.type == 1
+            yl = sprintf('$|%s|$%s',Zstrs{comp},yunitstr_);
+        end
+        if opts.type == 2
+            yl = sprintf('$%s$ [$\\Omega\\cdot$m]',Rhostrs{comp});
+        end
+        if opts.type == 3
+            yl = sprintf('Re$(%s)$ %s',Zstrs{comp},yunitstr_);
+        end
+        if ~isempty(opts.period_range)
+            set(gca,'XLim',opts.period_range);
+        end
+        ylabel(yl);
+        legend(h,ls,opts.legend{:});
+        adjust_yticks(1e-4);
+        adjust_exponent('y');
+        if opts.type == 3
+            adjust_ylim('both');
+        else
+            adjust_ylim('upper');
+        end
+        setx(opts,0,frequnit);
+
+    ax2 = subplot('Position', opts.PositionBottom);
+        [x,y,yebu,yebl] = xycell(S,opts,comp,'bottom');
+        for s = 1:length(S)
+            ls{s} = sprintf('%s',S{s}.Options.description);
+
+            opts.line = lineopts_(size(S{s}.Z,1), s);
+            if opts.vs_period
+                semilogx(x{s}, y{s}, opts.line{:});
             else
-                adjust_ylim('upper');
+                plot(x{s}, y{s}, opts.line{:});
             end
-            legend(ls,opts.legend{:});
-            adjust_yticks(1e-4);
-            adjust_exponent();
-            setx(opts,1,frequnit,freqsf);
 
-        if opts.print
-            comp = regexprep(Zstrs{j},'\{|\}','');
-            for i = 1:length(opts.printfmt)
-                fname = sprintf('%s-%s.%s',opts.printname, comp, opts.printfmt{i});
-                figsave(fullfile(opts.printdir, fname), opts);
+            if s == 1
+                grid on;box on;hold on;
             end
-        end    
-    end % j
+
+            if ~isempty(yebl{s})
+                errorbars(x{s},y{s},yebl{s},yebu{s});
+            end
+
+        end
+
+        yl = sprintf('$%s$ [$^\\circ]$',Phistrs{comp});
+        if opts.type == 3
+            yl = sprintf('Im$(%s)$ %s',Zstrs{comp},unitstr_(S{1}.Metadata));
+        end
+        ylabel(yl);
+
+        if opts.type ~= 3 && ~opts.unwrap
+            set(gca,'YScale','linear');
+            set(gca,'YLim',[-180,180]);
+            set(gca,'YTick',[-180:45:180]);
+            adjust_ylim();
+        else
+            adjust_ylim('upper');
+        end
+        legend(ls,opts.legend{:});
+        adjust_yticks(1e-4);
+        adjust_exponent();
+        setx(opts,1,frequnit);
+
+    if opts.print
+        comp = regexprep(Zstrs{j},'\{|\}','');
+        for i = 1:length(opts.printfmt)
+            fname = sprintf('%s-%s.%s',opts.printname, comp, opts.printfmt{i});
+            figsave(fullfile(opts.printdir, fname), opts);
+        end
+    end
+    
 end % if iscell(S)
 
 end % function
+
+function [x,y,yebu,yebl] = xycell(S,opts,comp,panel)
+
+    % TODO: Assumes units are the same for all Zs.
+    %       Check this before plotting.
+
+    for s = 1:length(S)
+        if opts.vs_period
+            x{s} = 1./(S{s}.fe*S{s}.Metadata.freqsf);
+        else
+            x{s} = S{s}.fe*S{s}.Metadata.freqsf;
+        end
+        
+        yebu{s} = [];
+        yebl{s} = [];
+        if strcmp(panel,'top')
+            switch opts.type
+                case 1
+                    y{s} = abs(S{s}.Z(:,comp));
+                    if isfield(S{s},'ZCL')
+                        %yebl =  y-squeeze(S{s}.ZCL.Magnitude.Normal.x_1sigma(:,j,1));
+                        %yebu = -y+squeeze(S{s}.ZCL.Magnitude.Normal.x_1sigma(:,j,2));
+                        yebl{s} =  y-squeeze(S{s}.ZCL.Magnitude.Bootstrap.x_1sigma(:,j,1));
+                        yebu{s} = -y+squeeze(S{s}.ZCL.Magnitude.Bootstrap.x_1sigma(:,j,2));
+                    end
+                case 2
+                    % TODO: Check that f in Hz and Z in (mV/km)/nT
+                    f = S{s}.fe*S{s}.Metadata.freqsf;
+                    y{s} = z2rho(f, S{s}.Z(:,comp));
+                case 3
+                    y{s} = real(S{s}.Z(:,comp));
+                    if isfield(S{s},'ZCL')
+                        yebl{s} =  y-squeeze(real(S{s}.ZCL.Z.Normal.x_1sigma(:,comp,1)));
+                        yebu{s} = -y+squeeze(real(S{s}.ZCL.Z.Normal.x_1sigma(:,comp,2)));
+                    end
+            end
+            if opts.vs_period && ~isempty(opts.period_range)
+                idx = x{s} <= opts.period_range(1) | x{s} >= opts.period_range(2);
+                y{s}(idx) = NaN;
+            end
+        end
+        
+        if strcmp(panel,'bottom')
+            if opts.type == 3
+                y{s} = imag(S{s}.Z(:,comp));
+                if isfield(S{s},'ZCL')
+                    yebl{s} = squeeze(imag(S{s}.ZCL.Z.Normal.x_1sigma(:,comp,1)));
+                    yebu{s} = squeeze(imag(S{s}.ZCL.Z.Normal.x_1sigma(:,comp,2)));
+                end
+            else
+                if opts.unwrap
+                    y{s} = (180/pi)*unwrap(atan2(imag(S{s}.Z(:,comp)),real(S{s}.Z(:,comp))));
+                else
+                    y{s} = (180/pi)*atan2(imag(S{s}.Z(:,comp)),real(S{s}.Z(:,comp)));
+                end
+            end
+            if opts.vs_period && ~isempty(opts.period_range)
+                idx = x{s} <= opts.period_range(1) | x{s} >= opts.period_range(2);
+                y{s}(idx) = NaN;
+            end            
+        end
+
+    end
+end
 
 function line = lineopts_(Nz, s)
     ms = max(30-8*s,1);

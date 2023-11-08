@@ -61,8 +61,8 @@ figure();
 if wf > 0
     figure();
         [~,fidx] = min(abs(S1.fe-f));
-        qqplot_(S1,fidx);
+        qqplot_(S1,struct(),fidx);
     figure();
         [~,fidx] = min(abs(S2.fe-f));
-        qqplot_(S2,fidx);        
+        qqplot_(S2,struct(),fidx);        
 end

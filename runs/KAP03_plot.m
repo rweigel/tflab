@@ -1,3 +1,4 @@
+clear;
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
 
@@ -12,7 +13,9 @@ siteid = 'KAP163';
 tfs = {...
         '20031028-20031031-tf1a',...
         '20031031-20031103-tf1b',...
-        '20031028-20031124-tf2'};
+        '20031028-20031124-tf2a',...
+        '20031028-20031124-tf2b'...
+       };
 
 outdir = fullfile(scriptdir(),'data','KAP03',siteid);
 
@@ -35,7 +38,7 @@ if hao
     figure();
         topts = copts;
         topts.type = 'original';
-        tsplot(TF1,topts);
+        tsplot(TFs{1},topts);
         colororder(gcf,[0,0,0;0.5,0.5,0.5]);
 
     figure();
@@ -43,12 +46,12 @@ if hao
         topts.type  = 'error';
         topts.time_range = {'2003-10-29T06:00:00.000',...
                             '2003-10-29T09:00:00.000'};
-        tsplot({TF1,TF2},topts);
+        %tsplot(TFs,topts);
 
     figure();
         zopts = copts;
         zopts.type = 2;
-        zplot({TF1,TF2},zopts);
+        zplot(TFs,zopts);
     return
 end
 
@@ -59,6 +62,17 @@ figure();
     tsplot(TFs{3},topts);
 
 %%
+
+if 0
+topts = copts;
+topts.type  = 'error';
+%topts.time_range = 
+for i = [1,3,2,4]%1:length(TFs)
+    figure();
+    tsplot(TFs{i},topts);
+end
+end
+
 if 0
 figure();
     topts = copts;
@@ -90,23 +104,21 @@ figure();
 figure();
     snopts = copts;
     snplot(TFs{2},snopts);
+end
 
 % Compare
 figure();
     snopts = copts;
-    snplot({TFs{1},TFs{2}},snopts);
-end
+    snplot(TFs,snopts);
 
 %% Z plots
-if 1
 % Compare
 figure();
     zopts = copts;
-    zopts.period_range = [10, 2*1e3];
+    %zopts.period_range = [10, 1e5];
     zopts.type = 1;
     zplot(TFs,zopts);
-end
-    
+
 if 0
 %% DFT plots
 figure();

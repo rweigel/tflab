@@ -69,8 +69,8 @@ if ~isnan(tdopts.zeropad)
     if loglevel > 0
         logmsg('Zero padding input and output with %d zeros\n',tdopts.zeropad);
     end
-    Inx = [Out;zeros(tdopts.zeropad,1)];
-    Outx = [In;zeros(tdopts.zeropad,size(In,2))];
+    Inx = [Inx;zeros(tdopts.zeropad,size(Inx,2))];
+    Outx = [Outx;zeros(tdopts.zeropad,size(Outx,2))];
     S.In_.Zeropadded = Inx;
     S.Out_.Zeropadded = Outx;
 else

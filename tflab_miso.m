@@ -23,11 +23,14 @@ function [Z,fe,Regression] = tflab_miso(DFT,opts)
 
 Regression = struct();
 
+%function [Z,fe,Regression] = tflab_miso(DFTIn, DFTOut, f, fe, opts)
+
 if isfield(DFT,'In_')
-    DFTIn = DFT.In_.Final.DFT;
-    DFTOut = DFT.Out_.Final.DFT;
-    f = DFT.Out_.Final.f;
-    fe = DFT.Out_.Final.fe;
+    logmsg('Using DFTs from filtered In and Out (DFT.In_.Final and DFT.Out_.Final)');
+    DFTIn = DFT.In_.Final;
+    DFTOut = DFT.Out_.Final;
+    f = DFT.f_;
+    fe = DFT.fe_;
 else
     DFTIn = DFT.In;
     DFTOut = DFT.Out;
@@ -43,17 +46,10 @@ if opts.tflab.loglevel > 0
             func2str(opts.fd.regression.function));
 end
 
-[WIn, WOut] = dftweights(f, DFTIn, DFTOut, opts);
-
-Regression.DFT.InWeights = WIn;
-Regression.DFT.OutWeights = WOut;
-
 for j = 1:length(fe)
 
     ftIn = DFTIn{j,1};
     ftOut = DFTOut{j,1};
-    wIn = WIn{j,1};
-    wOut = WOut{j,1};
 
     if opts.fd.window.loglevel > 0
         logmsg(['Band with center of fe = %.8f has %d '...
@@ -87,7 +83,7 @@ for j = 1:length(fe)
     regressfunc = opts.fd.regression.function;
     
     [Z(j,:),Residuals,Weights] = ...
-               regressfunc(wOut.*ftOut,wIn.*ftIn,regressargs{:});
+               regressfunc(ftOut,ftIn,regressargs{:});
     
     if ~isempty(lastwarn)
         logmsg('Above is for eval. freq. #%d; fe = %f; Te = %f\n', ...

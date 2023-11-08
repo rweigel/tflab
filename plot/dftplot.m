@@ -40,7 +40,6 @@ argcheck_(S, popts)
 
 % TODO: Check all same. If not convert to same.
 frequnit = S{1}.Metadata.frequnit;
-freqsf = S{1}.Metadata.freqsf;
 
 tparts = split(popts.type,'-');
 for s = 1:length(S)
@@ -75,21 +74,22 @@ for s = 1:length(S)
             if ~isfield(S{s}.DFT,'In_') ||  ~isfield(S{s}.DFT.In_,tparts1uc)
                 error('Time series was not %s.',tparts{1});
             end
-            segsIn = S{s}.DFT.In_.(tparts1uc).DFT;
-            segsOut = S{s}.DFT.Out_.(tparts1uc).DFT;
-            f = S{s}.DFT.Out_.(tparts1uc).f;
+            segsIn = S{s}.DFT.In_.(tparts1uc);
+            segsOut = S{s}.DFT.Out_.(tparts1uc);
+            f = S{s}.DFT.f_;
+            fe{s} = S{s}.DFT.fe_;
         else
             % original
             segsIn = S{s}.DFT.In;
             segsOut = S{s}.DFT.Out;
             f = S{s}.DFT.f;
+            fe{s} = S{s}.DFT.fe;
         end
 
         if strcmp(tparts{2},'averaged')
             [wIn,wOut] = dftweights(f, segsOut, segsIn, opts);
             DFTIn{s}  = dftaverage(segsIn, wIn);
             DFTOut{s} = dftaverage(segsOut, wOut);
-            fe{s} = S{s}.DFT.fe;
         else
             tmp = cat(1,f{:});
             fe{s,1} = tmp(:);
@@ -163,7 +163,7 @@ if strcmp(tparts{1},'error')
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts,0,frequnit,freqsf);
+        setx(popts,0,frequnit);
 
     ax(2) = subplot('Position',popts.PositionBottom);
         plot_(x,y2,popts);
@@ -182,7 +182,7 @@ if strcmp(tparts{1},'error')
         end
         adjust_ylim();
         adjust_exponent('y');
-        setx(popts,1,frequnit,freqsf);
+        setx(popts,1,frequnit);
 end
 
 if ~strcmp(tparts{1},'error')
@@ -204,7 +204,7 @@ if ~strcmp(tparts{1},'error')
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts,0,frequnit,freqsf);
+        setx(popts,0,frequnit);
 
     ax(2) = subplot('Position',popts.PositionBottom);
         plot_(x,y2,popts);
@@ -218,7 +218,7 @@ if ~strcmp(tparts{1},'error')
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts,1,frequnit,freqsf);
+        setx(popts,1,frequnit);
 end
 
 if popts.print

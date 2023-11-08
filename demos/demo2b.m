@@ -62,5 +62,5 @@ figure();
 
 if wf > 0
     figure();
-        qqplot_(S1,Nf-wf+1);
+        qqplot_(S1,struct(),Nf-wf+1);
 end

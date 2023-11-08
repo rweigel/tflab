@@ -1,20 +1,19 @@
 function [bands, f, fe] = dftbands(x, Ic, Ne)
 %DFTBANDS Compute DFT and split into bands
 %
-%   [bands, f, fe] = DFTBANDS(x, [fc, Ic, Ne]) computes xdft = fftu(x)
-%   and splits the result into bands determined 
+%   [bands, f, fe] = DFTBANDS(x, Ic, Ne) computes xdft = fftu(x)
+%   and splits the result into bands determined by
 %   bands{j,1} = xdft(Ic(j)-Ne(j):Ic(j)+Ne(j),:)
 %
 %   Example:
 %
-%   x = randn(100,2);
-%   [fc, Ic, Ne] = evalfreq(size(x,1));
-%   [bands, f] = dftbands(x, Ic, Ne)
-%   whos bands f
+%     x = randn(100,2);
+%     [fc, Ic, Ne] = evalfreq(size(x,1));
+%     [bands, f] = dftbands(x, Ic, Ne)
+%     whos bands f
 %
-%   [bands, f, fc] = DFTBANDS(x, evalfreq) computes xdft = fftu(x) and
-%   splits the result into bands determined by calling 
-%   evalfreq.function with arguments evalfreq.functionargs.
+%   [bands, f, fc] = DFTBANDS(x, opts) uses opts.fd.evalfreq.function with
+%   arguments opts.fd.evalfreq.functionargs to compute Ic and Ne.
 %    
 %   See also evalfreq.
 

@@ -27,7 +27,6 @@ ytick = get(ax,'YTick');
 ytick_old = ytick;
 
 ylim = get(ax,'YLim');
-ylim_old = ylim;
 
 if ~isempty(ax.UserData) && isfield(ax.UserData, 'YLimLast')
     tf = all(ax.UserData.YLimLast == ylim);
@@ -49,7 +48,8 @@ if strcmp(pos, 'upper') || strcmp(pos, 'both')
     if strcmp(get(ax,'YScale'),'log')
         if length(ytick) > 1
             ylim(end) = ylim(end)*10^(0.5*(log10(ytick(end))-log10(ytick(end-1))));
-            %ylim(end) = 5*10^(log10(ylim(end)));
+        else
+            ylim(end) = 10*ytick;
         end
     else
         if (ylim(1) == -ylim(end)) && ~strcmp(pos, 'both')
@@ -65,6 +65,8 @@ if strcmp(pos,'lower') || strcmp(pos, 'both')
         if length(ytick) > 1
             ylim(1) = ylim(1)/10^(0.5*(log10(ytick(2))-log10(ytick(1))));
             ylim(1) = 0.5*10^(log10(ylim(1)) - 0.5*(log10(ytick(2))-log10(ytick(1))));
+        else
+           ylim(end) = ytick/10'
         end
     else
         if (ylim(1) == -ylim(end)) && ~strcmp(pos, 'both')
@@ -84,8 +86,14 @@ if debug
 end
 ax.UserData.YLimIgnoreChange = 1;
 
+if debug
+    ylim
+end
+
 set(ax,'YLim',ylim);
-set(ax,'YTick',ytick_old);
+if length(ytick) > 1
+    set(ax,'YTick',ytick_old);
+end
 drawnow;
 
 if debug
