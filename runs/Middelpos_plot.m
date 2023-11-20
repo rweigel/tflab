@@ -2,29 +2,6 @@
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-%% Load data if not already in memory.
-daterange = '20120712-20120721';
-%daterange = '20120712-20121031';
-%daterange = '20120712-20121106';
-if ~exist('TF1','var')
-    fname = fullfile('data','Middelpos',...
-            sprintf('Middelpos-%s-tf1.mat',daterange));
-    fnamefull = fullfile(scriptdir(),fname);
-    logmsg(sprintf('Reading %s',fname));
-    TF1 = load(fnamefull);
-    TF1 = tflab_preprocess(TF1,'both',1,1);
-    TF1 = tflab_metrics(TF1);
-end
-if ~exist('TF2','var')
-    fname = fullfile('data','Middelpos',...
-            sprintf('Middelpos-%s-tf2.mat',daterange));
-    fnamefull = fullfile(scriptdir(),fname);
-    logmsg(sprintf('Reading %s',fname));
-    TF2 = load(fnamefull);
-    TF2 = tflab_preprocess(TF2,'both',0,1);
-    TF2 = tflab_metrics(TF2);
-end
-
 %% Set common print optionsx
 
 copts.print    = 0; % Set to 1 to print pdf of each figure created.
@@ -40,6 +17,16 @@ figure();
     tsopts.type = 'original';
     tsplot(TF1,tsopts);
 
+figure();
+    tsopts = copts;
+    tsopts.type = 'original';
+    tsplot(TF2,tsopts);
+
+figure();
+    tsopts = copts;
+    tsopts.type = 'original';
+    tsplot(TF3,tsopts);
+    
 % Plot error for S1 only
 if 0
     figure();
@@ -48,11 +35,11 @@ if 0
         tsplot(TF1,tsopts);
 end
 
- % Compare S1 and S2 error
+% Compare S1 and S2 error
 figure();
     tsopts = copts;
     tsopts.type  = 'error';
-    tsplot({TF1,TF2},tsopts);
+    %tsplot({TF1,TF2},tsopts);
 
 
 %% DFT plots
@@ -101,7 +88,7 @@ figure();
 % Compare SN between TF1 and TF2
 figure();
     snopts = copts;
-    snplot({TF1,TF2},snopts);
+    snplot({TF1,TF2,TF3},snopts);
 
 %% Z plots
 % Compare Z between S1 and S2

@@ -32,10 +32,13 @@ assert(any(strcmp(algorithm,algorithms)),emsg);
 
 W = ones(size(ftE,1),1);
 
+ftB = [ftB,ones(size(ftB,1),1)];
+
 if strcmp(algorithm,'backslash')
     Z = ftB\ftE;
     R = ftE - ftB*Z;
 end
+Z = Z(1:end-1);
 
 if strcmp(algorithm,'regress')
     [Z,~,R] = regress(ftE,ftB);

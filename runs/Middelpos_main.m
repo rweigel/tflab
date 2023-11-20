@@ -49,7 +49,8 @@ meta = struct();
     meta.stationid = 'Middelpos';
 
 %% Compute first TF
-desc1 = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
+%desc1 = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
+desc1 = sprintf('6-day bandpass');
 opts1 = tflab_options(1);
     opts1.tflab.loglevel = 1;
     opts1.td.window.width = pps;
@@ -85,20 +86,20 @@ if 1
     E = E(1:I,:);
     t = t(1:I);
 
-    desc2 = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
+    desc2 = sprintf('3-day bandpass');
     opts2 = tflab_options(1);
         opts2.tflab.loglevel = 1;
         opts2.td.window.width = pps;
         opts2.td.window.shift = pps;
 
-    TF1 = tflab(B(:,1:2),E,opts2);
+    TF2 = tflab(B(:,1:2),E,opts2);
     % Modify default description of run
-    TF1.Options.description = desc2;
-    TF1.Metadata = meta;
+    TF2.Options.description = desc2;
+    TF2.Metadata = meta;
     %TF1 = tflab_uncertainty(TF1);
 
     fname1 = fullfile(scriptdir(),'data','Middelpos',[filestr,'-tf2.mat']);
-    savetf(TF1, fname1);
+    savetf(TF2, fname1);
 end
 
 if 0
@@ -138,26 +139,27 @@ fname2 = fullfile(scriptdir(),'data','Middelpos',[filestr,'-tf2.mat']);
 savetf(TF2, fname2);
 end
 
-%Middelpos_plot;
-
 %% Third TF
-if (0)
+if (1)
     %%
+    % Get input/output data
+    [B,E,t,infile,outfile] = Middelpos_clean();
     % Third TF
-    desc3 = sprintf('OLS; %d 5-day segments',size(B,1)/(5*ppd));
-    opts3 = tflab_options(1,dopts);
+    desc3 = sprintf('No bandpass');
+    opts3 = tflab_options(1);
         opts3.tflab.loglevel = 1;
-        opts3.td.window.width = 5*86400;
-        opts3.td.window.shift = 5*86400;
+        opts3.td.window.width = pps;
+        opts3.td.window.shift = pps;
         opts3.filestr = sprintf('%s-tf3',filestr);
 
-    S3 = tflab(B(:,1:2),E,opts3);
+    TF3 = tflab(B(:,1:2),E,opts3);
     % Modify default description of run
-    S3.Options.description = desc3;
-    S3 = tflab_uncertainty(S3);
+    TF3.Options.description = desc3;
+    TF3.Metadata = meta;
 
-    fname = fullfile(scriptdir(),'data','Middelpos',[opts3.filestr,'.mat']);
-    fprintf('Saving: %s\n',fname);
-    save(fname,'-v7.3','-struct','S3');
-    fprintf('Saved: %s\n',fname);
+
+    fname3 = fullfile(scriptdir(),'data','Middelpos',[opts3.filestr,'.mat']);
+    savetf(TF3, fname3);
 end
+
+Middelpos_plot;
