@@ -177,6 +177,7 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
     end
 end
 
+
 if ~iscell(S) && strcmp(popts.type,'error')
     
     for j = 1:size(S.Out,2)

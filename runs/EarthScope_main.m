@@ -12,6 +12,13 @@ outdir = fullfile(scriptdir(),'data','EarthScope',id);
 % Get input/output data
 [B,E,t,infile,outfile] = EarthScope_clean(id);
 
+if 0
+I = find(t > 736498.3 & t < 736502);
+B = B(I,:);
+E = E(I,:);
+t = t(I);
+end
+
 %% Make length an integer number of segments.
 pps = 86400;                % Points per segment
 Ns  = floor(size(B,1)/pps); % Number of segments
@@ -20,13 +27,13 @@ B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-%B = B(1:6*86400,:);
-%E = E(1:6*86400,:);
-%t = t(1:6*86400);
+B = B(1:6*86400,:);
+E = E(1:6*86400,:);
+t = t(1:6*86400);
 
-B = B(1:8*86400,:);
-E = E(1:8*86400,:);
-t = t(1:8*86400);
+%B = B(1:8*86400,:);
+%E = E(1:8*86400,:);
+%t = t(1:8*86400);
 
 %% Set output file base name using start/stop times of input data
 filestr = sprintf('%s-%s-%s',id,...
@@ -40,6 +47,8 @@ meta = struct();
     meta.outunit   = 'mV/km';
     meta.timeunit  = 's';
     meta.timedelta = 1;
+    meta.frequnit  = 'Hz';
+    meta.freqsf    = 1;
     meta.timestart = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');
     meta.chainid   = 'EarthScope';
     meta.stationid = id;
@@ -103,7 +112,8 @@ EDI = read_edixml(edifilefull);
 % Set options and data needed for metrics and plotting
 TF3.Metadata = meta;
 TF3.Metadata.EDI = EDI;
-TF3.Metadata.timestart = [TF3.Metadata.EDI.Start,'.000'];
+TF3.Metadata.timestart = TF2.Metadata.timestart;
+%TF3.Metadata.timestart = [TF3.Metadata.EDI.Start,'.000'];
 TF3.Options.filestr = sprintf('%s-tf3',filestr);
 
 % EMTF is listed as software at http://ds.iris.edu/spud/emtf/15014571

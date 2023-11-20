@@ -15,7 +15,7 @@ if opts.vs_period
     end
     if ~isempty(periodunit)
         periodunit = sprintf(' [%s]', periodunit);
-        period_lines();
+        period_lines(last);
     end
     xlabel(sprintf('$T$%s',periodunit));
 else

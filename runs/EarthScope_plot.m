@@ -6,7 +6,15 @@ id = 'VAQ58';
 
 start = '20160610';
 stop = '20160616';
+
+%start = '20160610';
 %stop = '20160618';
+
+%start = '20160610';
+%stop = '20160623';
+
+%start = '20160617';
+%stop = '20160620';
 
 outdir = fullfile(scriptdir(),'data','EarthScope',id);
 
@@ -27,10 +35,10 @@ TF3 = tflab_metrics(TF3);
 
 %% Set common print options
 copts.print    = 0; % Set to 1 to print pdf of each figure created.
-copts.printdir = fullfile(scriptdir(),'data','Middelpos','figures');
+copts.printdir = fullfile(outdir,'figures');
 copts.printfmt = {'pdf'};
 
-figure(1);close all;
+dock on;figure(1);close all;
 
 %% Time series plots
 
@@ -81,8 +89,16 @@ figure();
     dftplot(TF1,dftopts);
 end
 
+
+
 %% SN plots
-% Compare SN between TF1 and TF2
+figure();
+    snopts = copts;
+    snopts.print = 1;
+    snplot(TF1,snopts)
+
+    
+% Compare all
 figure();
     snopts = copts;
     snplot({TF1,TF2,TF3},snopts);

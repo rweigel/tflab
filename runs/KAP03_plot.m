@@ -59,8 +59,13 @@ end
 figure();
     topts = copts;
     topts.type = 'original';
-    tsplot(TFs{3},topts);
+    tsplot(TFs{1},topts);
 
+figure();
+    topts = copts;
+    topts.type = 'original';
+    tsplot(TFs{2},topts);
+    
 %%
 
 if 0

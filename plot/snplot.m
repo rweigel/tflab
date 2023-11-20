@@ -11,6 +11,8 @@ if nargin < 3
     comp = 1;
 end
 
+show_xcoh = 1;
+
 % Apply default metadata for fields not specified in S.Metadata.
 S = tflab_metadata(S);
 
@@ -20,14 +22,15 @@ if ~iscell(S)
     S = {S};
 end
 
-% TODO: Check all same. This assumes 1s.
 frequnit = S{1}.Metadata.frequnit;
-freqsf = S{1}.Metadata.freqsf;
 
 for s = 1:length(S)
     fe{s} = S{s}.Metrics.fe;
     y1{s} = S{s}.Metrics.SN;
     y2{s} = S{s}.Metrics.Coherence;
+    if show_xcoh == 1
+        y3{s} = S{s}.Metrics.Xcoherence;
+    end
     if popts.vs_period
         x{s} = 1./(fe{s}*S{s}.Metadata.freqsf);
     else
@@ -41,6 +44,7 @@ if length(S) == 1
     x  = x{1};
     y1 = y1{1};
     y2 = y2{1};
+    y3 = y3{1};
     lg = legend_(S{1},popts);
 
     ax1 = subplot('Position', popts.PositionTop);
@@ -70,10 +74,22 @@ if length(S) == 1
         semilogx(x,y2,popts.line{:});
         colororder_(ax2, y2);
         grid on;box on;hold on;
-        if size(y2,2) > 1
-            legend(lg,popts.legend{:});
+        if show_xcoh
+            set(gca,'ColorOrderIndex',1);
+            h = semilogx(x,y3,'^');
+            set(h, {'MarkerFaceColor'}, get(h,'Color'));
+            lg = {...
+                    '$(E_x,E^{\mathrm{pred}}_x)$','$(E_y,E^{\mathrm{pred}}_y)$',...
+                    '$(E_x,B_y)$','$(E_y,B_x)$'...
+                  };
+            legend(lg,popts.legend{:});                
+            ylabel('Coherence');        
+        else
+            if size(y2,2) > 1
+                legend(lg,popts.legend{:});
+            end
+            ylabel('Meas. to Pred. Coherence');        
         end
-        ylabel('Meas. to Pred. Coherence');
         set(gca,'YLim',[0,1]);
         yline(1,'k');
         adjust_ylim('upper');
@@ -83,7 +99,7 @@ if length(S) == 1
     if popts.print
         for i = 1:length(popts.printfmt)
             fname = sprintf('%s.%s',popts.printname, popts.printfmt{i});
-            figsave(fullfile(popts.printdir, fname), popts);
+            figsave(fullfile(popts.printdir, fname));
         end
     end
 end
@@ -116,11 +132,16 @@ if length(S) > 1
         for s = 1:length(y2)
             plot(x{s},y2{s}(:,comp),popts.line{:});
         end
+        if show_xcoh == 1
+            plot(x{s},y3{s}(:,comp),'ko');%popts.line{:});
+            ylabel('Coherence');
+        else
+            ylabel('Meas. to Pred. Coherence');
+        end
         if popts.vs_period
             set(gca,'XScale','log');
         end
         legend(lg,popts.legend{:});
-        ylabel('Meas. to Pred. Coherence');
         set(gca,'YLim',[0,1]);
         adjust_ylim('upper');
         adjust_exponent('x');            

@@ -35,7 +35,9 @@ else
 end
 
 if strcmp(plotfun,'tsplot')
-    opts.dtype = 'original';
+    if ~isfield(opts,'type') || isempty(opts.type)
+        opts.type = 'original';
+    end
 end
 
 if strcmp(plotfun,'dftplot')
@@ -56,11 +58,6 @@ if strcmp(plotfun,'dftplot')
     opts.type = join(tparts,'-');
     opts.type = opts.type{:};
 end
-
-%if strcmp(plotfun,'tsplot')
-    %if strcmp(type,'original')
-    %end
-%end
 
 if strcmp(plotfun,'zplot')
     if ~isfield(opts,'type') || isempty(opts.type)

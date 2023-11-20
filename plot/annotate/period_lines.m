@@ -1,4 +1,4 @@
-function period_lines(freqsf)
+function period_lines(show_labels)
 %PERIOD_LINES Vertical lines and labels at periods in current x-axis range.
 %
 %   Usage PERIOD_LINES()
@@ -6,7 +6,7 @@ function period_lines(freqsf)
 % TODO: Allow timeunit to be passed.
 
 if nargin < 1
-    freqsf = 1;
+    show_labels = 1;
 end
 
 drawnow; % Updates axes limits
@@ -28,7 +28,9 @@ for i = 1:length(at)
         break
     end
     plot([at(i),at(i)],yl,'--','Color',[0.5,0.5,0.5]);
-    text(at(i),yl(1),ls{i},'VerticalAlignment','bottom');
+    if show_labels == 1
+        text(at(i),yl(1),ls{i},'VerticalAlignment','bottom');
+    end
 end
 
 if ~held

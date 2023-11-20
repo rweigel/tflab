@@ -11,6 +11,8 @@ function opts = updatedefaults(opts,iopts)
 %
 %
 
+extra = {'EDI'};
+
 fns = fieldnames(iopts);
 for i = 1:length(fns)
     if isfield(opts,fns{i})
@@ -20,6 +22,8 @@ for i = 1:length(fns)
             opts.(fns{i}) = iopts.(fns{i});
         end
     else
-        warning('Option %s is not a valid option',fns{i});
+        if ~strcmp(fns{i},extra)
+            warning('Option %s is not a valid option',fns{i});
+        end
     end
 end
