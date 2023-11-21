@@ -1,4 +1,4 @@
-function [Ep,Z] = zpredict(Z,B)
+function [Ep,Z] = zpredict(Z,B,dZ)
 %ZPREDICT Predict output given input and freq. domain transfer function
 %
 %  [E,Z] = ZPREDICT(Z,B) uses the frequency domain transfer function Z
@@ -18,13 +18,23 @@ Nin  = size(B,2);
 
 assert(mod(size(Z,2),Nin) == 0,'size(Z,2)/size(B,2) must be an integer');
 
+offset = 0;
+if nargin > 2
+    %offset = 1;
+end
+
 for j = 1:Nout
     for i = 1:size(B,2)
         c = (j-1)*size(B,2) + i;
-        if i > 1
-            Ep(:,j) = Ep(:,j) + ifft(fft(B(:,i)).*Z(:,c));
+        if offset == 0
+            conv = ifft(fft(B(:,i)).*Z(:,c));
         else
-            Ep(:,j) = ifft(fft(B(:,i)).*Z(:,c));            
+            conv = ifft(fft(B(:,i)).*Z(:,c)) + ifft(ones(size(B,1),1).*dZ(:,c));
+        end
+        if i > 1
+            Ep(:,j) = Ep(:,j) + conv;
+        else
+            Ep(:,j) = conv;
         end
     end
 end

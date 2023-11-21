@@ -1,4 +1,4 @@
-function [Z,R,W] = regress_ols(ftE,ftB,algorithm)
+function [Z,R,W,dZ] = regress_ols(ftE,ftB,algorithm)
 %REGRESS_OLS - Ordinary least-squares regression
 %
 %   Z = OLS_REGRESS(E, B) and Z = OLS_REGRESS(E, B, 'backslash')
@@ -32,13 +32,20 @@ assert(any(strcmp(algorithm,algorithms)),emsg);
 
 W = ones(size(ftE,1),1);
 
-ftB = [ftB,ones(size(ftB,1),1)];
+offset = 1;
+if offset
+    ftB = [ftB,ones(size(ftB,1),1)];
+end
 
 if strcmp(algorithm,'backslash')
     Z = ftB\ftE;
     R = ftE - ftB*Z;
 end
-Z = Z(1:end-1);
+
+if offset
+    Z = Z(1:end-1,:);
+    dZ = Z(end,:);
+end
 
 if strcmp(algorithm,'regress')
     [Z,~,R] = regress(ftE,ftB);

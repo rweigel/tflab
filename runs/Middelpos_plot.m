@@ -1,6 +1,17 @@
 
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
+outdir = fullfile(scriptdir(),'data','Middelpos');
+
+start = '20120712';
+stop = '20121025';
+
+for tfn = 1:3
+    f{tfn} = fullfile(outdir, sprintf('Middelpos-%s-%s-tf%d.mat',start,stop,tfn));
+    TFs{tfn} = loadtf(f{tfn});
+    TFs{tfn} = tflab_preprocess(TFs{tfn});
+    TFs{tfn} = tflab_metrics(TFs{tfn});
+end
 
 %% Set common print optionsx
 
@@ -15,24 +26,24 @@ dock on;figure(1);close all;
 figure();
     tsopts = copts;
     tsopts.type = 'original';
-    tsplot(TF1,tsopts);
+    tsplot(TFs{1},tsopts);
 
 figure();
     tsopts = copts;
     tsopts.type = 'original';
-    tsplot(TF2,tsopts);
+    tsplot(TFs{2},tsopts);
 
 figure();
     tsopts = copts;
     tsopts.type = 'original';
-    tsplot(TF3,tsopts);
+    tsplot(TFs{3},tsopts);
     
 % Plot error for S1 only
 if 0
     figure();
         tsopts = copts;
         tsopts.type = 'error';
-        tsplot(TF1,tsopts);
+        tsplot(TF{1},tsopts);
 end
 
 % Compare S1 and S2 error
@@ -47,35 +58,36 @@ figure();
 figure();
     dftopts = copts;
     dftopts.type = 'original-averaged';    
-    dftplot(TF1,dftopts);
+    dftplot(TFs{1},dftopts);
 
 if 0    
 figure();
     dftopts = copts;
     dftopts.type = 'original-averaged-reals';
-    dftplot(TF1,dftopts);
+    dftplot(TFs{1},dftopts);
 
 figure();
     dftopts = copts;
     dftopts.type = 'original-averaged-imaginaries';
-    dftplot(TF1,dftopts);
-end
+    dftplot(TFs{1},dftopts);
 
 % Plot Fourier phases for In/Out of TF1 (will be the same for both)
 figure();
     dftopts = copts;
     dftopts.type = 'original-averaged-phases';
-    dftplot(TF1,dftopts);
+    dftplot(TF{1},dftopts);
 
-% Compare TF1 and TF2
-figure();
-    dftopts = copts;
-    dftopts.type = 'error-averaged';
-    dftplot({TF1,TF2},dftopts);
+    % Compare TF1 and TF2
+    figure();
+        dftopts = copts;
+        dftopts.type = 'error-averaged';
+        dftplot(TF(1:2),dftopts);
+end
 
     
 %% SN plots
 % Plot SN for TF1 only
+if 0
 figure();
     snopts = copts;
     snplot(TF1,snopts);
@@ -84,18 +96,19 @@ figure();
 figure();
     snopts = copts;
     snplot(TF2,snopts);
+end
 
-% Compare SN between TF1 and TF2
+% Compare all
 figure();
     snopts = copts;
-    snplot({TF1,TF2,TF3},snopts);
+    snplot(TFs(1:3),snopts);
 
 %% Z plots
 % Compare Z between S1 and S2
 figure();
     zopts = copts;
     zopts.period_range = [1, 86400];
-    zplot({TF1,TF2},zopts);
+    zplot(TFs(1:3),zopts);
 
 
 %% Regression plots
@@ -108,5 +121,5 @@ comp = 2;  % component (Zxx=1, Zxy=2, Zyx=3, Zyy=4).
 sidx = 1;  % segment number
 
 figure();
-    qqplot_(TF1,struct(),fidx,comp,sidx);
+    qqplot_(TFs{1},struct(),fidx,comp,sidx);
     

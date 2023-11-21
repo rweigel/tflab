@@ -90,6 +90,16 @@ figure();
 end
 
 
+figure()
+    y = abs(TF2.Out_.Predicted(:,1));
+    [N,X] = hist(y(y < 500),20);
+    semilogy(X,N/sum(N),'.','MarkerSize',20);
+    hold on;grid on;
+    y = abs(TF3.Out_.Predicted(:,1));
+    [N3,X3] = hist(y(y < 500),20);
+    semilogy(X3,N3/sum(N3),'.','MarkerSize',20);
+    ylabel('Probability')
+    xlabel('$E_x$ [mV/m]','Interpreter','Latex')
 
 %% SN plots
 figure();
@@ -101,7 +111,8 @@ figure();
 % Compare all
 figure();
     snopts = copts;
-    snplot({TF1,TF2,TF3},snopts);
+    snopts.period_range = [7,6*3600];
+    snplot({TF1,TF3},snopts);
 
 %% Z plots
 if 0
@@ -120,8 +131,8 @@ if 1
 % Compare Z between TF1 and TF2    
 figure();
     zopts = copts;
-    zopts.period_range = [3, 86400];
-    zplot({TF1,TF2,TF3},zopts);
+    zopts.period_range = [6,6*3600];
+    zplot({TF1,TF3},zopts);
 end
 
 %% Regression plots

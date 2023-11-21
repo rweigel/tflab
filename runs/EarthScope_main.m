@@ -89,7 +89,7 @@ TF2.Metadata = meta; % Attach metadata used in plots
 savetf(TF2, fullfile(outdir, opts2.filestr));
 
 
-%% Read TF computed using BIRP
+%% Read TF computed using EMTF
 zread_dir = [fileparts(mfilename('fullpath')),'/zread'];
 if ~exist(zread_dir,'dir')
     url = 'https://github.com/rweigel/zread';
@@ -122,10 +122,12 @@ TF3.Options.fd = opts1.fd;
 TF3.Options.tflab.loglevel = opts1.tflab.loglevel;
 TF3.Z = -transpose(TF3.Metadata.EDI.Z); % Negative due to e^{+iwt} convention
 TF3.fe = 1./transpose(TF3.Metadata.EDI.PERIOD);
-TF3.In  = TF1.In; 
+TF3.In  = TF1.In(:,1:2); 
 TF3.Out = TF1.Out;
 
 TF3 = tflab_metrics(TF3);
 
 fname = fullfile(scriptdir(),'data','EarthScope',id,[TF3.Options.filestr,'.mat']);
 savetf(TF3,fname);
+
+EarthScope_plot

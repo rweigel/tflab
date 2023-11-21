@@ -162,4 +162,25 @@ if (1)
     savetf(TF3, fname3);
 end
 
+%% Fourth TF
+if (1)
+    %%
+    % Get input/output data
+    [B,E,t,infile,outfile] = Middelpos_clean();
+    % Third TF
+    desc4 = sprintf('No segmenting; no bandpass');
+    opts4 = tflab_options(1);
+        opts4.tflab.loglevel = 1;
+        opts4.filestr = sprintf('%s-tf4',filestr);
+
+    TF4 = tflab(B(:,1:2),E,opts4);
+    % Modify default description of run
+    TF4.Options.description = desc4;
+    TF4.Metadata = meta;
+
+
+    fname4 = fullfile(scriptdir(),'data','Middelpos',[opts4.filestr,'.mat']);
+    savetf(TF4, fname4);
+end
+
 Middelpos_plot;
