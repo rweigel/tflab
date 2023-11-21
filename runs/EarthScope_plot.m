@@ -90,11 +90,10 @@ figure();
 end
 
 
-
 %% SN plots
 figure();
     snopts = copts;
-    snopts.print = 1;
+    %snopts.print = 1;
     snplot(TF1,snopts)
 
     
