@@ -28,6 +28,7 @@ for s = 1:length(S)
     fe{s} = S{s}.Metrics.fe;
     y1{s} = S{s}.Metrics.SN;
     y2{s} = S{s}.Metrics.Coherence;
+    y1cl{s} = S{s}.Metrics.SNCL;
     if show_xcoh == 1
         y3{s} = S{s}.Metrics.Xcoherence;
     end
@@ -113,6 +114,10 @@ if length(S) > 1
         for s = 1:length(y1)
             plot(x{s},y1{s}(:,comp),popts.line{:});
         end
+        for s = 1:length(y1)
+            errorbars(x{s},y1{s},y1{s}-y1cl{s}(:,2),y1{s}-y1cl{s}(:,2));
+        end
+
         if popts.vs_period
             set(gca,'XScale','log');
         end
