@@ -27,6 +27,9 @@ if nargin < 2
 end
 
 if isfield(popts,'time_range')
+    if ~iscell(popts.time_range)
+        %popts.time_range = num2cell(popts.time_range);
+    end
     try
         fmt = 'yyyy-mm-ddTHH:MM:SS.FFF';
         popts.mldatenum_range(1) = datenum(popts.time_range{1},fmt);
@@ -51,7 +54,7 @@ if iscell(S)
     timeunit  = S{1}.Metadata.timeunit;
     timedelta = S{1}.Metadata.timedelta;
 
-    t = frequnit_(S{1}, size(S{1}.In,1));
+    t = index2mldn_(S{1}, size(S{1}.In,1));
     trange = [t(1),t(end)];
     
     timeunits = {};
@@ -80,10 +83,10 @@ else
         end
         y1{2} = S.Out_.Predicted;
             
-        t1 = frequnit_(S, size(y1{1},1));
+        t1 = index2mldn_(S, size(y1{1},1));
 
         y2 = S.Out_.Error;
-        t2 = frequnit_(S, size(y2,1));
+        t2 = index2mldn_(S, size(y2,1));
 
         trange = [t1(1),t1(end)];
         lg1 = {'Measured', 'Predicted'};
@@ -112,8 +115,8 @@ else
             y1 = S.In_.(typeuc);
             y2 = S.Out_.(typeuc);
         end
-        t1 = frequnit_(S, size(y1,1));
-        t2 = frequnit_(S, size(y2,1));
+        t1 = index2mldn_(S, size(y1,1));
+        t2 = index2mldn_(S, size(y2,1));
         trange = [t1(1),t1(end)];        
         [yl1, yl2] = ylabel_(S,popts);
         [lg1, lg2] = legend_(popts);
@@ -141,7 +144,7 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
             [~, lo] = legend(lg1,popts.legend{:});
             adjust_legend_lines(lo);
         end
-        %adjust_ylim();
+        adjust_ylim();
         adjust_exponent('y');
         setx_(0,info,trange);
         
@@ -244,9 +247,14 @@ if iscell(S)
     if ~strcmp(popts.type,'error')
         error('tsplot for cell array input must be ''error''');
     end
-
+    if isfield(popts,'mldatenum_range')
+        trange = popts.mldatenum_range;
+        tidx = find(t >= trange(1) & t <= trange(2));
+    else
+        tidx = [1:length(t)];
+    end
     ax(1) = subplot('Position',popts.PositionTop);
-        plot(t,S{1}.Out(:,1));
+        plot(t(tidx),S{1}.Out(tidx,1));
         % Force first line to be black so color order
         % of compared data matches later plots.
         colororder(ax(1), [0,0,0;colororder()]);
@@ -256,7 +264,7 @@ if iscell(S)
         lg0 = sprintf('Observed at %s\n', S{1}.Metadata.stationid);
 
         for j = 1:length(S)
-            plot(t,S{j}.Out_.Predicted(:,1));
+            plot(t(tidx),S{j}.Out_.Predicted(tidx,1));
             lg{j} = sprintf('Predicted %s\n',...
                         S{j}.Options.description);
         end
@@ -271,7 +279,7 @@ if iscell(S)
         setx_(0,info,trange);
         
     ax(2) = subplot('Position',popts.PositionBottom);
-        plot(t,S{1}.Out(:,2));
+        plot(t(tidx),S{1}.Out(tidx,2));
         % Force first line to be black so color order
         % of compared data matches later plots.
         colororder(ax(2), [0,0,0;colororder()]);
@@ -281,7 +289,7 @@ if iscell(S)
         lg0 = sprintf('Observed at %s\n', S{1}.Metadata.stationid);
 
         for j = 1:length(S)
-            plot(t,S{j}.Out_.Predicted(:,2));
+            plot(t(tidx),S{j}.Out_.Predicted(tidx,2));
             lg{j} = sprintf('Predicted %s\n',...
                         S{j}.Options.description);
         end
@@ -379,7 +387,7 @@ function [yl1, yl2] = ylabel_(S,popts)
     end
 end
 
-function t = frequnit_(S, nt)
+function t = index2mldn_(S, nt)
 
     meta = S.Metadata;
     if ischar(meta.timestart)

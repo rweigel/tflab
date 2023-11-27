@@ -33,6 +33,8 @@ if ~strcmp(windowstyle,'normal')
     set(cf,'WindowStyle','normal')
 end
 
+warning off export_fig:exportgraphics
+
 logmsg(sprintf('Writing %s\n',filename));
 export_fig(filename, varargin{:});
 logmsg(sprintf('Wrote %s\n',filename));

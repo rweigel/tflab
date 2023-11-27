@@ -34,7 +34,7 @@ if isfield(tf,'Segment')
     end
 end
 
-keeps = {'In','Out','Z','fe','Regression','Options','Metadata','Metrics','Segment'};
+keeps = {'In','Out','Z','ZVAR','fe','Regression','Options','Metadata','Metrics','Segment'};
 for i = 1:length(keeps)
     if ~isfield(tf,keeps{i})
         keeps{i} = '';

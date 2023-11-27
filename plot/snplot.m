@@ -44,6 +44,7 @@ if length(S) == 1
     figprep();
     x  = x{1};
     y1 = y1{1};
+    y1cl = y1cl{1};
     y2 = y2{1};
     y3 = y3{1};
     lg = legend_(S{1},popts);
@@ -55,6 +56,10 @@ if length(S) == 1
         grid on;box on;hold on;
         if size(y1,2) > 1
             legend(lg,popts.legend{:});
+        end
+        hold on;
+        for i = 1:size(y1,2)
+            errorbars(x,y1(:,i),y1(:,i)-y1cl(:,2*i-1),y1cl(:,2*i)-y1(:,i));
         end
         set(gca,'XTickLabel',[]);
         titlestr(S{1},popts,'sn');
@@ -75,7 +80,8 @@ if length(S) == 1
         semilogx(x,y2,popts.line{:});
         colororder_(ax2, y2);
         grid on;box on;hold on;
-        if show_xcoh
+        if show_xcoh && length(popts.outstr) == 2 && length(popts.instr) == 2
+            % TODO: Generalize; only works for 2x2 Z
             set(gca,'ColorOrderIndex',1);
             h = semilogx(x,y3,'^');
             set(h, {'MarkerFaceColor'}, get(h,'Color'));
@@ -115,9 +121,8 @@ if length(S) > 1
             plot(x{s},y1{s}(:,comp),popts.line{:});
         end
         for s = 1:length(y1)
-            errorbars(x{s},y1{s},y1{s}-y1cl{s}(:,2),y1{s}-y1cl{s}(:,2));
+            errorbars(x{s},y1{s}(:,comp),y1{s}(:,comp)-y1cl{s}(:,2*comp-1),y1cl{s}(:,2*comp)-y1{s}(:,comp));
         end
-
         if popts.vs_period
             set(gca,'XScale','log');
         end
@@ -128,6 +133,8 @@ if length(S) > 1
         ylabel('Signal to Error');
         adjust_ylim('upper');
         adjust_yticks();
+        yl = get(gca,'YLim');
+        set(gca,'YLim',[0,yl(end)]);
         adjust_exponent();
         yline(1,'k');
         setx(popts,0,frequnit);
@@ -138,8 +145,16 @@ if length(S) > 1
             plot(x{s},y2{s}(:,comp),popts.line{:});
         end
         if show_xcoh == 1
-            plot(x{s},y3{s}(:,comp),'ko');%popts.line{:});
-            ylabel('Coherence');
+            lg = legend_(S,popts,comp);
+            plot(x{s},y3{s}(:,comp),'ko');
+            ylabel(sprintf('Coherence with %s',popts.outstr{comp}));
+            if length(popts.instr) == 2
+                if comp == 1
+                    lg{end+1} = popts.instr{2};
+                else
+                    lg{end+1} = popts.instr{1};
+                end
+            end
         else
             ylabel('Meas. to Pred. Coherence');
         end
@@ -153,10 +168,10 @@ if length(S) > 1
         setx(popts,1,frequnit);
 
     if popts.print
-        ext = regexprep(S{1}.Options.info.outstr{comp},'\$','');        
+        ext = regexprep(S{1}.Metadata.outstr{comp},'\$','');        
         for i = 1:length(popts.printfmt)
             fname = sprintf('%s-%s.%s',popts.printname, ext, popts.printfmt{i});
-            figsave(fullfile(popts.printdir, fname), popts);
+            figsave(fullfile(popts.printdir, fname));
         end
     end
     if comp < size(S{1}.In,2)
@@ -173,22 +188,22 @@ end % function
 
 function lg = legend_(S,popts,comp)
 
+    if (nargin < 2)
+        comp = 1;
+    end
     if iscell(S)
-        if (nargin == 1)
-            comp = 1;
-        end
         for s = 1:length(S)
             desc = S{s}.Options.description;
             if ~isempty(desc)
                 desc = [' ',desc];
             end
             if iscell(popts.outstr)
-                lg{s} = sprintf('%s%s\n',popts.outstr{comp}, desc);
+                lg{s} = sprintf('%s%s',popts.outstr{comp}, desc);
             else
                 if size(S{s}.Out,2) == 1
-                    lg{s} = sprintf('%s\n',desc);
+                    lg{s} = sprintf('%s',desc);
                 else
-                    lg{s} = sprintf('%s(:,%d)%s\n',popts.outstr,comp,desc);
+                    lg{s} = sprintf('%s(:,%d)%s',popts.outstr,comp,desc);
                 end
             end
         end

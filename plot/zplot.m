@@ -124,6 +124,14 @@ if isstruct(S)
         else
             adjust_ylim('both');
         end
+        if isfield(S,'ZVAR')
+            if opts.type == 1
+                errorbars(x,y,2*sqrt(S.ZVAR/2));
+            end
+            if opts.type == 2
+                errorbars(x,y,2*sqrt(z2rho(x, S.ZVAR)/2));
+            end
+        end
         adjust_yticks(1e-4);
         adjust_exponent('y');
         setx(opts,0,frequnit);
@@ -223,13 +231,12 @@ if iscell(S)
             if s == 1
                 grid on;hold on;box on;
             end
+        end
+        legend(h,ls,opts.legend{:});
+        for s = 1:length(S)
             if ~isempty(yebl{s})
-                errorbars(x{s},y{s},yebl{s},yebu{s});
-                %return
-                %b = squeeze(S{s}.Segment.Z(:,j,:));
-                %for k = 2:length(x)
-                %    plot(x(k),abs(b(k,:)),'k.','MarkerSize',1);
-                %end
+                set(h(s),'MarkerSize',1,'LineWidth',2);
+                errorbars(x{s},y{s},yebl{s},yebu{s},'y','Color',get(h(s),'Color'));
             end
         end
         if opts.type < 3
@@ -252,7 +259,6 @@ if iscell(S)
             set(gca,'XLim',opts.period_range);
         end
         ylabel(yl);
-        legend(h,ls,opts.legend{:});
         adjust_yticks(1e-4);
         adjust_exponent('y');
         if opts.type == 3
@@ -277,11 +283,6 @@ if iscell(S)
             if s == 1
                 grid on;box on;hold on;
             end
-
-            if ~isempty(yebl{s})
-                errorbars(x{s},y{s},yebl{s},yebu{s});
-            end
-
         end
 
         yl = sprintf('$%s$ [$^\\circ]$',Phistrs{comp});
@@ -304,10 +305,10 @@ if iscell(S)
         setx(opts,1,frequnit);
 
     if opts.print
-        comp = regexprep(Zstrs{j},'\{|\}','');
+        comp = regexprep(Zstrs{comp},'\{|\}','');
         for i = 1:length(opts.printfmt)
             fname = sprintf('%s-%s.%s',opts.printname, comp, opts.printfmt{i});
-            figsave(fullfile(opts.printdir, fname), opts);
+            figsave(fullfile(opts.printdir, fname));
         end
     end
     
@@ -330,26 +331,36 @@ function [x,y,yebu,yebl] = xycell(S,opts,comp,panel)
         yebu{s} = [];
         yebl{s} = [];
         if strcmp(panel,'top')
-            switch opts.type
-                case 1
-                    y{s} = abs(S{s}.Z(:,comp));
-                    if isfield(S{s},'ZCL')
-                        %yebl =  y-squeeze(S{s}.ZCL.Magnitude.Normal.x_1sigma(:,j,1));
-                        %yebu = -y+squeeze(S{s}.ZCL.Magnitude.Normal.x_1sigma(:,j,2));
-                        yebl{s} =  y-squeeze(S{s}.ZCL.Magnitude.Bootstrap.x_1sigma(:,j,1));
-                        yebu{s} = -y+squeeze(S{s}.ZCL.Magnitude.Bootstrap.x_1sigma(:,j,2));
-                    end
-                case 2
-                    % TODO: Check that f in Hz and Z in (mV/km)/nT
+            if opts.type ~= 3
+                y{s} = abs(S{s}.Z(:,comp));
+                if opts.type == 2
                     f = S{s}.fe*S{s}.Metadata.freqsf;
                     y{s} = z2rho(f, S{s}.Z(:,comp));
-                case 3
-                    y{s} = real(S{s}.Z(:,comp));
-                    if isfield(S{s},'ZCL')
-                        yebl{s} =  y-squeeze(real(S{s}.ZCL.Z.Normal.x_1sigma(:,comp,1)));
-                        yebu{s} = -y+squeeze(real(S{s}.ZCL.Z.Normal.x_1sigma(:,comp,2)));
+                end
+                if isfield(S{s},'ZVAR')
+                    % http://ds.iris.edu/files/products/emtf/definitions/variance.html
+                    % Multiply by two to get 2 SE estimate. This gives and
+                    % approxmate match to error bars at 
+                    % http://ds.iris.edu/spud/emtf/15014571 (not quite;
+                    % why?)
+                    dZ = 2*abs(S{s}.ZVAR(:,comp));
+                    yebl{s} = dZ;
+                    yebu{s} = dZ;
+                    if opts.type == 2
+                        %rho = |Z|^2/(5*f) => drho = 2|Z|dZ/(5*f)
+                        yebl{s} = 2*abs(S{s}.Z(:,comp)).*dZ./(5*S{s}.fe);
+                        yebu{s} = yebl{s};
                     end
+                end
+                if isfield(S{s},'Regression')
+                    yebl{s} = y{s}-S{s}.Regression.ZCL(:,2*comp-1:2*comp);
+                    yebu{s} = -y{s}+S{s}.Regression.ZCL(:,2*comp-1:2*comp);
+
+                    yebl{s} = sqrt(S{s}.Regression.ZVAR(:,comp));
+                    yebu{s} = sqrt(S{s}.Regression.ZVAR(:,comp));
+                end
             end
+
             if opts.vs_period && ~isempty(opts.period_range)
                 idx = x{s} <= opts.period_range(1) | x{s} >= opts.period_range(2);
                 y{s}(idx) = NaN;

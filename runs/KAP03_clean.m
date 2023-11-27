@@ -1,4 +1,8 @@
-function [B,E,t,infile,outfile,timedelta] = KAP03_clean(sta)
+function [B,E,t,infile,outfile,timedelta] = KAP03_clean(sta,plot)
+
+if nargin < 2
+    plot = 0;
+end
 
 addpath(fullfile(fileparts(mfilename('fullpath')),'..'));
 tflab_setpaths();
@@ -22,31 +26,43 @@ start = [strrep(Header.STARTTIME,' ','T'),'.000'];
 %stop  = [strrep(Header.ENDTIME,' ','T'),'.000'];
 dno = datenum(datevec(start,'yyyy-mm-ddTHH:MM:SS.FFF'));
 
-figprep();
-subplot(3,1,1)
-    plot(t,E)
-    title('Raw');
-    datetick();
-    grid on
-    set(gca,'XTickLabels',[])
-subplot(3,1,2)
-    E = despikeE(E, sta);
-    plot(t,E)
-    title('Despiked');
-    datetick()
-    grid on
-    set(gca,'XTickLabels',[])    
-subplot(3,1,3)
-    E = naninterp1(E);
-    plot(t,E)
-    title('Interpolated');
-    datetick()
-    grid on
-    xlabel('Month/Day of 2003')
-figsave([outfile(1:end-3),'png']);
+if plot
+    Er = E;
+    Ed = despikeE(Er, sta);
+else
+    Ed = despikeE(E, sta);
+end
+logmsg('Interpolating over NaNs in E\n');
+E = naninterp1(Ed);
 
 logmsg('Interpolating over NaNs in B\n');
 B = naninterp1(B);
+
+if plot
+    figprep();
+    subplot(3,1,1)
+        plot(t,Er)
+        title('Raw');
+        datetick();
+        grid on
+        set(gca,'XTickLabels',[])
+    subplot(3,1,2)
+        plot(t,Ed)
+        title('Despiked');
+        datetick()
+        grid on
+        set(gca,'XTickLabels',[])    
+    subplot(3,1,3)
+        plot(t,E)
+        title('Interpolated');
+        datetick()
+        grid on
+        xlabel('Month/Day of 2003')
+    figsave([outfile(1:end-3),'png']);
+end
+
+logmsg('Saving %s\n',outfile);
+save(outfile,'B','E','t','infile','outfile','timedelta','Header')
 
 function X = despikeE(X, sta)
     Ibad = [];
@@ -65,8 +81,6 @@ function X = despikeE(X, sta)
     end
 end
 
-logmsg('Saving %s\n',outfile);
-save(outfile,'B','E','t','infile','outfile','timedelta','Header')
 
 end
 

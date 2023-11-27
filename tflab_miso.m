@@ -85,6 +85,23 @@ for j = 1:length(fe)
     [Z(j,:),Residuals,Weights] = ...
                regressfunc(ftOut,ftIn,regressargs{:});
     
+    n = size(ftOut,1);
+    if  n > 10
+        Nb = 1000;
+        for b = 1:Nb
+            I = randsample(n,round(0.63*n),1);
+            Zb(b,:) = regressfunc(ftOut(I,:),ftIn(I,:),regressargs{:});
+        end
+        nl = round((1-0.95)*Nb);
+        nh = round(0.95*Nb);
+        Zb = sort(abs(Zb),1); % Sort
+        l = Zb(nl,:);    % Select the nth lowest
+        u = Zb(nh,:);    % Select the nth highest
+        Regression.ZVAR(j,:) = var(Zb,0,1);
+        Regression.ZCL(j,1:2:2*length(l)) = l;
+        Regression.ZCL(j,2:2:2*length(u)+1) = u;
+    end
+
     if ~isempty(lastwarn)
         logmsg('Above is for eval. freq. #%d; fe = %f; Te = %f\n', ...
             j,fe(j),1/fe(j));
@@ -93,7 +110,6 @@ for j = 1:length(fe)
         logmsg(sprintf('ftB = \n'));
         logmsg(sprintf('   %.16f\n',ftIn));
     end
-
 
     if any(isinf(Z(j,:)))
         logmsg(['!!! Z has Infs for fe = %f. ',...
@@ -118,3 +134,4 @@ end
 if all(isnan(Z(:)))
     error('All Z values are NaN');
 end
+
