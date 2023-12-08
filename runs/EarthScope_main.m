@@ -12,13 +12,6 @@ outdir = fullfile(scriptdir(),'data','EarthScope',id);
 % Get input/output data
 [B,E,t,infile,outfile] = EarthScope_clean(id);
 
-if 0
-I = find(t > 736498.3 & t < 736502);
-B = B(I,:);
-E = E(I,:);
-t = t(I);
-end
-
 %% Make length an integer number of segments.
 pps = 86400;                % Points per segment
 Ns  = floor(size(B,1)/pps); % Number of segments
@@ -30,6 +23,26 @@ t = t(1:I);
 B = B(1:6*86400,:);
 E = E(1:6*86400,:);
 t = t(1:6*86400);
+
+if 1
+    %% Band pass
+    Tm = 2*86400;
+    band = [1/Tm,0.5];
+    B = bandpass_(B,band);
+    E = bandpass_(E,band);
+    %keyboard
+    %E = E(Tm+1:end-Tm,:);
+    %B = B(Tm+1:end-Tm,:);
+    %t = t(Tm+1:end-Tm,:);
+end
+
+if 0
+    I = find(t > 736498.3 & t < 736502);
+    B = B(I,:);
+    E = E(I,:);
+    t = t(I);
+end
+
 
 %B = B(1:8*86400,:);
 %E = E(1:8*86400,:);
@@ -53,6 +66,7 @@ meta = struct();
     meta.chainid   = 'EarthScope';
     meta.stationid = id;
 
+if 1
 %% Compute first TF
 tfn = 1;
 Ns = size(B,1)/pps;
@@ -71,6 +85,8 @@ TF1 = tflab(B(:,1:2),E,opts1);
 TF1.Metadata = meta; % Attach metadata used in plots
 
 savetf(TF1, fullfile(outdir, opts1.filestr));
+end
+
 
 %% Compute second TF
 tfn = 2;
@@ -90,7 +106,9 @@ TF2.Metadata = meta; % Attach metadata used in plots
 
 savetf(TF2, fullfile(outdir, opts2.filestr));
 
+%zplot(TF2)
 
+if 1
 %% Read TF computed using EMTF
 zread_dir = [fileparts(mfilename('fullpath')),'/zread'];
 if ~exist(zread_dir,'dir')
@@ -130,7 +148,6 @@ TF3.Out = TF1.Out;
 
 TF3 = tflab_metrics(TF3);
 
-fname = fullfile(scriptdir(),'data','EarthScope',id,[TF3.Options.filestr,'.mat']);
+fname = fullfile(outdir,[TF3.Options.filestr,'.mat']);
 savetf(TF3,fname);
-
-EarthScope_plot
+end

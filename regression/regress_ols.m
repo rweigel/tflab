@@ -1,4 +1,4 @@
-function [Z,R,W,dZ] = regress_ols(ftE,ftB,algorithm)
+function [Z,dZ,Info] = regress_ols(ftE,ftB,algorithm)
 %REGRESS_OLS - Ordinary least-squares regression
 %
 %   Z = OLS_REGRESS(E, B) and Z = OLS_REGRESS(E, B, 'backslash')
@@ -37,23 +37,41 @@ if offset
     ftB = [ftB,ones(size(ftB,1),1)];
 end
 
+Info = struct();
+
 if strcmp(algorithm,'backslash')
     Z = ftB\ftE;
-    R = ftE - ftB*Z;
-end
-
-if offset
-    Z = Z(1:end-1,:);
-    dZ = Z(end,:);
+    Info.Residuals = ftE - ftB*Z;
 end
 
 if strcmp(algorithm,'regress')
-    [Z,~,R] = regress(ftE,ftB);
+    [Z,Info.ZCL95,Info.Residuals,Info.RINT,Info.STATS] = regress(ftE,ftB);
+    if 0
+        if offset
+            Info.ZCL95 = Info.ZCL95(1:end-1,:);
+        end
+        % Z has is one column with rows of component. Last element is offset.
+        % ZCL95 has rows of component. First column is lower limit, second is
+        % upper limit. I don't think MATLAB is handling confidence limits
+        % with complex Z properly. The imaginary part of the upper and lower
+        % confidence limits on Z are the same as the imaginary part of Z.
+        Info.ZCL95l = transpose(Info.ZCL95(:,1));
+        Info.ZCL95u = transpose(Info.ZCL95(:,2));
+    else
+        Info = rmfield(Info,'ZCL95');        
+    end
 end
 
 if strcmp(algorithm,'regress-analytic')
-    [Z,R] = regress_ols_analytic(ftE,ftB);
+    [Z,Info.Residuals] = regress_ols_analytic(ftE,ftB);
 end
+
+if offset
+    Z = Z(1:end-1);
+    dZ = Z(end);
+end
+
+Z = transpose(Z);
 
 if strcmp(algorithm,'regress-real')
     % Calculation using only real numbers

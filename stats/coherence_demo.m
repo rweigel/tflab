@@ -2,7 +2,7 @@ clear
 %% Demo 1
 N = 256*4;
 f = fftfreqp(N/4); % Get positive DFT frequencies for a signal of length N
-t = (0:N-1)';    % Time index
+t = (0:N-1)';      % Time index
 
 % Create input/output signals.
 

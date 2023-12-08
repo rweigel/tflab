@@ -35,7 +35,7 @@ for tfn = 1:length(tfs)
 end
 
 %% Common plot options
-copts.print    = 1;  % Set to 1 to print pdf of each figure created.
+copts.print    = 0;  % Set to 1 to print pdf of each figure created.
 copts.printdir = fullfile(scriptdir(),'data',chainid,siteid,'figures');
 copts.printfmt = {'pdf','png'};
 
@@ -69,11 +69,11 @@ figure();
     topts.type = 'original';
     tsplot(TFs{1},topts);
 
-if 0
+if 1
     topts = copts;
     topts.type  = 'error';
     %topts.time_range = 
-    for i = [1,3,2,4]%1:length(TFs)
+    for i = 1:length(TFs)
         figure();
         tsplot(TFs{i},topts);
     end
@@ -86,6 +86,7 @@ if 0
         tsplot(TFs{1},topts);
 end
 
+if (0)
 %% Compare
 figure();
     topts = copts;
@@ -101,6 +102,7 @@ figure();
     topts.time_range = {'2003-10-29T06:00:00.000',...
                         '2003-10-29T09:00:00.000'};
     tsplot(TFs,topts);
+end
 
 if 0
     %% SN plots

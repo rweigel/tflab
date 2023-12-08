@@ -1,4 +1,4 @@
-function [se,f,cl] = signaltoerror(sig, err, averaged, opts)
+function [se,f,clu,cll] = signaltoerror(sig, err, averaged, opts)
 
 if ~exist('averaged', 'var')
     averaged = 0;
@@ -14,7 +14,8 @@ end
 [dftsig,f] = dftbands(sig, opts);
 dfterr = dftbands(err, opts);
 
-cl = [];
+clu = [];
+cll = [];
 for s = 1:length(f)
     se(s,:) = sum(dftsig{s}.*conj(dftsig{s}),1)./sum(dfterr{s}.*conj(dfterr{s}),1);
 
@@ -32,7 +33,8 @@ for s = 1:length(f)
             V = sort(V,1);  % Sort each column
             l = V(nl,:);    % Select the nth lowest value
             u = V(nh,:);    % Select the nth highest value
-            cl(s,2*comp-1:2*comp) = [l',u'];
+            cll(s,comp) = l';
+            clu(s,comp) = u';
         end
     end
     

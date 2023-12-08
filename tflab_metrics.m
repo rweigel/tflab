@@ -51,7 +51,7 @@ for j = 1:size(Out,2) % Second dimension is component
         
         Error(:,j,k) = OutPredicted(:,j,k)-Out(:,j,k);
 
-        [Metrics.SN(:,j,k),~,Metrics.SNCL(:,2*j-1:2*j,k)] = ...
+        [Metrics.SN(:,j,k),~,Metrics.SNCLl(:,j,k),Metrics.SNCLu(:,j,k)] = ...
             signaltoerror(Out(:,j,k), Error(:,j,k), 1, opts);
 
     end

@@ -104,7 +104,7 @@ if isnan(opts.td.window.width) || size(E,1) == opts.td.window.width
     S = struct('In',B,'Out',E,'Options',opts);
     S = tflab_tdpreprocess(S,opts.tflab.loglevel);
     S = tflab_fdpreprocess(S);
-    [S.Z,S.fe,S.Regression] = tflab_miso(S.DFT,opts);
+    [S.Z,S.fe,S.dZ,S.Regression] = tflab_miso(S.DFT,opts);
     S = tflab_metrics(S);
     return
 end
@@ -140,7 +140,7 @@ function S = stackregression_(S,opts)
         logmsg('Computing Z using stack regression.\n');
     end
     DFT = dftcombine(S.Segment.DFT);
-    [S.Z,S.fe,S.Regression] = tflab_miso(DFT,opts);
+    [S.Z,S.fe,S.dZ,S.Regression] = tflab_miso(DFT,opts);
 end
 
 function S = stackaverage_(S,opts)
@@ -163,7 +163,7 @@ function S = stackaverage_(S,opts)
         end
         
         logmsg('Computing Z for segment %d of %d\n',s,length(Sc));
-        [Sc{s}.Z,Sc{s}.fe,Sc{s}.Regression] = tflab_miso(Sc{s}.DFT,opts);
+        [Sc{s}.Z,Sc{s}.fe,Sc{s}.dZ,Sc{s}.Regression] = tflab_miso(Sc{s}.DFT,opts);
         
         if opts.tflab.loglevel > 0
             logmsg('Computing metrics on segment using segment Z.\n');
@@ -178,10 +178,11 @@ function S = stackaverage_(S,opts)
             logmsg('Computated Z and metrics for segment %d of %d; PE/CC/MSE %.2f/%.2f/%.3f\n',...
                    s,length(Sc),Sc{s}.Metrics.PE,Sc{s}.Metrics.CC,Sc{s}.Metrics.MSE);
         end
-    end    
+    end
 
     S.Segment = combineStructs(Sc,3);
     S.Z = mean(S.Segment.Z,3);
+    S.dZ = mean(S.Segment.Z,3);
     S.fe = Sc{1}.fe;    
 
 end

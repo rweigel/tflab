@@ -27,10 +27,11 @@ frequnit = S{1}.Metadata.frequnit;
 for s = 1:length(S)
     fe{s} = S{s}.Metrics.fe;
     y1{s} = S{s}.Metrics.SN;
-    y2{s} = S{s}.Metrics.Coherence;
-    y1cl{s} = S{s}.Metrics.SNCL;
+    y2{s} = sqrt(S{s}.Metrics.Coherence);
+    y1clu{s} = S{s}.Metrics.SNCLu;
+    y1cll{s} = S{s}.Metrics.SNCLl;
     if show_xcoh == 1
-        y3{s} = S{s}.Metrics.Xcoherence;
+        y3{s} = sqrt(S{s}.Metrics.Xcoherence);
     end
     if popts.vs_period
         x{s} = 1./(fe{s}*S{s}.Metadata.freqsf);
@@ -42,24 +43,39 @@ end
 if length(S) == 1
     % Single transfer function
     figprep();
+
     x  = x{1};
     y1 = y1{1};
-    y1cl = y1cl{1};
+    y1cll = y1cll{1};
+    y1clu = y1clu{1};
     y2 = y2{1};
-    y3 = y3{1};
+    if show_xcoh
+        y3 = y3{1};
+    end
     lg = legend_(S{1},popts);
+    if nargin > 2
+        y1 = y1(:,comp);
+        y1cll = y1cll(:,comp);
+        y1clu = y1clu(:,comp);
+        y2 = y2(:,comp);
+        lg = lg{comp};
+    end
 
     ax1 = subplot('Position', popts.PositionTop);
         
         plot(x,y1,popts.line{:});
         colororder_(ax1, y1);
         grid on;box on;hold on;
-        if size(y1,2) > 1
+        %if size(y1,2) > 1
             legend(lg,popts.legend{:});
-        end
+        %end
         hold on;
-        for i = 1:size(y1,2)
-            errorbars(x,y1(:,i),y1(:,i)-y1cl(:,2*i-1),y1cl(:,2*i)-y1(:,i));
+        if nargin > 2
+            errorbars(x,y1(:,comp),y1(:,comp)-y1cll(:,comp),y1clu(:,comp)-y1(:,comp));
+        else
+            for j = 1:size(y1,2)
+                errorbars(x,y1(:,j),y1(:,j)-y1cll(:,j),y1clu(:,j)-y1(:,j));
+            end
         end
         set(gca,'XTickLabel',[]);
         titlestr(S{1},popts,'sn');
@@ -80,13 +96,14 @@ if length(S) == 1
         semilogx(x,y2,popts.line{:});
         colororder_(ax2, y2);
         grid on;box on;hold on;
-        if show_xcoh && length(popts.outstr) == 2 && length(popts.instr) == 2
-            % TODO: Generalize; only works for 2x2 Z
-            set(gca,'ColorOrderIndex',1);
-            h = semilogx(x,y3,'^');
-            set(h, {'MarkerFaceColor'}, get(h,'Color'));
+        if show_xcoh && nargin > 2 %length(popts.outstr) == 2 && length(popts.instr) == 2
+            %set(gca,'ColorOrderIndex',1);
+            h = semilogx(x,y3(:,1),'rs');
+            set(h, 'MarkerFaceColor', get(h,'Color'));
+            h = semilogx(x,y3(:,2),'b^');
+            set(h, 'MarkerFaceColor', get(h,'Color'));
             lg = {...
-                    '$(E_x,E^{\mathrm{pred}}_x)$','$(E_y,E^{\mathrm{pred}}_y)$',...
+                    '$(E_x,E^{\mathrm{pred}}_x)$',...
                     '$(E_x,B_y)$','$(E_y,B_x)$'...
                   };
             legend(lg,popts.legend{:});                
@@ -121,7 +138,7 @@ if length(S) > 1
             plot(x{s},y1{s}(:,comp),popts.line{:});
         end
         for s = 1:length(y1)
-            errorbars(x{s},y1{s}(:,comp),y1{s}(:,comp)-y1cl{s}(:,2*comp-1),y1cl{s}(:,2*comp)-y1{s}(:,comp));
+            errorbars(x{s},y1{s}(:,comp),y1{s}(:,comp)-y1cll{s}(:,comp),y1clu{s}(:,comp)-y1{s}(:,comp));
         end
         if popts.vs_period
             set(gca,'XScale','log');
@@ -188,10 +205,10 @@ end % function
 
 function lg = legend_(S,popts,comp)
 
-    if (nargin < 2)
-        comp = 1;
-    end
     if iscell(S)
+        if (nargin < 2)
+            comp = 1;
+        end
         for s = 1:length(S)
             desc = S{s}.Options.description;
             if ~isempty(desc)
@@ -219,6 +236,9 @@ function lg = legend_(S,popts,comp)
                 end
             end
         end
+        if (nargin > 2)
+            lg = lg{comp};
+        end        
     end
     
 end

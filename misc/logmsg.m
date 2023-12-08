@@ -11,7 +11,6 @@ function logmsg(msg, varargin)
 % hyperline).
 
 stack = dbstack;
-
 if length(stack) > 1
     stack = stack(2:end); % Remove entry for logmsg.m
     % Indent one space per call stack entry.

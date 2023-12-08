@@ -1,4 +1,4 @@
-function [Z,fe,Regression] = tflab_miso(DFT,opts)
+function [Z,fe,dZ,Regression] = tflab_miso(DFT,opts)
 %TFLAB_MISO Frequency domain MISO transfer function estimate
 %
 %  S = TFLAB_MISO(DFT) returns a structure with an estimate of the
@@ -23,8 +23,6 @@ function [Z,fe,Regression] = tflab_miso(DFT,opts)
 
 Regression = struct();
 
-%function [Z,fe,Regression] = tflab_miso(DFTIn, DFTOut, f, fe, opts)
-
 if isfield(DFT,'In_')
     logmsg('Using DFTs from filtered In and Out (DFT.In_.Final and DFT.Out_.Final)');
     DFTIn = DFT.In_.Final;
@@ -46,10 +44,13 @@ if opts.tflab.loglevel > 0
             func2str(opts.fd.regression.function));
 end
 
+boot_note = 1;
 for j = 1:length(fe)
 
     ftIn = DFTIn{j,1};
     ftOut = DFTOut{j,1};
+
+    Regression.Residuals{j,1} = [];
 
     if opts.fd.window.loglevel > 0
         logmsg(['Band with center of fe = %.8f has %d '...
@@ -64,65 +65,76 @@ for j = 1:length(fe)
         end
         keyboard
         Z(j,1) = z;
-        Regression.Weights{j,1} = nan(length(f),1);
-        Regression.Residuals{j,1} = nan(length(f),1);
+        dZ(j,1) = 0;
         continue;
     end
     
-    if length(f) < size(ftIn,2)
+    if length(f{j}) < size(ftIn,2)
         Z(j,:) = nan(1,size(ftIn,2));
-        Regression.Weights{j,1} = nan(length(f),1);
-        Regression.Residuals{j,1} = nan(length(f),1);
+        dZ(j,1) = nan;
         logmsg(['!!! System is underdetermined for fe = %f. ',...
-                'Setting Z equal to NaN(s) for this frequency.'],fe(j));
+                'Setting Z equal to NaN(s).\n'],fe(j));
         continue;
     end
 
     lastwarn('');
+
     regressargs = opts.fd.regression.functionargs;
     regressfunc = opts.fd.regression.function;
     
-    [Z(j,:),Residuals,Weights] = ...
-               regressfunc(ftOut,ftIn,regressargs{:});
+    [Z(j,:),dZ(j,:),Info] = regressfunc(ftOut,ftIn,regressargs{:});
     
-    n = size(ftOut,1);
-    if  n > 10
-        Nb = 1000;
-        for b = 1:Nb
-            I = randsample(n,round(0.63*n),1);
-            Zb(b,:) = regressfunc(ftOut(I,:),ftIn(I,:),regressargs{:});
-        end
-        nl = round((1-0.95)*Nb);
-        nh = round(0.95*Nb);
-        Zb = sort(abs(Zb),1); % Sort
-        l = Zb(nl,:);    % Select the nth lowest
-        u = Zb(nh,:);    % Select the nth highest
-        Regression.ZVAR(j,:) = var(Zb,0,1);
-        Regression.ZCL(j,1:2:2*length(l)) = l;
-        Regression.ZCL(j,2:2:2*length(u)+1) = u;
-    end
-
     if ~isempty(lastwarn)
-        logmsg('Above is for eval. freq. #%d; fe = %f; Te = %f\n', ...
+        logmsg('Above warning is for eval. freq. #%d; fe = %f; Te = %f\n', ...
             j,fe(j),1/fe(j));
-        logmsg(sprintf('ftE = \n'));
-        logmsg(sprintf('   %.16f\n',ftOut));
-        logmsg(sprintf('ftB = \n'));
-        logmsg(sprintf('   %.16f\n',ftIn));
+        logmsg('ftE =');
+        ftOut
+        logmsg('ftB =');
+        ftIn
     end
 
     if any(isinf(Z(j,:)))
         logmsg(['!!! Z has Infs for fe = %f. ',...
-                'Setting Z equal to NaN(s) for this frequency.'],fe(j));
+                'Setting Z equal to NaN(s).\n'],fe(j));
         Z(j,:) = nan;
-        Regression.Weights{j,1} = nan(length(f),1);
-        Regression.Residuals{j,1} = nan(length(f),1);
+        dZ(j,:) = nan;
         continue;
     end
-           
-    Regression.Weights{j,1} = Weights;
-    Regression.Residuals{j,1} = Residuals;
 
+    if isfield(Info,'Residuals')
+        Regression.Residuals{j,1} = Info.Residuals;
+    end
+    if isfield(Info,'ZCL95')
+        Regression.ZCL95l(j,:) = Info.ZCL95(:,1);
+        Regression.ZCL95u(j,:) = Info.ZCL95(:,2);
+    end
+
+    n = size(ftOut,1);
+    if 1 && n > 10
+        Nb = 100; % Number of bootstrap samples
+        fract = 0.63; % Fraction to sample; Efron's original bootstrap method uses 1;
+                      % If f != 1, called m of n bootstrap; see 10.1002/9781118445112.stat08002
+        if boot_note == 1
+            logmsg(sprintf('Computing confidence limits using %d bootstrap samples and m/n = %.2f\n',Nb,fract));
+            boot_note = 0;
+        end
+        for b = 1:Nb
+            I = randsample(n,round(fract*n),1); % Resample with replacement
+            Zb(b,:) = regressfunc(ftOut(I,:),ftIn(I,:),regressargs{:});
+        end
+        nl = round((0.05/2)*Nb);
+        nh = round((1-0.05/2)*Nb);
+
+        for c = 1:size(Z,2)
+            Zb(:,c) = sort(abs(Zb(:,c)),1); % Sort rows
+            l = abs(Zb(nl,c));    % Select the nth lowest
+            u = abs(Zb(nh,c));    % Select the nth highest
+            Regression.Bootstrap.ZVAR(j,c) = var(abs(Zb(:,c)),0,1);
+            Regression.Bootstrap.ZCL95l(j,c) = l;
+            Regression.Bootstrap.ZCL95u(j,c) = u;
+        end
+    end
+           
 end
 
 if opts.fd.regression.loglevel > 0
