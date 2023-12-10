@@ -437,7 +437,7 @@ function line = lineopts_(Nz, s);
         line = {'.','markersize', ms};
     else
         %ms = max(30-8*s,1);
-        ms = 30;
+        ms = 22;
         line = {'.','markersize',ms};
     end
 end

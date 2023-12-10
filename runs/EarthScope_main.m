@@ -3,9 +3,14 @@ tflab_setpaths();
 
 id = 'VAQ58';
 edifile = 'VAQ58bc_FRDcoh.xml';
-
 % http://ds.iris.edu/spud/emtf/15014571
 % http://ds.iris.edu/spudservice/data/15014570
+
+id = 'ORF03';
+%edifile = 'ORF03bc_G3x.xml';
+edifile = 'USArray.ORF03.2007.xml'; % Older version
+% http://ds.iris.edu/spud/emtf/14866915
+% http://ds.iris.edu/spudservice/data/14866913
 
 outdir = fullfile(scriptdir(),'data','EarthScope',id);
 
@@ -20,9 +25,11 @@ B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-B = B(1:6*86400,:);
-E = E(1:6*86400,:);
-t = t(1:6*86400);
+if strcmp(id,'VAQ58')
+    B = B(1:6*86400,:);
+    E = E(1:6*86400,:);
+    t = t(1:6*86400);
+end
 
 if 1
     %% Band pass
@@ -42,11 +49,6 @@ if 0
     E = E(I,:);
     t = t(I);
 end
-
-
-%B = B(1:8*86400,:);
-%E = E(1:8*86400,:);
-%t = t(1:8*86400);
 
 %% Set output file base name using start/stop times of input data
 filestr = sprintf('%s-%s-%s',id,...
@@ -79,8 +81,6 @@ opts1 = tflab_options(1);
     opts1.filestr = sprintf('%s-tf%d',filestr,tfn);
     opts1.description = desc1;
 TF1 = tflab(B(:,1:2),E,opts1);
-
-%TF1 = tflab_uncertainty(TF1);
 
 TF1.Metadata = meta; % Attach metadata used in plots
 

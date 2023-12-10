@@ -1,7 +1,7 @@
 function [B,E,t,unitsB,unitsE,infile,outfile] = EarthScope_clean(id,plot_,print_)
 
 % List of sites for which cleaning conditions have been created.
-prepared = {'VAQ58'};
+prepared = {'VAQ58','ORF03'};
 
 if all(strcmp(id,prepared) == 0)
     error('Data for %s is not available',id);
@@ -41,8 +41,6 @@ for c = 1:length(data)
     [datacat{c},timecat{c}] = catSegments(data{c}.segments);
 end
 
-
-
 if strcmp(id,'VAQ58')    
     B = [datacat{1}, datacat{2}, datacat{3}];
     E = [datacat{4}, datacat{5}];
@@ -69,18 +67,71 @@ if strcmp(id,'VAQ58')
     despike_B = {100,[5,5]};   % Despike parameters
 end
 
-% Assumes units same for all segments & B channels
-unitsB = data{1}.segments(1).dataScaledUnits; 
-if strcmp(lower(unitsB),'t')
-    B = B/1e-9;
-    unitsB = 'nT';
+if strcmp(id,'ORF03')
+    B = [datacat{1}, datacat{2}, datacat{3}];
+    E = [datacat{4}, datacat{5}];
+    t = timecat{1};
+    %keyboard
+    %Ikeep = [86400*12+1:86400*16];
+    to = datenum('2007-08-31');
+    tf = datenum('2007-09-04');
+    Ik = find(t >= to & t <= tf);
+    B = B(Ik,:)/1e2;
+    E = E(Ik,:)/1e5;
+    t = t(Ik,:);
+    
+    % Number of time intervals.
+    Ni = 1 + round((t(end)-t(1))*86400);
+    % Time interval index of measurement
+    tidx = 1 + round( (t-t(1))*86400 );
+    t = t(1) + (0:Ni-1)'/86400;
+
+    % Fill gaps with NaNs.
+    Ei = nan(Ni,2);
+    Ei(tidx,:) = E;
+    E = Ei;
+
+    
+    Bi = nan(Ni,3);
+    Bi(tidx,:) = B;
+    B = Bi;
+    Ir = [];
+    Ik = [1:size(B,1)];
+    %Ir = (1123950:size(B,1))'; % Values to remove
+    %Ik = 1:Ir(1)-1;            % Values to keep    
+    despike_E = {300,[5,5]};   % Despike parameters
+    despike_B = {100,[5,5]};   % Despike parameters
 end
 
-% Assumes units same for all segments & E channels
-unitsE = data{4}.segments(1).dataScaledUnits;
-if strcmp(lower(unitsE),'v/m')
-    E = E/1e-6;
-    unitsE = 'mV/km';
+if 0 && strmatch(sta,'ORF03','exact')
+  t = [1:size(D,1)]/1000;
+  delta1 = nanmean(D(850000:end,3))-nanmean(D(11000:848000,3));
+  D(848000:end,3) = D(848000:end,3)-delta1;
+  D(1:10400,3) = NaN;
+  D(852455,5) = NaN;
+  D(852480,5) = NaN;
+  D(852486,5) = NaN;
+  D(861374:861380,5) = NaN;  
+end
+
+unitsB = 'Counts';
+if isfield(data{1}.segments(1),'dataScaledUnits');
+    % Assumes units same for all segments & B channels
+    unitsB = data{1}.segments(1).dataScaledUnits; 
+    if strcmp(lower(unitsB),'t')
+        B = B/1e-9;
+        unitsB = 'nT';
+    end
+end
+
+unitsE = 'Counts';
+if isfield(data{1}.segments(1),'dataScaledUnits');
+    % Assumes units same for all segments & E channels
+    unitsE = data{4}.segments(1).dataScaledUnits;
+    if strcmp(lower(unitsE),'v/m')
+        E = E/1e-6;
+        unitsE = 'mV/km';
+    end
 end
 
 logmsg('Cleaning E');

@@ -6,23 +6,23 @@ tflab_setpaths();
 chainid = 'KAP03';
 
 if 1
-siteid = 'KAP163';
-tfs = {...
-        '20031028-20031124-tf1',...
-        '20031028-20031124-tf2'...
-        '20031028-20031124-tf3'...
-       };
+    siteid = 'KAP163';
+    tfs = {...
+            '20031028-20031124-tf1',...
+            '20031028-20031124-tf2'...
+            '20031028-20031124-tf3'...
+           };
 end
 
 if 0
-siteid = 'KAP163';
-tfs = {...
-        '20031028-20031031-tf1a',...
-        '20031031-20031103-tf1b',...
-        '20031028-20031124-tf2a',...
-        '20031028-20031124-tf2b'...
-       };
-tfs = tfs(1:3);
+    siteid = 'KAP163';
+    tfs = {...
+            '20031028-20031031-tf1a',...
+            '20031031-20031103-tf1b',...
+            '20031028-20031124-tf2a',...
+            '20031028-20031124-tf2b'...
+           };
+    tfs = tfs(1:3);
 end
 
 outdir = fullfile(scriptdir(),'data','KAP03',siteid);
@@ -38,6 +38,8 @@ end
 copts.print    = 0;  % Set to 1 to print pdf of each figure created.
 copts.printdir = fullfile(scriptdir(),'data',chainid,siteid,'figures');
 copts.printfmt = {'pdf','png'};
+
+period_range = [10, 3600*7];
 
 dock on;figure(1);close all;
 
@@ -69,7 +71,7 @@ figure();
     topts.type = 'original';
     tsplot(TFs{1},topts);
 
-if 1
+if 0
     topts = copts;
     topts.type  = 'error';
     %topts.time_range = 
@@ -79,29 +81,29 @@ if 1
     end
 end
 
-if 0
+if 1
     figure();
         topts = copts;
         topts.type  = 'error';
-        tsplot(TFs{1},topts);
+        tsplot(TFs,topts);
 end
 
 if (0)
-%% Compare
-figure();
-    topts = copts;
-    topts.printname = 'ts-error-tf1-tf2-tf3';
-    topts.type  = 'error';
-    tsplot(TFs,topts);
+    %% Compare
+    figure();
+        topts = copts;
+        topts.printname = 'ts-error-tf1-tf2-tf3';
+        topts.type  = 'error';
+        tsplot(TFs,topts);
 
 
-figure();
-    topts = copts;
-    topts.printname = 'ts-error-zoom-tf1-tf2-tf3';
-    topts.type  = 'error';
-    topts.time_range = {'2003-10-29T06:00:00.000',...
-                        '2003-10-29T09:00:00.000'};
-    tsplot(TFs,topts);
+    figure();
+        topts = copts;
+        topts.printname = 'ts-error-zoom-tf1-tf2-tf3';
+        topts.type  = 'error';
+        topts.time_range = {'2003-10-29T06:00:00.000',...
+                            '2003-10-29T09:00:00.000'};
+        tsplot(TFs,topts);
 end
 
 if 0
@@ -119,7 +121,7 @@ end
 figure();
     snopts = copts;
     snopts.printname = 'sn-tf1-tf2-tf3';
-    snopts.period_range = [10, 3600*7];
+    snopts.period_range = period_range;
     snplot(TFs,snopts);
 
 %% Z plots
@@ -128,7 +130,7 @@ figure();
     zopts = copts;
     zopts.type = 1;
     zopts.printname = 'z-tf1-tf2-tf3';
-    zopts.period_range = [10, 3600*7];
+    zopts.period_range = period_range;
     zplot(TFs,zopts);
 
 if 0

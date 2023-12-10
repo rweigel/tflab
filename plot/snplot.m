@@ -24,41 +24,17 @@ end
 
 frequnit = S{1}.Metadata.frequnit;
 
-for s = 1:length(S)
-    fe{s} = S{s}.Metrics.fe;
-    y1{s} = S{s}.Metrics.SN;
-    y2{s} = sqrt(S{s}.Metrics.Coherence);
-    y1clu{s} = S{s}.Metrics.SNCLu;
-    y1cll{s} = S{s}.Metrics.SNCLl;
-    if show_xcoh == 1
-        y3{s} = sqrt(S{s}.Metrics.Xcoherence);
-    end
-    if popts.vs_period
-        x{s} = 1./(fe{s}*S{s}.Metadata.freqsf);
-    else
-        x{s} = fe{s}*S{s}.Metadata.freqsf;
-    end
-end
-
 if length(S) == 1
     % Single transfer function
     figprep();
+    lg = legend_(S{1},popts,comp);
 
-    x  = x{1};
-    y1 = y1{1};
-    y1cll = y1cll{1};
-    y1clu = y1clu{1};
-    y2 = y2{1};
-    if show_xcoh
-        y3 = y3{1};
-    end
-    lg = legend_(S{1},popts);
+    [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts);
     if nargin > 2
         y1 = y1(:,comp);
         y1cll = y1cll(:,comp);
         y1clu = y1clu(:,comp);
         y2 = y2(:,comp);
-        lg = lg{comp};
     end
 
     ax1 = subplot('Position', popts.PositionTop);
@@ -131,7 +107,10 @@ end
 if length(S) > 1
     % Multiple TFs
     figprep();
+
     lg = legend_(S,popts,comp);
+    [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts);
+
     ax1 = subplot('Position', popts.PositionTop);
         grid on;box on;hold on;
         for s = 1:length(y1)
@@ -203,6 +182,41 @@ end
 
 end % function
 
+function [x,y1,y2,y3,y1cll,y1clu] = xyvals_(S,popts)
+
+    for s = 1:length(S)
+        fe{s} = S{s}.Metrics.fe;
+        y1{s} = S{s}.Metrics.SN;
+        y2{s} = sqrt(S{s}.Metrics.Coherence);
+        y1clu{s} = S{s}.Metrics.SNCLu;
+        y1cll{s} = S{s}.Metrics.SNCLl;
+        y3{s} = sqrt(S{s}.Metrics.Xcoherence);
+        if popts.vs_period
+            x{s} = 1./(fe{s}*S{s}.Metadata.freqsf);
+        else
+            x{s} = fe{s}*S{s}.Metadata.freqsf;
+        end
+
+        if popts.vs_period && ~isempty(popts.period_range)
+            idx = x{s} >= popts.period_range(1) & x{s} <= popts.period_range(2);
+            x{s} = x{s}(idx);
+            y1{s} = y1{s}(idx,:);
+            y2{s} = y2{s}(idx,:);
+            y3{s} = y3{s}(idx,:);
+            y1clu{s} = y1clu{s}(idx,:);
+            y1cll{s} = y1cll{s}(idx,:);
+        end
+    end
+    
+    if length(S) == 1
+        x  = x{1};
+        y1 = y1{1};
+        y1cll = y1cll{1};
+        y1clu = y1clu{1};
+        y2 = y2{1};
+        y3 = y3{1};
+    end    
+end
 function lg = legend_(S,popts,comp)
 
     if iscell(S)

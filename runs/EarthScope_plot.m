@@ -3,7 +3,7 @@ addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 id = 'VAQ58';
-
+id = 'ORF03';
 outdir = fullfile(scriptdir(),'data','EarthScope',id);
 
 %% Set common print options
@@ -32,8 +32,15 @@ if 0
     time_range_zoom = {'2016-06-14T18:00:00.000','2016-06-23T12:00:00.000'};
 end
 
+if 1
+    start = '20070831';
+    stop = '20070903';
+    time_range_full = {'2007-08-31T00:00:00.000','2007-09-03T12:00:00.000'};
+    time_range_zoom = {'2007-08-31T00:00:00.000','2007-09-03T12:00:00.000'};
+end
+
 for tfn = 1:3
-    fname = fullfile(outdir, sprintf('VAQ58-%s-%s-tf%d.mat',start,stop,tfn));
+    fname = fullfile(outdir, sprintf('%s-%s-%s-tf%d.mat',id,start,stop,tfn));
     TFs{tfn} = loadtf(fname,'',1,1);
 end
 
@@ -45,7 +52,8 @@ dock on;figure(1);close all;
 figure();
     tsopts = copts;
     tsopts.type = 'original';
-    zoptsoptsts.printname = 'ts-tf1-tf3';
+    tsopts.printname = 'ts-tf1';
+    tsopts.print = 0;
     tsplot(TFs{1},tsopts);
 
 if 0
@@ -140,9 +148,9 @@ figure()
 %% SN plots
 figure();
     snopts = copts;
-    snopts.period_range = [7,24*3600];
+    snopts.period_range = [7,6*3600];
     snopts.printname = 'sn-tf1';
-    snopts.print = 0;
+    %snopts.print = 1;
     snplot(TFs{1},snopts,1);
 
 % Compare all
@@ -169,8 +177,9 @@ if 1
     % Compare Z
     figure();
         zopts = copts;
+        %zopts.print = 1;
         zopts.printname = 'z-tf1-tf3';
-        zopts.period_range = [6,6*3600];
+        zopts.period_range = [7,6*3600];
         zopts.unwrap = 0;
         zopts.type = 1;
         zplot({TFs{2},TFs{3}},zopts);
