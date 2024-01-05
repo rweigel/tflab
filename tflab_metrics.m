@@ -61,11 +61,9 @@ for k = 1:size(In,3) % Third dimension is segment
     u = 1;
     for i = 1:size(In,2) % Second dimension is component
         for j = 1:size(Out,2) % Second dimension is component
-            if i ~= j
-                Metrics.Xcoherence(:,u,k) = ...
-                    coherence(Out(:,j,k), In(:,i,k), 1, opts);
-                u = u + 1;
-            end
+            Metrics.Xcoherence(:,u,k) = ...
+                coherence(Out(:,j,k), In(:,i,k), 1, opts);
+            u = u + 1;
         end
     end
 end

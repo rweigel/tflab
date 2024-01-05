@@ -71,13 +71,13 @@ if strcmp(id,'ORF03')
     B = [datacat{1}, datacat{2}, datacat{3}];
     E = [datacat{4}, datacat{5}];
     t = timecat{1};
-    %keyboard
+
     %Ikeep = [86400*12+1:86400*16];
     to = datenum('2007-08-31');
     tf = datenum('2007-09-04');
     Ik = find(t >= to & t <= tf);
-    B = B(Ik,:)/1e2;
-    E = E(Ik,:)/1e5;
+    B = B(Ik,:);
+    E = E(Ik,:);
     t = t(Ik,:);
     
     % Number of time intervals.
@@ -129,6 +129,11 @@ if isfield(data{1}.segments(1),'dataScaledUnits');
     % Assumes units same for all segments & E channels
     unitsE = data{4}.segments(1).dataScaledUnits;
     if strcmp(lower(unitsE),'v/m')
+        E = E/1e-6;
+        unitsE = 'mV/km';
+    end
+    if strcmp(lower(unitsE),'v')
+        warning('Check E units; V given, V/m assumed');
         E = E/1e-6;
         unitsE = 'mV/km';
     end

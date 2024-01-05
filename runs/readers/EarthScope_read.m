@@ -9,7 +9,7 @@ end
 
 baseurl = 'http://mag.gmu.edu/git-data/IRIS-EM-download';
 
-outdir  = fullfile(scriptdir(),'data','EarthScope',id);
+outdir  = fullfile(scriptdir(),'..','data','EarthScope',id);
 outfile = sprintf('%s_raw.mat',id);
 outfile = fullfile(outdir,outfile);
 
