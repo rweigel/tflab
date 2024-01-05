@@ -46,12 +46,8 @@ if length(S) == 1
             legend(lg,popts.legend{:});
         %end
         hold on;
-        if nargin > 2
-            errorbars(x,y1(:,comp),y1(:,comp)-y1cll(:,comp),y1clu(:,comp)-y1(:,comp));
-        else
-            for j = 1:size(y1,2)
-                errorbars(x,y1(:,j),y1(:,j)-y1cll(:,j),y1clu(:,j)-y1(:,j));
-            end
+        for j = 1:size(y1,2)
+            errorbars(x,y1(:,j),y1(:,j)-y1cll(:,j),y1clu(:,j)-y1(:,j));
         end
         set(gca,'XTickLabel',[]);
         titlestr(S{1},popts,'sn');
@@ -72,16 +68,24 @@ if length(S) == 1
         semilogx(x,y2,popts.line{:});
         colororder_(ax2, y2);
         grid on;box on;hold on;
-        if show_xcoh && nargin > 2 %length(popts.outstr) == 2 && length(popts.instr) == 2
+        if show_xcoh && nargin > 2
             %set(gca,'ColorOrderIndex',1);
             h = semilogx(x,y3(:,1),'rs');
             set(h, 'MarkerFaceColor', get(h,'Color'));
             h = semilogx(x,y3(:,2),'b^');
             set(h, 'MarkerFaceColor', get(h,'Color'));
-            lg = {...
-                    '$(E_x,E^{\mathrm{pred}}_x)$',...
-                    '$(E_x,B_y)$','$(E_y,B_x)$'...
-                  };
+            if comp == 1
+                lg = {...
+                        '$(E_x,E^{\mathrm{pred}}_x)$',...
+                        '$(E_x,B_x)$','$(E_x,B_y)$'...
+                      };
+            end
+            if comp == 2
+                lg = {...
+                        '$(E_y,E^{\mathrm{pred}}_y)$',...
+                        '$(E_y,B_x)$','$(E_y,B_y)$'...
+                      };
+            end
             legend(lg,popts.legend{:});                
             ylabel('Coherence');        
         else

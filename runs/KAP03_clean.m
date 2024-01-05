@@ -74,7 +74,7 @@ function X = despikeE(X, sta)
                 419932, 422771];
     end
     if strcmp(sta,'KAP163')
-        Ibad = [188720, 188760];
+        Ibad = [188720, 188760; 152629, 152708];
     end
     for i = 1:size(Ibad,1)
         X(Ibad(i,1):Ibad(i,2),:) = nan;

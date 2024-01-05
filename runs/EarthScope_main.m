@@ -9,7 +9,7 @@ edifile = 'VAQ58bc_FRDcoh.xml';
 if 1
 id = 'ORF03';
 %edifile = 'ORF03bc_G3x.xml';
-edifile = 'USArray.ORF03.2007.xml'; % Older version
+%edifile = 'USArray.ORF03.2007.xml'; % Older version
 % http://ds.iris.edu/spud/emtf/14866915
 % http://ds.iris.edu/spudservice/data/14866913
 end
@@ -33,7 +33,7 @@ if strcmp(id,'VAQ58')
     t = t(1:6*86400);
 end
 
-if 1
+if 1 || strcmp(id,'VAQ58')
     %% Band pass
     Tm = 2*86400;
     band = [1/Tm,0.5];

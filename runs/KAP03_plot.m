@@ -35,7 +35,7 @@ for tfn = 1:length(tfs)
 end
 
 %% Common plot options
-copts.print    = 0;  % Set to 1 to print pdf of each figure created.
+copts.print    = 1;  % Set to 1 to print pdf of each figure created.
 copts.printdir = fullfile(scriptdir(),'data',chainid,siteid,'figures');
 copts.printfmt = {'pdf','png'};
 
@@ -94,6 +94,7 @@ if (0)
         topts = copts;
         topts.printname = 'ts-error-tf1-tf2-tf3';
         topts.type  = 'error';
+        topts.print = 1;
         tsplot(TFs,topts);
 
 
@@ -121,7 +122,7 @@ end
 figure();
     snopts = copts;
     snopts.printname = 'sn-tf1-tf2-tf3';
-    snopts.period_range = period_range;
+    %snopts.period_range = period_range;
     snplot(TFs,snopts);
 
 %% Z plots
@@ -131,6 +132,7 @@ figure();
     zopts.type = 1;
     zopts.printname = 'z-tf1-tf2-tf3';
     zopts.period_range = period_range;
+    %zopts.print = 1;
     zplot(TFs,zopts);
 
 if 0
