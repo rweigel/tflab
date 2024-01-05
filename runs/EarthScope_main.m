@@ -6,11 +6,13 @@ edifile = 'VAQ58bc_FRDcoh.xml';
 % http://ds.iris.edu/spud/emtf/15014571
 % http://ds.iris.edu/spudservice/data/15014570
 
+if 1
 id = 'ORF03';
 %edifile = 'ORF03bc_G3x.xml';
 edifile = 'USArray.ORF03.2007.xml'; % Older version
 % http://ds.iris.edu/spud/emtf/14866915
 % http://ds.iris.edu/spudservice/data/14866913
+end
 
 outdir = fullfile(scriptdir(),'data','EarthScope',id);
 
