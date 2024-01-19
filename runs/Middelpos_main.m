@@ -5,6 +5,7 @@ tflab_setpaths();
 
 % Get input/output data
 [B,E,t,infile,outfile] = Middelpos_clean(); 
+
 if 1
     %% Band pass
     addpath(fullfile(scriptdir(),'..','fft'));
@@ -23,11 +24,11 @@ B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-if 0
-% Trim for faster run
-B = B(1:10*pps,:);
-E = E(1:10*pps,:);
-t = t(1:10*pps,:);
+if 1
+    % Trim for faster run
+    B = B(1:55*pps,:);
+    E = E(1:55*pps,:);
+    t = t(1:55*pps,:);
 end
 
 %% Set output file base name using start/stop times of input data
@@ -65,6 +66,7 @@ TF1.Metadata = meta;
 fname1 = fullfile(scriptdir(),'data','Middelpos',[filestr,'-tf1.mat']);
 savetf(TF1, fname1);
 
+if 0
 if 1
     % Get input/output data
     [B,E,t,infile,outfile] = Middelpos_clean(); 
@@ -184,3 +186,4 @@ if (1)
 end
 
 Middelpos_plot;
+end

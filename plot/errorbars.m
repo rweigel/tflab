@@ -1,5 +1,5 @@
 function errorbars(x,y,dyl,dyu,dir,varargin)
-% Similar to ERRORBAR except handles loglog and semilogx
+%ERRORBARS  Similar to ERRORBAR except handles loglog and semilogx
 
     if nargin < 4
         dyu = dyl;

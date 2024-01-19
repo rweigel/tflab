@@ -25,9 +25,14 @@ end
 frequnit = S{1}.Metadata.frequnit;
 
 if length(S) == 1
+
     % Single transfer function
     figprep();
-    lg = legend_(S{1},popts,comp);
+    lg = legend_(S{1},popts);
+
+    if (nargin > 2)
+        lg = lg{comp};
+    end        
 
     [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts);
     if nargin > 2
@@ -42,9 +47,7 @@ if length(S) == 1
         plot(x,y1,popts.line{:});
         colororder_(ax1, y1);
         grid on;box on;hold on;
-        %if size(y1,2) > 1
-            legend(lg,popts.legend{:});
-        %end
+        legend(lg,popts.legend{:});
         hold on;
         for j = 1:size(y1,2)
             errorbars(x,y1(:,j),y1(:,j)-y1cll(:,j),y1clu(:,j)-y1(:,j));
@@ -221,12 +224,10 @@ function [x,y1,y2,y3,y1cll,y1clu] = xyvals_(S,popts)
         y3 = y3{1};
     end    
 end
+
 function lg = legend_(S,popts,comp)
 
     if iscell(S)
-        if (nargin < 2)
-            comp = 1;
-        end
         for s = 1:length(S)
             desc = S{s}.Options.description;
             if ~isempty(desc)
@@ -254,11 +255,6 @@ function lg = legend_(S,popts,comp)
                 end
             end
         end
-        if (nargin > 2)
-            lg = lg{comp};
-        end        
     end
     
 end
-
-
