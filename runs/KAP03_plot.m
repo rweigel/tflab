@@ -25,6 +25,15 @@ if 0
     tfs = tfs(1:3);
 end
 
+if 1
+    siteid = 'KAP103';
+    tfs = {...
+            '20031108-20031205-tf1',...
+            '20031108-20031205-tf2'...
+            'unknown-unknown-tf3'...
+           };
+end
+
 outdir = fullfile(scriptdir(),'data','KAP03',siteid);
 
 for tfn = 1:length(tfs)
@@ -35,7 +44,7 @@ for tfn = 1:length(tfs)
 end
 
 %% Common plot options
-copts.print    = 1;  % Set to 1 to print pdf of each figure created.
+copts.print    = 0;  % Set to 1 to print pdf of each figure created.
 copts.printdir = fullfile(scriptdir(),'data',chainid,siteid,'figures');
 copts.printfmt = {'pdf','png'};
 

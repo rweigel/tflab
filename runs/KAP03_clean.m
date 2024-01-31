@@ -14,7 +14,7 @@ outfile = fullfile(scriptdir(),'data','KAP03',sta,[sta,'_cleaned.mat']);
 if exist(outfile,'file')
     logmsg('Reading %s\n',outfile);
     load(outfile)
-    %return
+    return
 end
 
 % Read input/output data

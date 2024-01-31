@@ -116,7 +116,9 @@ opts.fd.interpolation = struct();
     opts.fd.interpolation.functionargs = {...
                     struct('loglevel',0,...
                            'interp1args',{{'linear',0}})};
-    
+
+opts.fd.zerrorbars_ = 0; % Compute bootstrap error bars
+
 opts.fd.regression = struct();
     opts.fd.regression.function = @regress_ols;
     %opts.fd.regression.functionstr = 'OLS using backslash function';

@@ -4,7 +4,7 @@ tflab_setpaths();
 outdir = fullfile(scriptdir(),'data','Middelpos');
 
 start = '20120712';
-stop = '20121025';
+stop = '20120721';
 
 for tfn = 1:3
     f{tfn} = fullfile(outdir, sprintf('Middelpos-%s-%s-tf%d.mat',start,stop,tfn));

@@ -110,9 +110,9 @@ for j = 1:length(fe)
     end
 
     n = size(ftOut,1);
-    if 1 && n > 10
+    if opts.fd.zerrorbars_ && n > 10
         Nb = 100; % Number of bootstrap samples
-        fract = 0.63; % Fraction to sample; Efron's original bootstrap method uses 1;
+        fract = 1; % Fraction to sample; Efron's original bootstrap method uses 1;
                       % If f != 1, called m of n bootstrap; see 10.1002/9781118445112.stat08002
         if boot_note == 1
             logmsg(sprintf('Computing confidence limits using %d bootstrap samples and m/n = %.2f\n',Nb,fract));

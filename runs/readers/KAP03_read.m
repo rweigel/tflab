@@ -12,7 +12,7 @@ matfile = fullfile(datapath,'/',[id,'_raw.mat']);
 if exist(matfile,'file')
     logmsg(sprintf('Reading %s\n',matfile));
     load(matfile);
-    %return
+    return
 end
 
 fname = fullfile(datapath,'measurements',[lower(id),'as.ts']);
