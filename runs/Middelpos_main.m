@@ -64,6 +64,7 @@ if 1
     savetf(TF1, fname1);
 end
 
+if 0
 if 1
     %% Second TF
 
@@ -110,3 +111,4 @@ if 1
 end
 
 Middelpos_plot;
+end

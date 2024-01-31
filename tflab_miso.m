@@ -5,7 +5,7 @@ function [Z,fe,dZ,Regression] = tflab_miso(DFT,opts)
 %  transfer function Z in the expression
 %
 %    Ex(f) = Zxx(f)Bx(f) + Zxy(f)By(f) + ...
-%  
+%
 %  given time series for Ex(t), Bx(t), By(t), ... and using the convention
 %  that for an arbitrary variable U, U(f) is the fourier transform of U(t).
 %

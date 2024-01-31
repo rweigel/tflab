@@ -6,14 +6,14 @@ outdir = fullfile(scriptdir(),'data','Middelpos');
 start = '20120712';
 stop = '20120721';
 
-for tfn = 1:3
+for tfn = 1:1
     f{tfn} = fullfile(outdir, sprintf('Middelpos-%s-%s-tf%d.mat',start,stop,tfn));
     TFs{tfn} = loadtf(f{tfn});
     TFs{tfn} = tflab_preprocess(TFs{tfn});
     TFs{tfn} = tflab_metrics(TFs{tfn});
 end
 
-%% Set common print optionsx
+%% Set common print options
 
 copts.print    = 0; % Set to 1 to print pdf of each figure created.
 copts.printdir = fullfile(scriptdir(),'data','Middelpos','figures');
@@ -28,39 +28,31 @@ figure();
     tsopts.type = 'original';
     tsplot(TFs{1},tsopts);
 
-figure();
-    tsopts = copts;
-    tsopts.type = 'original';
-    tsplot(TFs{2},tsopts);
-
-figure();
-    tsopts = copts;
-    tsopts.type = 'original';
-    tsplot(TFs{3},tsopts);
     
 % Plot error for S1 only
-if 0
+if 1
     figure();
         tsopts = copts;
         tsopts.type = 'error';
-        tsplot(TF{1},tsopts);
+        tsplot(TFs{1},tsopts);
 end
 
-% Compare S1 and S2 error
-figure();
-    tsopts = copts;
-    tsopts.type  = 'error';
-    %tsplot({TF1,TF2},tsopts);
-
+if 0
+    % Compare S1 and S2 error
+    figure();
+        tsopts = copts;
+        tsopts.type  = 'error';
+        %tsplot({TF1,TF2},tsopts);
+end
 
 %% DFT plots
 % Plot Fourier amplitudes for In/Out of TF1 (will be the same for both)
+if 0    
 figure();
     dftopts = copts;
     dftopts.type = 'original-averaged';    
     dftplot(TFs{1},dftopts);
 
-if 0    
 figure();
     dftopts = copts;
     dftopts.type = 'original-averaged-reals';
@@ -88,27 +80,27 @@ end
 %% SN plots
 % Plot SN for TF1 only
 if 0
-figure();
-    snopts = copts;
-    snplot(TF1,snopts);
-
-% Plot SN for TF2 only
-figure();
-    snopts = copts;
-    snplot(TF2,snopts);
+    figure();
+        snopts = copts;
+        snplot(TF1,snopts);
+    
+    % Plot SN for TF2 only
+    figure();
+        snopts = copts;
+        snplot(TF2,snopts);
 end
 
 % Compare all
 figure();
     snopts = copts;
-    snplot(TFs(1:3),snopts);
+    snplot(TFs{1},snopts);
 
 %% Z plots
 % Compare Z between S1 and S2
 figure();
     zopts = copts;
     zopts.period_range = [1, 86400];
-    zplot(TFs(1:3),zopts);
+    zplot(TFs(:),zopts);
 
 
 %% Regression plots

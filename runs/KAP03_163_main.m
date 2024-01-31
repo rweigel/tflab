@@ -51,7 +51,7 @@ if strcmp(chainid,'KAP03')
         fprintf('Calling system with command: %s\n',com);
         [status,msg] = system(com);
         if status ~= 0
-            fprintf('Command failed. Download and unzip https://github.com/rweigel/zread/archive/refs/heads/master.zip in this directory\n');
+            fprintf('Command failed. Download and unzip https://github.com/rweigel/zread/archive/refs/heads/master.zip in %s directory\n', pwd);
             error('System command failed: %s\nMessage:\n%s\n',com,msg);            
         end
     end
