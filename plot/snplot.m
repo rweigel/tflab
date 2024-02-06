@@ -16,6 +16,7 @@ show_xcoh = 1;
 % Apply default metadata for fields not specified in S.Metadata.
 S = tflab_metadata(S);
 
+
 popts = tflabplot_options(S,popts,'snplot');
 
 if ~iscell(S)
@@ -102,13 +103,8 @@ if length(S) == 1
         adjust_ylim('upper');
         adjust_exponent('x');
         setx(popts,1,frequnit);
-        
-    if popts.print
-        for i = 1:length(popts.printfmt)
-            fname = sprintf('%s.%s',popts.printname, popts.printfmt{i});
-            figsave(fullfile(popts.printdir, fname));
-        end
-    end
+
+    figsave_(popts,S{1}.Metadata.outstr{comp})
 end
 
 if length(S) > 1
@@ -170,13 +166,8 @@ if length(S) > 1
         adjust_exponent('x');            
         setx(popts,1,frequnit);
 
-    if popts.print
-        ext = regexprep(S{1}.Metadata.outstr{comp},'\$','');        
-        for i = 1:length(popts.printfmt)
-            fname = sprintf('%s-%s.%s',popts.printname, ext, popts.printfmt{i});
-            figsave(fullfile(popts.printdir, fname));
-        end
-    end
+    figsave_(popts,S{1}.Metadata.outstr{comp})
+
     if comp < size(S{1}.In,2)
         figure();
         comp = comp + 1;
@@ -185,7 +176,6 @@ if length(S) > 1
         [ax1{comp},ax2{comp}] = snplot(S,popts,comp);
     end
 end
-
 
 end % function
 

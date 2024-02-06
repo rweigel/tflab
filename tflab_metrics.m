@@ -1,5 +1,7 @@
 function S = tflab_metrics(S,onsegments)
 
+logmsg('Computing metrics\n');
+
 if nargin < 2
     onsegments = 0;
 end
@@ -13,18 +15,14 @@ else
     Out = S.Out;
 end
 
-offset = 0;
-
-if offset == 0 && ~(size(Out,2)*size(In,2) == size(S.Z,2))
+if size(Out,2)*size(In,2) ~= size(S.Z,2)
     assert(size(Out,2)*size(In,2) == size(S.Z,2) || size(Out,2)*size(In,2) == size(S.Z,2) - 1,...
            'size(Out,2) must equal size(Z,2)/size(In,2)');
 end
 
-if offset && size(Out,2)*size(In,2) == size(S.Z,2) - size(Out,2)
-    dZ = [S.Z(:,3),S.Z(:,6)];
-    Z = [S.Z(:,1:2),S.Z(:,4:5)];
-    [Zi,~] = zinterp(S.fe,Z,size(In,1));
-    [dZi,~] = zinterp(S.fe,dZ,size(In,1));
+if ~isempty(S.dZ)
+    [Zi,~] = zinterp(S.fe,S.Z,size(In,1));
+    [dZi,~] = zinterp(S.fe,S.dZ,size(In,1));
 else
     [Zi,~] = zinterp(S.fe,S.Z,size(In,1));    
 end
@@ -37,7 +35,7 @@ for j = 1:size(Out,2) % Second dimension is component
     zcols = (1:size(In,2)) + (j-1)*size(In,2);
 
     for k = 1:size(In,3) % Third dimension is segment
-        if offset
+        if ~isempty(S.dZ)
             OutPredicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k),dZi);
         else
             OutPredicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k));

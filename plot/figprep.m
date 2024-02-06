@@ -1,5 +1,8 @@
 function figprep()
 
+set(gcf,'color','w');
+set(gcf,'defaultFigureColor',[1,1,1]); 
+
 set(gcf,'DefaultAxesXTickLabelRotationMode','manual')
 set(gcf,'DefaultLegendAutoUpdate', 'off');
 set(gcf,'DefaultTextInterpreter','latex');

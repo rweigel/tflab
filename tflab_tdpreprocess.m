@@ -28,7 +28,7 @@ if ~isempty(tdopts.detrend.function)
     S.Out_.Detrended = Outx;
 else
     if loglevel > 0
-        logmsg('No detrending b/c no function given.\n');
+        %logmsg('No detrending b/c no function given.\n');
     end
 end
 
@@ -45,7 +45,7 @@ if ~isempty(tdopts.window.function)
     S.Out_.Windowed = Outx;    
 else
     if loglevel > 0
-        logmsg('No windowing applied b/c no window function given.\n');
+        %logmsg('No windowing applied b/c no window function given.\n');
     end
 end
 
@@ -60,7 +60,7 @@ if ~isempty(tdopts.whiten.function)
     S.Out_.Whitened = Outx;
 else
     if loglevel > 0
-        logmsg('No whitening performed b/c no whiten function given.\n');
+        %logmsg('No whitening performed b/c no whiten function given.\n');
     end
 end
 
@@ -75,7 +75,7 @@ if ~isnan(tdopts.zeropad)
     S.Out_.Zeropadded = Outx;
 else
     if loglevel > 0
-        logmsg('No zero padding performed b/c no zeropad value given.\n');
+        %logmsg('No zero padding performed b/c no zeropad value given.\n');
     end
 end
 

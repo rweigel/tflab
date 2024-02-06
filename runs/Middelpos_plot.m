@@ -5,8 +5,11 @@ outdir = fullfile(scriptdir(),'data','Middelpos');
 
 start = '20120712';
 stop = '20120721';
+stop = '20121025';
+stop = '20121106';
+stop = '20120716';
 
-for tfn = 1:1
+for tfn = 1:2
     f{tfn} = fullfile(outdir, sprintf('Middelpos-%s-%s-tf%d.mat',start,stop,tfn));
     TFs{tfn} = loadtf(f{tfn});
     TFs{tfn} = tflab_preprocess(TFs{tfn});
@@ -15,9 +18,10 @@ end
 
 %% Set common print options
 
-copts.print    = 0; % Set to 1 to print pdf of each figure created.
-copts.printdir = fullfile(scriptdir(),'data','Middelpos','figures');
-copts.printfmt = {'pdf'};
+copts = struct();
+    copts.print = 0; % Set to 1 to print pdf of each figure created.
+    copts.printOptions.printDir = fullfile(scriptdir(),'data','Middelpos','figures');
+    copts.printOptions.printFormats = {'pdf'};
 
 dock on;figure(1);close all;
 
@@ -25,10 +29,12 @@ dock on;figure(1);close all;
 % Plot raw time series data used for TF1 (will be same as that for TF2)
 figure();
     tsopts = copts;
+    tsopts.printOptions.printFormats = {'png'};
     tsopts.type = 'original';
     tsplot(TFs{1},tsopts);
+figure();
+    tsplot(TFs{2},tsopts);
 
-    
 % Plot error for S1 only
 if 1
     figure();
@@ -93,15 +99,16 @@ end
 % Compare all
 figure();
     snopts = copts;
-    snplot(TFs{1},snopts);
+    snplot(TFs(:),snopts);
 
 %% Z plots
 % Compare Z between S1 and S2
 figure();
     zopts = copts;
     zopts.period_range = [1, 86400];
-    zplot(TFs(:),zopts);
-
+    zplot(TFs(:),zopts,[1,2]);
+figure();
+    zplot(TFs(:),zopts,[3,4]);
 
 %% Regression plots
 % Plot regression errors for a component of S1's Z at a single frequency
@@ -112,6 +119,6 @@ fidx = 20; % frequency number
 comp = 2;  % component (Zxx=1, Zxy=2, Zyx=3, Zyy=4).
 sidx = 1;  % segment number
 
-figure();
-    qqplot_(TFs{1},struct(),fidx,comp,sidx);
+%figure();
+%    qqplot_(TFs{1},struct(),fidx,comp,sidx);
     

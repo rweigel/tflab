@@ -83,7 +83,7 @@ for j = 1:length(fe)
     regressfunc = opts.fd.regression.function;
     
     [Z(j,:),dZ(j,:),Info] = regressfunc(ftOut,ftIn,regressargs{:});
-    
+
     if ~isempty(lastwarn)
         logmsg('Above warning is for eval. freq. #%d; fe = %f; Te = %f\n', ...
             j,fe(j),1/fe(j));
@@ -136,7 +136,6 @@ for j = 1:length(fe)
     end
            
 end
-
 if opts.fd.regression.loglevel > 0
     logmsg(['Finished freq band and regression '...
             'calculations for %d eval. freqs.\n'],...

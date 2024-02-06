@@ -145,7 +145,7 @@ end
 
 function S = stackaverage_(S,opts)
 
-    logmsg('Computing Z using stack averaging segment Zs.\n');
+    logmsg('Computing Z by stack averaging segment Zs.\n');
 
     Sc = S.Segment;
     for s = 1:length(Sc)
@@ -164,7 +164,6 @@ function S = stackaverage_(S,opts)
         
         logmsg('Computing Z for segment %d of %d\n',s,length(Sc));
         [Sc{s}.Z,Sc{s}.fe,Sc{s}.dZ,Sc{s}.Regression] = tflab_miso(Sc{s}.DFT,opts);
-        
         if opts.tflab.loglevel > 0
             logmsg('Computing metrics on segment using segment Z.\n');
         end
@@ -182,7 +181,7 @@ function S = stackaverage_(S,opts)
 
     S.Segment = combineStructs(Sc,3);
     S.Z = mean(S.Segment.Z,3);
-    S.dZ = mean(S.Segment.Z,3);
+    S.dZ = mean(S.Segment.dZ,3);
     S.fe = Sc{1}.fe;    
 
 end

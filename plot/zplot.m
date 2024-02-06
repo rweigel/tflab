@@ -28,10 +28,10 @@ S = tflab_metadata(S);
 
 % TODO: Check all same units and sfs or allow different.
 frequnit = S{1}.Metadata.frequnit;
-opts = tflabplot_options(S, popts, 'zplot');
-Zstrs   = opts.zstrs;
-Rhostrs = opts.rhostrs;
-Phistrs = opts.phistrs;
+popts = tflabplot_options(S, popts, 'zplot');
+Zstrs   = popts.zstrs;
+Rhostrs = popts.rhostrs;
+Phistrs = popts.phistrs;
 
 % Single transfer function
 if length(S) == 1
@@ -41,7 +41,7 @@ if length(S) == 1
         interp_Z_exists = 1;
     end
 
-    if opts.vs_period
+    if popts.vs_period
         if interp_Z_exists
             xi = 1./(S{1}.fi*S.Metadata.freqsf);
         end
@@ -52,8 +52,8 @@ if length(S) == 1
     end
     
     figprep();
-    ax1 = subplot('Position', opts.PositionTop);
-        switch opts.type
+    ax1 = subplot('Position', popts.PositionTop);
+        switch popts.type
             case 1
                 if interp_Z_exists
                     yi = abs(S.Zi);
@@ -82,33 +82,33 @@ if length(S) == 1
         end
 
         for j = 1:length(comps)
-            [x,y(:,j),dyebu(:,j),dyebl(:,j)] = xyvals_(S,opts,comps(j),'top');
+            [x,y(:,j),dyebu(:,j),dyebl(:,j)] = xyvals_(S,popts,comps(j),'top');
         end
 
         if interp_Z_exists
             yi = y(:,comps);
         end
-        opts.line = lineopts_(size(S{1}.Z,1), 1);
+        popts.line = linepopts_(size(S{1}.Z,1), 1);
 
-        h1 = plot(x, y, opts.line{:});
+        h1 = plot(x, y, popts.line{:});
         hold on;grid on;box on;
-        titlestr(S,opts,'z');
+        titlestr(S{1},popts,'z');
         colororder_(ax1,y);
         
         if interp_Z_exists
-            plot(xi, yi, opts.line{:}, 'markersize', 15);
+            plot(xi, yi, popts.line{:}, 'markersize', 15);
         end
 
         if length(ls) > 1
             ylabel(unitstr_(S{1}.Metadata));
-            legend(ls,opts.legend{:});
+            legend(ls,popts.legend{:});
         else
             ylabel(sprintf('%s %s',ls{1},unitstr_(S{1}.Metadata)));
         end
-        if opts.vs_period
+        if popts.vs_period
             set(gca,'XScale','log');
         end
-        if opts.type < 3
+        if popts.type < 3
             set(gca,'YScale','log');            
             adjust_ylim('upper');
         else
@@ -127,11 +127,11 @@ if length(S) == 1
         end
         adjust_yticks(1e-4);
         adjust_exponent('y');
-        setx(opts,0,frequnit);
-    ax2 = subplot('Position', opts.PositionBottom);
-        if opts.type ~= 3
+        setx(popts,0,frequnit);
+    ax2 = subplot('Position', popts.PositionBottom);
+        if popts.type ~= 3
             yl = '[$^\circ$]';
-            if opts.unwrap
+            if popts.unwrap
                 if interp_Z_exists
                     yi = (180/pi)*unwrap(atan2(imag(S.Zi),real(S.Zi)));
                 end
@@ -157,41 +157,54 @@ if length(S) == 1
             end
         end
         for j = 1:length(comps)
-            [x(:,j),y(:,j)] = xyvals_(S,opts,comps(j),'bottom');
+            [x(:,j),y(:,j)] = xyvals_(S,popts,comps(j),'bottom');
         end
 
-        plot(x, y, opts.line{:}, 'markersize', 20);
+        plot(x, y, popts.line{:}, 'markersize', 20);
         hold on;grid on;box on;
         colororder_(ax2,y);
 
         if interp_Z_exists
-            plot(xi, yi, opts.line{:}, 'markersize', 15);
+            plot(xi, yi, popts.line{:}, 'markersize', 15);
         end
 
         if length(ls) > 1
             ylabel(yl);
-            legend(ls,opts.legend{:});
+            legend(ls,popts.legend{:});
         else
             ylabel(sprintf('%s %s',ls{1},yl));
         end
-        if opts.vs_period
+        if popts.vs_period
             set(gca,'XScale','log');
         end
-        if ~opts.unwrap && opts.type ~= 3
+        if ~popts.unwrap && popts.type ~= 3
             set(gca,'YScale','linear');
             set(gca,'YTick',-180:45:180);
         end
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(opts,1,frequnit);
+        setx(popts,1,frequnit);
 
-    if opts.print
-        for i = 1:length(opts.printfmt)
-            fname = sprintf('%s.%s',opts.printname, opts.printfmt{i});
-            figsave(fullfile(opts.printdir, fname), opts);
+    if popts.print == 1
+        exts = {};
+        if length(Zstrs) == 2
+            exts = {'x','y'};
         end
+        if length(Zstrs) == 4
+            exts = {'xx','xy','yx','yy'};
+        end
+        ext = '';
+        for i = 1:length(comps)
+            if ~isempty(exts)
+                ext = [ext,exts{comps(i)},'-'];
+            else
+                ext = [ext,num2str(comps(i)),'-'];
+            end
+        end
+        figsave_(popts,ext);
     end
+        
 end % if isstruct(S)
 
 % Multiple transfer functions
@@ -211,20 +224,20 @@ if length(S) > 1
     
     figprep();
 
-    ax1 = subplot('Position', opts.PositionTop);
+    ax1 = subplot('Position', popts.PositionTop);
 
-        [x,y,dyebu,dyebl] = xyvals_(S,opts,comp,'top');
+        [x,y,dyebu,dyebl] = xyvals_(S,popts,comp,'top');
 
         for s = 1:length(S)
             ls{s} = sprintf('%s',S{s}.Options.description);
-            opts.line = lineopts_(size(S{s}.Z,1), s);            
-            h(s) = plot(x{s}, y{s}, opts.line{:});
+            popts.line = linepopts_(size(S{s}.Z,1), s);            
+            h(s) = plot(x{s}, y{s}, popts.line{:});
             if s == 1
                 grid on;hold on;box on;
             end
         end
 
-        legend(h,ls,opts.legend{:});
+        legend(h,ls,popts.legend{:});
 
         for s = 1:length(S)
             if ~isempty(dyebl{s})
@@ -232,46 +245,46 @@ if length(S) > 1
                     'y','Color',get(h(s),'Color'),'LineWidth',2);
             end
         end
-        if opts.type < 3
+        if popts.type < 3
             set(gca,'YScale','log');
         end
-        if opts.vs_period
+        if popts.vs_period
             set(gca,'XScale','log');
         end
         yunitstr_ = unitstr_(S{1}.Metadata);
-        if opts.type == 1
+        if popts.type == 1
             yl = sprintf('$|%s|$%s',Zstrs{comp},yunitstr_);
         end
-        if opts.type == 2
+        if popts.type == 2
             yl = sprintf('$%s$ [$\\Omega\\cdot$m]',Rhostrs{comp});
         end
-        if opts.type == 3
+        if popts.type == 3
             yl = sprintf('Re$(%s)$ %s',Zstrs{comp},yunitstr_);
         end
-        if ~isempty(opts.period_range)
-            set(gca,'XLim',opts.period_range);
+        if ~isempty(popts.period_range)
+            set(gca,'XLim',popts.period_range);
         end
         ylabel(yl);
         adjust_yticks(1e-4);
         adjust_exponent('y');
-        if opts.type == 3
+        if popts.type == 3
             adjust_ylim('both');
         else
             adjust_ylim('upper');
         end
-        setx(opts,0,frequnit);
+        setx(popts,0,frequnit);
 
-    ax2 = subplot('Position', opts.PositionBottom);
+    ax2 = subplot('Position', popts.PositionBottom);
 
-        [x,y,dyebu,dyebl] = xyvals_(S,opts,comp,'bottom');
+        [x,y,dyebu,dyebl] = xyvals_(S,popts,comp,'bottom');
         for s = 1:length(S)
             ls{s} = sprintf('%s',S{s}.Options.description);
 
-            opts.line = lineopts_(size(S{s}.Z,1), s);
-            if opts.vs_period
-                semilogx(x{s}, y{s}, opts.line{:});
+            popts.line = linepopts_(size(S{s}.Z,1), s);
+            if popts.vs_period
+                semilogx(x{s}, y{s}, popts.line{:});
             else
-                plot(x{s}, y{s}, opts.line{:});
+                plot(x{s}, y{s}, popts.line{:});
             end
 
             if s == 1
@@ -280,12 +293,12 @@ if length(S) > 1
         end
 
         yl = sprintf('$%s$ [$^\\circ]$',Phistrs{comp});
-        if opts.type == 3
+        if popts.type == 3
             yl = sprintf('Im$(%s)$ %s',Zstrs{comp},unitstr_(S{1}.Metadata));
         end
         ylabel(yl);
 
-        if opts.type ~= 3 && ~opts.unwrap
+        if popts.type ~= 3 && ~popts.unwrap
             set(gca,'YScale','linear');
             set(gca,'YLim',[-180,180]);
             set(gca,'YTick',-180:45:180);
@@ -293,30 +306,24 @@ if length(S) > 1
         else
             adjust_ylim('upper');
         end
-        legend(ls,opts.legend{:});
+        legend(ls,popts.legend{:});
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(opts,1,frequnit);
+        setx(popts,1,frequnit);
 
-    if opts.print
-        comp = regexprep(Zstrs{comp},'\{|\}','');
-        for i = 1:length(opts.printfmt)
-            fname = sprintf('%s-%s.%s',opts.printname, comp, opts.printfmt{i});
-            figsave(fullfile(opts.printdir, fname));
-        end
-    end
+    figsave_(popts,Zstrs{comp});
     
 end % if iscell(S)
 
 end % function
 
-function [dyebu,dyebl] = compute_errorbars_(S,opts,panel,comp)
+function [dyebu,dyebl] = compute_errorbars_(S,popts,panel,comp)
 
     dyebu = zeros(size(S.Z(:,comp)));
     dyebl = zeros(size(S.Z(:,comp)));
 
     if isfield(S,'Regression') && isfield(S.Regression,'Bootstrap')
-        if opts.type == 1 && strcmp(panel,'top')
+        if popts.type == 1 && strcmp(panel,'top')
             dyebl = abs(S.Z(:,comp)) - S.Regression.Bootstrap.ZCL95l(:,comp);            
             dyebu = S.Regression.Bootstrap.ZCL95u(:,comp) - abs(S.Z(:,comp));
             %dyebl = abs(S.Z(:,comp)) - 2*sqrt(S.Regression.Bootstrap.ZVAR(:,comp));
@@ -355,22 +362,22 @@ function [dyebu,dyebl] = compute_errorbars_(S,opts,panel,comp)
     
     if strcmp(panel,'top')
         dZ = sqrt(2)*sqrt(S.ZVAR(:,comp));
-        if opts.type == 1
+        if popts.type == 1
             dyebl = dZ;
             dyebu = dZ;
         end
-        if opts.type == 2
+        if popts.type == 2
             % ρ = |Z|^2/(5*f) => Δρ = 2|Z|dZ/(5*f)
             dyebl = 2*abs(S.Z(:,comp)).*dZ./(5*S.fe);
             dyebu = yebl;
         end
-        if opts.type == 3
+        if popts.type == 3
             dyebl = dZ;
             dyebu = dZ;
         end            
     end
     if strcmp(panel,'bottom')
-        if opts.type == 3
+        if popts.type == 3
             dZ = sqrt(2)*sqrt(S.ZVAR(:,comp)/2);
             dyebl = dZ;
             dyebu = dZ;
@@ -378,7 +385,7 @@ function [dyebu,dyebl] = compute_errorbars_(S,opts,panel,comp)
     end
 end
 
-function [x,y,dyebu,dyebl] = xyvals_(S,opts,comp,panel)
+function [x,y,dyebu,dyebl] = xyvals_(S,popts,comp,panel)
 
     % TODO: Assumes units are the same for all Zs.
     %       Check this before plotting.
@@ -386,23 +393,23 @@ function [x,y,dyebu,dyebl] = xyvals_(S,opts,comp,panel)
     for s = 1:length(S)
         
         if strcmp(panel,'top')
-            if opts.type == 1
+            if popts.type == 1
                 y{s} = abs(S{s}.Z(:,comp));
             end
-            if opts.type == 2
+            if popts.type == 2
                 f = S{s}.fe*S{s}.Metadata.freqsf;
                 y{s} = z2rho(f, S{s}.Z(:,comp));
             end
-            if opts.type == 3
+            if popts.type == 3
                 y{s} = real(S{s}.Z(:,comp));
             end
         end
         
         if strcmp(panel,'bottom')
-            if opts.type == 3
+            if popts.type == 3
                 y{s} = imag(S{s}.Z(:,comp));
             else
-                if opts.unwrap
+                if popts.unwrap
                     y{s} = (180/pi)*unwrap(atan2(imag(S{s}.Z(:,comp)),real(S{s}.Z(:,comp))));
                 else
                     y{s} = (180/pi)*atan2(imag(S{s}.Z(:,comp)),real(S{s}.Z(:,comp)));
@@ -410,16 +417,16 @@ function [x,y,dyebu,dyebl] = xyvals_(S,opts,comp,panel)
             end
         end
 
-        [dyebu{s},dyebl{s}] = compute_errorbars_(S{s},opts,panel,comp);            
+        [dyebu{s},dyebl{s}] = compute_errorbars_(S{s},popts,panel,comp);            
 
-        if opts.vs_period
+        if popts.vs_period
             x{s} = 1./(S{s}.fe*S{s}.Metadata.freqsf);
         else
             x{s} = S{s}.fe*S{s}.Metadata.freqsf;
         end
         
-        if opts.vs_period && ~isempty(opts.period_range)
-            idx = x{s} <= opts.period_range(1) | x{s} >= opts.period_range(2);
+        if popts.vs_period && ~isempty(popts.period_range)
+            idx = x{s} <= popts.period_range(1) | x{s} >= popts.period_range(2);
             y{s}(idx) = NaN;
         end
     end
@@ -431,13 +438,12 @@ function [x,y,dyebu,dyebl] = xyvals_(S,opts,comp,panel)
     end
 end
 
-function line = lineopts_(Nz, s);
+function line = linepopts_(Nz, s);
     if Nz == 1 % Single point
         ms = 30;
         line = {'.','markersize', ms};
     else
-        %ms = max(30-8*s,1);
-        ms = 22;
+        ms = max(22-2*s,1);
         line = {'.','markersize',ms};
     end
 end

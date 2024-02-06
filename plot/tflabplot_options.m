@@ -1,20 +1,25 @@
 function opts = tflabplot_options(S,opts,plotfun)
 
+if iscell(S)
+    nOut = size(S{1}.Out,2);
+    nIn = size(S{1}.In,2);
+    filestr = S{1}.Options.filestr;
+else
+    nOut = size(S.Out,2);
+    nIn = size(S.In,2);
+    filestr = S.Options.filestr;
+end
+
 dopts = struct(); % Defalt opts
 
 dopts.title = '';
 
-prefix = struct('tsplot','ts',...
-                'dftplot','dft',...
-                'zplot','tf',...
-                'snplot','sn',...
-                'qqplot','qq');
-
 % Print options passed to tflab's figsave()
 dopts.print = 0;
-dopts.printname = prefix.(plotfun);
-dopts.printdir = '';
-dopts.printfmt = {'pdf'};
+dopts.printOptions.printName = plotfun;
+dopts.printOptions.printDir = '';
+dopts.printOptions.printFormats = {'pdf'};
+dopts.printOptions.export_fig = {};
 
 % Line options passed to plot()
 dopts.line = {'marker', '.', 'markersize', 15, 'linestyle', 'none'};
@@ -26,18 +31,11 @@ dopts.legend = {'Location', 'NorthWest', 'Orientation', 'Horizontal'};
 dopts.PositionTop = [0.1300 0.5400 0.7750 0.4];
 dopts.PositionBottom = [0.1300 0.1100 0.7750 0.4];
 
-if iscell(S)
-    nOut = size(S{1}.Out,2);
-    nIn = size(S{1}.In,2);
-else
-    nOut = size(S.Out,2);
-    nIn = size(S.In,2);
-end
-
 if strcmp(plotfun,'tsplot')
     if ~isfield(opts,'type') || isempty(opts.type)
         opts.type = 'original';
     end
+    dopts.printOptions.printName = [dopts.printOptions.printName,'-',opts.type];
 end
 
 if strcmp(plotfun,'dftplot')
@@ -57,25 +55,25 @@ if strcmp(plotfun,'dftplot')
     end
     opts.type = join(tparts,'-');
     opts.type = opts.type{:};
+    dopts.printOptions.printName = [dopts.printOptions.printName,'-',opts.type];
 end
 
 if strcmp(plotfun,'zplot')
-    if ~isfield(opts,'type') || isempty(opts.type)
-        dopts.type = 1;
-    else
-        dopts.type = opts.type;
-    end
-    
     dopts.unwrap = 0;
-    switch dopts.type
+    if ~isfield(opts,'type') || isempty(opts.type)
+        opts.type = 1;
+    end    
+    switch opts.type
         case 1
-            dopts.printname = [dopts.printname,'_magnitude_phase'];
+            dopts.printOptions.printName = [dopts.printOptions.printName,'-magnitude_phase'];
         case 2
-            dopts.printname = [dopts.printname,'_rhoa_phase'];            
+            dopts.printOptions.printName = [dopts.printOptions.printName,'-rhoa_phase'];            
         case 3
-            dopts.printname = [dopts.printname,'_real_imaginary'];            
+            dopts.printOptions.printName = [dopts.printOptions.printName,'-real_imaginary'];            
     end
 end
+
+dopts.printOptions.printName = [dopts.printOptions.printName,'-',filestr];
 
 if any(strcmp(plotfun,{'zplot','qqplot'}))
     if nOut == 1
@@ -134,16 +132,26 @@ else
     end
 end
 
-% Replace default options with given options in opts
-fns = fieldnames(dopts);
-for i = 1:length(fns)
-    if ~isfield(opts, fns{i})
-        opts.(fns{i}) = dopts.(fns{i});
-    end
+opts = updateFields(opts,dopts);
+
 end
 
-%opts = dopts;
-
+% Replace default options with given options in opts
+function opts = updateFields(opts, dopts)
+    fns = fieldnames(dopts);
+    for i = 1:length(fns)
+        if ~isstruct(dopts.(fns{i}))
+            if ~isfield(opts, fns{i})
+                opts.(fns{i}) = dopts.(fns{i});
+            end
+        else
+            if ~isfield(opts,fns{i})
+                opts.(fns{i}) = dopts.(fns{i});
+            else
+                opts.(fns{i}) = updateFields(opts.(fns{i}),dopts.(fns{i}));
+            end
+        end
+    end
 end
 
 function namestrs = namestrs_(namestrs, nc)

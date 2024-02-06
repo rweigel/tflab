@@ -25,6 +25,9 @@ assert(isstruct(S) || iscell(S), ...
 if nargin < 2
     popts = struct();
 end
+if ~isfield(popts,'type')
+    popts.type = 'original';
+end
 
 if isfield(popts,'time_range')
     if ~iscell(popts.time_range)
@@ -167,17 +170,8 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
         %adjust_ylim();
         adjust_exponent('y');
         setx_(1,info,trange);
-    
-    if popts.print
-        if isfield(info,'timestart')
-        else
-        end
-        for i = 1:length(popts.printfmt)
-            fname = sprintf('%s_%s.%s',...
-                        popts.printname, popts.type, popts.printfmt{i});
-            figsave(fullfile(popts.printdir, fname));
-        end
-    end
+
+    figsave_(popts);
 end
 
 
@@ -230,16 +224,9 @@ if ~iscell(S) && strcmp(popts.type,'error')
             [~, lo] = legend(lg2,popts.legend{:});
             adjust_legend_lines(lo);
             setx_(1,info,trange);
-
-        if popts.print
-            for i = 1:length(popts.printfmt)
-                fname = sprintf('%s_%s.%s',...
-                            popts.printname,popts.type, popts.printfmt{i});
-                figsave(fullfile(popts.printdir, fname));
-            end
-        end
     end
 
+    figsave_(popts);
 end
 
 % Compare
@@ -306,12 +293,9 @@ if iscell(S)
     %co = [0,0,0;colororder()];
     %colororder(gcf,co);
     
-    if popts.print
-        for i = 1:length(popts.printfmt)
-            fname = sprintf('%s_compare_%s.%s',...
-                        popts.printname, popts.type, popts.printfmt{i});
-            figsave(fullfile(popts.printdir, fname));
-        end
+    if popts.print == 1
+        pfname = fullfile(popts.printOptions.printDir,popts.printOptions.printName);
+        figsave(pfname,popts.printOptions.export_fig,popts.printOptions.printFormats);
     end
 end
 

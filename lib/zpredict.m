@@ -19,17 +19,22 @@ Nin  = size(B,2);
 assert(mod(size(Z,2),Nin) == 0,'size(Z,2)/size(B,2) must be an integer');
 
 offset = 0;
-if nargin > 2
-    %offset = 1;
+if nargin > 2 && ~isempty(dZ)
+    offset = 1;
 end
 
 for j = 1:Nout
+    zcols = [1:Nin] + (j-1)*Nin;
+    if offset
+        Ep(:,j) = sum(ifft(fft(B).*Z(:,zcols) + dZ(:,j)),2);
+        continue;
+    else
+        xEp(:,j) = sum(ifft(fft(B).*Z(:,zcols)),2);
+    end
     for i = 1:size(B,2)
         c = (j-1)*size(B,2) + i;
         if offset == 0
             conv = ifft(fft(B(:,i)).*Z(:,c));
-        else
-            conv = ifft(fft(B(:,i)).*Z(:,c)) + ifft(ones(size(B,1),1).*dZ(:,c));
         end
         if i > 1
             Ep(:,j) = Ep(:,j) + conv;
@@ -38,6 +43,10 @@ for j = 1:Nout
         end
     end
 end
+if offset == 0
+    assert(all(Ep == xEp));
+end
+
 c = max(max(abs(imag(Ep))));
 if max(abs(imag(Ep))) > eps
     warning(sprintf(...

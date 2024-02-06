@@ -221,17 +221,13 @@ if ~strcmp(tparts{1},'error')
         setx(popts,1,frequnit);
 end
 
-if popts.print
-    compstr = '';
-    if length(S) > 1 && size(S{1}.In,2) > 1
-        compstr = sprintf('_%s',comp);
-    end
-    for i = 1:length(popts.printfmt)
-        fname = sprintf('%s_%s%s.%s',...
-                popts.printname, popts.type, compstr, popts.printfmt{i});
-        figsave(fullfile(popts.printdir, fname));
-    end
+compstr = '';
+if length(S) > 1 && size(S{1}.In,2) > 1
+    compstr = sprintf('-%s-',comp);
 end
+
+pfname = fullfile(popts.printdir,[popts.printname,comptstr,S{1}.Options.filestr]);
+figsave_(popts);
 
 if strcmp(tparts{1},'error')
     if comp < size(S{1}.In,2)

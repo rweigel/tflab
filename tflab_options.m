@@ -116,18 +116,16 @@ opts.fd.interpolation = struct();
     opts.fd.interpolation.functionargs = {...
                     struct('loglevel',0,...
                            'interp1args',{{'linear',0}})};
-
-opts.fd.zerrorbars_ = 0; % Compute bootstrap error bars
-
+    
 opts.fd.regression = struct();
-    opts.fd.regression.function = @regress_ols;
-    %opts.fd.regression.functionstr = 'OLS using backslash function';
-    %opts.fd.regression.functionargs = {'backslash'};
     opts.fd.regression.function = @regress_ols;
     opts.fd.regression.functionstr = 'OLS using regress() function';
     opts.fd.regression.functionargs = {'regress'};
     opts.fd.regression.loglevel = 0;
 
+    %opts.fd.regression.functionargs = {'backslash'};
+    %opts.fd.regression.functionstr = 'OLS using backslash function';
+    
     %opts.fd.regression.function = @ols_analytic;
     %opts.fd.regression.functionstr = 'OLS using analytic formula';
     %opts.fd.regression.functionargs = {};
@@ -146,6 +144,8 @@ opts.fd.regression = struct();
         %ropts.snstop = 1000;
         %ropts.verbose = 0;    
         %opts.fd.regression.functionargs = {ropts};
+
+opts.fd.zerrorbars_ = 0;
 
 if os == 0
     % When no noise, should get exact TF used to generate the

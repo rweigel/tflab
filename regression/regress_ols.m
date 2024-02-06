@@ -46,7 +46,7 @@ end
 
 if strcmp(algorithm,'regress')
     [Z,Info.ZCL95,Info.Residuals,Info.RINT,Info.STATS] = regress(ftE,ftB);
-    if 0
+    if 1
         if offset
             Info.ZCL95 = Info.ZCL95(1:end-1,:);
         end
@@ -57,6 +57,11 @@ if strcmp(algorithm,'regress')
         % confidence limits on Z are the same as the imaginary part of Z.
         Info.ZCL95l = transpose(Info.ZCL95(:,1));
         Info.ZCL95u = transpose(Info.ZCL95(:,2));
+        tmp = [Info.ZCL95l(1),Z(1),Info.ZCL95u(1)];
+        fprintf('real(ZCLl(1), Z(1), ZCLu(1))')
+        real(tmp)
+        fprintf('imag(ZCLl(1), Z(1), ZCLu(1))')
+        imag(tmp)
     else
         Info = rmfield(Info,'ZCL95');        
     end
@@ -67,8 +72,10 @@ if strcmp(algorithm,'regress-analytic')
 end
 
 if offset
-    Z = Z(1:end-1);
     dZ = Z(end);
+    Z = Z(1:end-1);
+else
+    dZ = [];
 end
 
 Z = transpose(Z);
