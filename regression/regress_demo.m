@@ -17,7 +17,7 @@ Np = 100;  % Number of points per regression.
 mx = 1; % Slope in input x 
 my = 1; % Slope in input y
 
-% Anonumous function zao adds outliers to z
+% Anonymous function zao adds outliers to z
 % Set last value of z to 10
 zao = @(z) [z(1:end-1); 10];
 % For no outliers, use

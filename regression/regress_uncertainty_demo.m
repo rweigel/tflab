@@ -26,7 +26,7 @@ t = tinv(p,Np-2);
 bintt = [bo(1) - sb*t,bo(1) + sb*t;...
          ao(1) - sa*t,ao(1) + sa*t];
 
-% Theoretical variances in estimates (Bulmer, pg 214)
+% Theoretical variances in estimates (Bulmer, Principles of Statistics, p214)
 Vb = sigma^2/sum((x-mean(x)).^2);
 Va = sigma^2*(1/Np + mean(x)^2/sum((x-mean(x)).^2));
 d = norminv(p,0,1); % 1.96 for p = 1-0.05/2.
