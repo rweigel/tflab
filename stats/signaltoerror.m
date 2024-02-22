@@ -14,8 +14,8 @@ end
 [dftsig,f] = dftbands(sig, opts);
 dfterr = dftbands(err, opts);
 
-clu = [];
-cll = [];
+clu = NaN(length(f),size(sig,2));
+cll = clu;
 for s = 1:length(f)
     se(s,:) = sum(dftsig{s}.*conj(dftsig{s}),1)./sum(dfterr{s}.*conj(dfterr{s}),1);
 

@@ -10,8 +10,8 @@ function [ax1,ax2] = zplot(S,popts,comps)
 %   2 => rho,phase (assumes Z in (mV/km)/nT and frequencies in Hz).
 %   3 => Real,Imaginary
 
-assert(isstruct(S) || iscell(S), ...
-    'S must be a tflab struct or cell array of tflab structs');
+msg = 'S must be a tflab struct or cell array of tflab structs';
+assert(isstruct(S) || iscell(S), msg);
 
 if isstruct(S)
     S = {S};
@@ -108,22 +108,14 @@ if length(S) == 1
         if popts.vs_period
             set(gca,'XScale','log');
         end
+
+        plot_errorbars_(h1,x,y,dyebl,dyebu)
+
         if popts.type < 3
             set(gca,'YScale','log');            
             adjust_ylim('upper');
         else
             adjust_ylim('both');
-        end
-
-        if ~isempty(dyebl)
-            colors = get(h1,'Color');
-            if ~iscell(colors)
-                colors = {colors};
-            end
-            for j = 1:length(comps)
-                errorbars(x,y(:,j),dyebl(:,j),dyebu(:,j),...
-                         'y','Color',colors{j},'LineWidth',2);
-            end
         end
         adjust_yticks(1e-4);
         adjust_exponent('y');
@@ -156,6 +148,7 @@ if length(S) == 1
                 end
             end
         end
+
         for j = 1:length(comps)
             [x(:,j),y(:,j)] = xyvals_(S,popts,comps(j),'bottom');
         end
@@ -181,6 +174,9 @@ if length(S) == 1
             set(gca,'YScale','linear');
             set(gca,'YTick',-180:45:180);
         end
+
+        plot_errorbars_(h1,x,y,dyebl,dyebu)
+
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
@@ -317,21 +313,78 @@ end % if iscell(S)
 
 end % function
 
+function plot_errorbars_(h,x,y,dyebl,dyebu)
+    if ~isempty(dyebl)
+        colors = get(h,'Color');
+        if ~iscell(colors)
+            colors = {colors};
+        end
+        for j = 1:size(y,2)
+            errorbars(x,y(:,j),dyebl(:,j),dyebu(:,j),...
+                     'y','Color',colors{j},'LineWidth',2);
+        end
+    end
+end
+
 function [dyebu,dyebl] = compute_errorbars_(S,popts,panel,comp)
 
     dyebu = zeros(size(S.Z(:,comp)));
     dyebl = zeros(size(S.Z(:,comp)));
 
-    if isfield(S,'Regression') && isfield(S.Regression,'Bootstrap')
-        if popts.type == 1 && strcmp(panel,'top')
-            dyebl = abs(S.Z(:,comp)) - S.Regression.Bootstrap.ZCL95l(:,comp);            
-            dyebu = S.Regression.Bootstrap.ZCL95u(:,comp) - abs(S.Z(:,comp));
-            %dyebl = abs(S.Z(:,comp)) - 2*sqrt(S.Regression.Bootstrap.ZVAR(:,comp));
-            %dyebu = 2*sqrt(S.Regression.Bootstrap.ZVAR(:,comp)) - abs(S.Z(:,comp));
-        end
+    if isfield(S,'Regression')
+        if isfield(S.Regression,'Bootstrap')
+            if popts.type == 1 && strcmp(panel,'top')
+                dyebl = abs(S.Z(:,comp)) - S.Regression.Bootstrap.ZCL95l(:,comp);            
+                dyebu = S.Regression.Bootstrap.ZCL95u(:,comp) - abs(S.Z(:,comp));
+            end
         return;
+        end
     end
 
+    %dyebl = abs(S.Z(:,comp)) - 2*sqrt(S.Regression.Bootstrap.ZVAR(:,comp));
+    %dyebu = 2*sqrt(S.Regression.Bootstrap.ZVAR(:,comp)) - abs(S.Z(:,comp));
+
+    if isfield(S,'Regression')
+        if isfield(S.Regression,'ZCL95l')
+            if popts.type == 1
+                % For real Zx and Zy, if
+                % Z = sqrt(Zx^2 + Zy^2) standard propagation of errors is
+                % |ΔZ| = (|Zx|/Z)ΔZx + (|Zy|/Z)ΔZy
+                % or
+                % |ΔZ| = sqrt( [(Zx/Z)ΔZx]^2 + [(|Zy|/Z)ΔZy]^2 )
+                %
+                % For complex Zx and Zy, if
+                % Z = sqrt(Zr^2 + Zi^2) standard propagation of errors is
+                % |ΔZ| = (|Zr|/Z)ΔZr + (|Zi|/Z)ΔZi
+                % or the equivalent sum-of-square in pattern above.
+                if strcmp(panel,'top')
+                    Zmag = abs(S.Z(:,comp));
+                    dZr = real(S.Regression.ZCL95u(:,comp) - S.Regression.ZCL95l(:,comp));
+                    dZi = imag(S.Regression.ZCL95u(:,comp) - S.Regression.ZCL95l(:,comp));
+                    Zr = real(S.Z(:,comp));
+                    Zi = imag(S.Z(:,comp));
+                    terms = abs(Zr).*dZr + abs(Zi).*dZi;
+                    deltaZ = terms./Zmag;
+                    dyebl = deltaZ/2;
+                    dyebu = deltaZ/2;
+                end
+            end
+            if popts.type == 3
+                dyebl = S.Z(:,comp) - S.Regression.ZCL95l(:,comp);
+                dyebu = S.Regression.ZCL95u(:,comp) - S.Z(:,comp);
+                if strcmp(panel,'top')
+                    dyebl = real(dyebl);
+                    dyebu = real(dyebu);
+                end
+                if strcmp(panel,'bottom')
+                    dyebl = imag(dyebl);
+                    dyebu = imag(dyebu);
+                end
+            end
+            return;
+        end
+    end
+    
     if ~isfield(S,'ZVAR')
         return;
     end

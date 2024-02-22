@@ -25,12 +25,14 @@ end
 
 for j = 1:Nout
     zcols = [1:Nin] + (j-1)*Nin;
-    if offset
-        Ep(:,j) = sum(ifft(fft(B).*Z(:,zcols) + dZ(:,j)),2);
+    if offset == 1
+        Ep(:,j) = sum(ifft( fft(B).*Z(:,zcols) + dZ(:,j) ),2);
         continue;
     else
-        xEp(:,j) = sum(ifft(fft(B).*Z(:,zcols)),2);
+        xEp(:,j) = sum(ifft( fft(B).*Z(:,zcols) ),2);
     end
+
+    % To remove. Old method of computing. When removed, change xEp to Ep.
     for i = 1:size(B,2)
         c = (j-1)*size(B,2) + i;
         if offset == 0
@@ -42,6 +44,7 @@ for j = 1:Nout
             Ep(:,j) = conv;
         end
     end
+
 end
 if offset == 0
     assert(all(Ep == xEp));

@@ -41,7 +41,7 @@ else
     if iscell(In)
         S = intervals_(In,Out,opts,domain,includeSegs,combineSegs);
         return;
-    end    
+    end
     S = struct('In',In,'Out',Out,'Options',opts);
 end
 
@@ -93,6 +93,7 @@ for s = 1:length(a)
 end
 
 if combineSegs
+    logmsg('Combining segments\n')
     S.Segment = combineStructs(S.Segment,3);
     if exist('Segmento','var')
         fns = fieldnames(Segmento);
@@ -145,10 +146,12 @@ function S = intervals_(In, Out, opts, domain, includeSegs, combineSegs)
     % Each cell contians an interval and an arbitrary gap in time is
     % assumed between the end of one cell and the start of the next
     % cell.
-
     assert(all(size(In) == size(Out)),'Required: size(B) == size(E)');
     assert(isvector(In),'Required: B must be vector cell array');
     assert(isvector(Out),'Required: E must be vector cell array');
+
+    S.Options = opts;
+    
     sOut = size(Out{1},2);
     sIn = size(In{1},2);
 
@@ -172,14 +175,13 @@ function S = intervals_(In, Out, opts, domain, includeSegs, combineSegs)
     
     for i = 1:length(In) % Number of intervals
         Si{i} = tflab_preprocess(In{i},Out{i},opts,domain,includeSegs,combineSegs);        
+        Si{i} = rmfield(Si{i},'Options');
     end
-
     p = 1;
     for i = 1:length(Si)
         fns = fieldnames(Si{i}); 
         for f = 1:length(fns)
             if ~any(strcmp(fns{f},{'Options','Segment'}))
-                S.(fns{f}){i} = Si{i}.(fns{f});
                 S.(fns{f}){i} = Si{i}.(fns{f});
             end
         end
@@ -193,10 +195,15 @@ function S = intervals_(In, Out, opts, domain, includeSegs, combineSegs)
             end
         end
     end
-    
+    for i = 1:length(Segment)
+        if isfield(Segment{i},'Options')
+            Segment{i} = rmfield(Segment{i},'Options');
+        end
+    end
     if combineSegs
         S.Segment = combineStructs(Segment,3);
     else
         S.Segment = Segment;        
-    end    
+    end
+
 end

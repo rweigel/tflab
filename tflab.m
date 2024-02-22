@@ -109,28 +109,28 @@ if isnan(opts.td.window.width) || size(E,1) == opts.td.window.width
     return
 end
 
-if isempty(opts.fd.stack.average.function)
+if ~isempty(opts.fd.stack.average.function)
+
+    S = tflab_preprocess(B,E,opts,'both',1,0);
+    S = stackaverage_(S,opts);
+    
+    if opts.tflab.loglevel > 0
+        logmsg('Computing metrics on full time range of data using average Z and\n');
+        logmsg('computing metrics on segments using segment Zs.\n');
+    end
+    S = tflab_metrics(S);
+else
 
     logmsg('Computing Z using stack regression.\n');        
 
     S = tflab_preprocess(B,E,opts,'both',1,1);
     S = stackregression_(S,opts);
 
-    logmsg('Computing metrics for full time series using computed Z.\n');
+    logmsg('Computing metrics on full time series and segments using stack regression Z.\n');
     S = tflab_metrics(S);
 
-    logmsg('Computing metrics on segments using computed Z.\n');    
-    S = tflab_metrics(S,1);
-else
-
-    S = tflab_preprocess(B,E,opts,'both',1,0);
-
-    S = stackaverage_(S,opts);
-    
-    if opts.tflab.loglevel > 0
-        logmsg('Computing metrics on unsegmented data using average Z.\n');
-    end
-    S = tflab_metrics(S);
+    %logmsg('Computing metrics on segments using computed Z.\n');    
+    %S = tflab_metrics(S,1);
 end
 
 end % tflab()
@@ -164,18 +164,19 @@ function S = stackaverage_(S,opts)
         
         logmsg('Computing Z for segment %d of %d\n',s,length(Sc));
         [Sc{s}.Z,Sc{s}.fe,Sc{s}.dZ,Sc{s}.Regression] = tflab_miso(Sc{s}.DFT,opts);
-        if opts.tflab.loglevel > 0
-            logmsg('Computing metrics on segment using segment Z.\n');
-        end
-        Sc{s}.fe = Sc{s}.DFT.fe;
-        Sc{s} = tflab_metrics(Sc{s});
-        if opts.tflab.loglevel > 0
-            logmsg('Computed metrics on segment using segment Z.\n');
-        end
 
-        if opts.tflab.loglevel > 0 && ~isempty(opts.fd.stack.average.function)
-            logmsg('Computated Z and metrics for segment %d of %d; PE/CC/MSE %.2f/%.2f/%.3f\n',...
-                   s,length(Sc),Sc{s}.Metrics.PE,Sc{s}.Metrics.CC,Sc{s}.Metrics.MSE);
+        if 0
+            if opts.tflab.loglevel > 0
+                logmsg('Computing metrics on segment using segment Z.\n');
+            end
+            Sc{s} = tflab_metrics(Sc{s});
+            if opts.tflab.loglevel > 0
+                logmsg('Computed metrics on segment using segment Z.\n');
+            end
+            if opts.tflab.loglevel > 0 && ~isempty(opts.fd.stack.average.function)
+                logmsg('Computed Z and metrics for segment %d of %d; PE/CC/MSE %.2f/%.2f/%.3f\n',...
+                       s,length(Sc),Sc{s}.Metrics.PE,Sc{s}.Metrics.CC,Sc{s}.Metrics.MSE);
+            end
         end
     end
 
@@ -195,4 +196,5 @@ function S = intervals_(B, E, opts)
         S = tflab_preprocess(B,E,opts,'both',1,0);
         S = stackaverage_(S,opts);
     end
+    S = tflab_metrics(S);
 end

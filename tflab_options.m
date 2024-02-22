@@ -119,23 +119,23 @@ opts.fd.interpolation = struct();
     
 opts.fd.regression = struct();
     opts.fd.regression.function = @regress_ols;
-    opts.fd.regression.functionstr = 'OLS using regress() function';
-    opts.fd.regression.functionargs = {'regress'};
+    opts.fd.regression.functionstr = 'OLS using regress() on real values and offset term';
+    opts.fd.regression.functionargs = {'regress-real', 1};
     opts.fd.regression.loglevel = 0;
+
+    %opts.fd.regression.functionstr = 'OLS using regress() function on complex values';
+    %opts.fd.regression.functionargs = {'regress', 1};
+    %opts.fd.regression.loglevel = 0;
 
     %opts.fd.regression.functionargs = {'backslash'};
     %opts.fd.regression.functionstr = 'OLS using backslash function';
     
-    %opts.fd.regression.function = @ols_analytic;
-    %opts.fd.regression.functionstr = 'OLS using analytic formula';
-    %opts.fd.regression.functionargs = {};
-
-    %opts.fd.regression.function = @robust_robustfit;
+    %opts.fd.regression.function = @regres_robustfit_matlab;
     %opts.fd.regression.functionstr = 'Robust regression using robustfit()';
     %opts.fd.regression.functionargs = {[],[],'off'};
 
-    %opts.fd.regression.function = @robust_v1;
-    %opts.fd.regression.functionstr = 'Robust regression using robust_v1()';
+    %opts.fd.regression.function = @regres_robustfit_tflab;
+    %opts.fd.regression.functionstr = 'Robust regression using regres_robustfit_tflab()';
         %ropts = struct();
         %ropts.weightfn = 'huber';
         %ropts.stepmax = 50;

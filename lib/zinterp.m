@@ -1,4 +1,4 @@
-function [Zi,fi,Zip,fip] = zinterp(f,Z,fi,opts)
+function [Zi,fi,Zip,fip] = zinterp(f,Z,fi,interp1args)
 % ZINTERP - Interpolate transfer function on to frequency grid
 %
 %  [Zi,fi] = ZINTERP(f,Z,N) returns Zi on the N-point DFT grid fi given by
@@ -22,17 +22,8 @@ function [Zi,fi,Zip,fip] = zinterp(f,Z,fi,opts)
 % TODO: Allow interpolation in log space.
 
 if nargin < 4
-    opts = struct('loglevel',0,'interp1args',{{'linear',0}});
-else
-    assert(isstruct(opts),'opts must be a structure');
-    if ~isfield(opts,'loglevel')
-        opts.loglevel = 0;
-    end
-    if ~isfield(opts,'interp1args')
-        opts.interp1args = {'linear',0};
-    end
+    interp1args = {'linear',0};
 end
-
 
 assert(ismatrix(Z),'Z can have at most two dimensions.');
 assert(iscolumn(f),'f must be a column vector (nx1)');
@@ -73,11 +64,7 @@ if any(f < 0) || any(fi < 0)
 end
 
 if length(f) == length(fi) && all(f(:) == fi(:))
-    if opts.loglevel > 0
-        logmsg(...
-            ['all(f == fi) returned true. '...
-             'No interpolation will be performed.\n']);
-    end
+    logmsg('all(f == fi) returned true. No interpolation will be performed.\n');
     if ~isnan(N)
         % Zinterp(f,Z,N) usage.
         fir = fi;
@@ -90,7 +77,7 @@ if length(f) == length(fi) && all(f(:) == fi(:))
     return;
 end
 
-if opts.loglevel > 0
+if 0
     logmsg('First interp frequency: %.4f\n',fi(1));
     logmsg('First given frequency : %.4f\n',f(1));
     logmsg('Last interp frequency : %.4f\n',fi(end));
@@ -110,11 +97,11 @@ end
 if f(end) == 0.5
     % TODO: This assumes f is normalized
     assert(all(imag(Z(end,:)) == 0),'If f(end) == 0.5 expect all(imag(Z(end,:))==0)');
-    Zi_re = interp1(f,real(Z),fi,opts.interp1args{:});
-    Zi_im = interp1(f(1:end-1),imag(Z(1:end-1,:)),fi,opts.interp1args{:});
+    Zi_re = interp1(f,real(Z),fi,interp1args{:});
+    Zi_im = interp1(f(1:end-1),imag(Z(1:end-1,:)),fi,interp1args{:});
     Zi = Zi_re + 1j*Zi_im;
 else
-    Zi = interp1(f,Z,fi,opts.interp1args{:});
+    Zi = interp1(f,Z,fi,interp1args{:});
 end
 
 if fi(1) == 0 % If lowest interp. frequency is zero (and so was removed)
@@ -123,10 +110,10 @@ if fi(1) == 0 % If lowest interp. frequency is zero (and so was removed)
         Zi(1,:) = Z0;
     else
         % Otherwise, set it to extrapval used in interp1 call.
-        if isscalar(opts.interp1args{2})
+        if isscalar(interp1args{2})
             % If 'extrap' is given instead of an extrap value, e.g.,
             % {'linear','extrap'}.
-            Zi(1,:) = opts.interp1args{2}*ones(1,size(Z,2));
+            Zi(1,:) = interp1args{2}*ones(1,size(Z,2));
         end
     end
 end

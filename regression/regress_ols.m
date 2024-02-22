@@ -1,4 +1,4 @@
-function [Z,dZ,Info] = regress_ols(ftE,ftB,algorithm)
+function [Z,dZ,Info] = regress_ols(ftE,ftB,algorithm,offset)
 %REGRESS_OLS - Ordinary least-squares regression
 %
 %   Z = REGRESS_OLS(E, B) and Z = REGRESS_OLS(E, B, 'backslash')
@@ -19,8 +19,8 @@ function [Z,dZ,Info] = regress_ols(ftE,ftB,algorithm)
 %
 %     Z = Zreal(1:end/2,:) + sqrt(-1)*Zreal(end/2+1:end,:);
 %
-%   See also REGRESS_TLS, REGRESS_ROBUSTFIT_TFLAB, and
-%   REGRESS_ROBUSTFIT_MATLAB.
+%   See also REGRESS_TLS, REGRESS_ROBUSTFIT_TFLAB, REGRESS_ROBUSTFIT_MATLAB
+%   REGRESS_DEMO, REGRESS_DEMO_COMPLEX.
 
 if nargin < 3
     algorithm = 'backslash';
@@ -30,11 +30,6 @@ algorithms = {'backslash','regress','regress-real','regress-analytic'};
 emsg = sprintf('algorithm must be one of: %s',strjoin(algorithms,', '));
 assert(any(strcmp(algorithm,algorithms)),emsg);
 
-offset = 1;
-if offset
-    ftB = [ftB,ones(size(ftB,1),1)];
-end
-
 Info = struct();
 
 if strcmp(algorithm,'backslash')
@@ -43,63 +38,88 @@ if strcmp(algorithm,'backslash')
 end
 
 if strcmp(algorithm,'regress')
-    % As demonstrated in regress_demo_complex.m, ZCL is wrong
-    % when ftE or ftB are complex.
-    [Z,ZCL95,Info.Residuals,Info.RINT,Info.STATS] = regress(ftE,ftB);
+    if ~isreal(ftE) || ~isreal(ftB)
+        logmsg('ftIn or ftOut is complex. Using regress-real.\n');
+        % As demonstrated in regress_demo_complex_bug.m, ZCL is wrong when
+        % ftE or ftB is complex.
+        [Z,dZ,Info] = regress_ols(ftE,ftB,'regress-real');
+        return
+    end
+    if offset
+        ftB = [ftB,ones(size(ftB,1),1)];
+    end
+    [Z,ZCL95,Info.Residuals,Rint,Stats] = regress(ftE,ftB);
 end
 
 if strcmp(algorithm,'regress-analytic')
+    if offset
+        error('Offset not handled in regress-analytic.')
+    end
     [Z,Info.Residuals] = regress_ols_analytic(ftE,ftB);
 end
 
 if strcmp(algorithm,'regress-real')
-    if isreal(ftE) && isreal(ftB)
-        if offset
-            ftB = ftB(:,1:end-1);
-        end
-        [Z,dZ,Info] = regress_ols(ftE,ftB,'regress');
-        return;
-    end
     % Calculation using only real numbers
     %   Ec = Zc*Bc for complex-valued scalars (subscript c) can be written as
     %
-    %   Er + jEi = (Zr + jZi)*(Br + jBi),
+    %   Er + jEi = (Zr + jZi)*(Br + jBi) + dZr + jdZi,
     %
     %   where subscript r (i) indicates a real (imaginary) value and
     %   Er, Ei, Zr, Zi, Br, Bi are real numbers. Two independent equations are
     %
-    %   Er = Zr*Br - Zi*Bi
-    %   Ei = Zr*Bi + Zi*Br,
+    %   Er = Zr*Br - Zi*Bi + dZr
+    %   Ei = Zr*Bi + Zi*Br + dZi
     %
-    %   or, in MATLAB matrix notation, real matrices E and B are
+    %   or, in matrix notation, real matrices E and B are
     %
-    %   E = [Er ; Ei]
-    %   B = [Br , -Bi ; Bi , Br]*[Zr ; Zi]
-    %  
+    %   E = [Er]
+    %       [Ei]
+    %   B = [Br  -Bi  1  0][Zr]
+    %       [Bi   Br  0  1][Zi]
+    %                      [dZr]
+    %                      [dZi]
     %   Zc = regress(Ec,Bc) and Z = regress(E,B) are related by
     % 
-    %   Zc = Z(1:end/2,:) + sqrt(-1)*Z(end/2+1:end,:);\
-    E = [real(ftE) ; imag(ftE)];
-    B = [real(ftB), -imag(ftB) ; imag(ftB), real(ftB)];
-    [Z,ZCL95,R,RINT,STATS] = regress(E,B);
+    %   Zc = Z(1:end/2,:) + sqrt(-1)*Z(end/2+1:end,:);
+
+    E = [real(ftE); ...
+         imag(ftE)];
+    B = [real(ftB),  ones(size(ftB,1),1), -imag(ftB), zeros(size(ftB,1),1);...
+         imag(ftB), zeros(size(ftB,1),1),  real(ftB),  ones(size(ftB,1),1)];
+    if offset == 0
+        B = [real(ftB), -imag(ftB);...
+             imag(ftB),  real(ftB)];
+    else
+        B = [real(ftB),  ones(size(ftB,1),1), -imag(ftB), zeros(size(ftB,1),1);...
+             imag(ftB), zeros(size(ftB,1),1),  real(ftB),  ones(size(ftB,1),1)];
+    end
+    [Z,ZCL95,Residuals,Rint,Stats] = regress(E,B);
+    Z = Z(1:end/2) + sqrt(-1)*Z(end/2+1:end);
     ZCL95 = ZCL95(1:end/2,:) + sqrt(-1)*ZCL95(end/2+1:end,:);
-    Z = Z(1:end/2,:) + sqrt(-1)*Z(end/2+1:end,:);
-    R = R(1:end/2,:) + sqrt(-1)*R(end/2+1:end,:);
+    Info.Residuals = Residuals(1:end/2) + sqrt(-1)*Residuals(end/2+1:end);
 end
 
 if offset
-    dZCL95 = ZCL95(end,:);
-    ZCL95 = ZCL95(1:end-1,:);
     dZ = Z(end);
     Z = Z(1:end-1);
 else
     dZ = [];
 end
 
-Info.ZCL95l = transpose(ZCL95(:,1));
-Info.ZCL95u = transpose(ZCL95(:,2));
-Info.dZCL95l = transpose(dZCL95(:,1));
-Info.dZCL95u = transpose(dZCL95(:,2));
+if offset
+    ftB = [ftB,ones(size(ftB,1),1)];
+end
+
+if exist('ZCL95','var')
+    if offset
+        dZCL95 = ZCL95(end,:);
+        ZCL95 = ZCL95(1:end-1,:);
+    end
+    Info.ZCL95l = transpose(ZCL95(:,1));
+    Info.ZCL95u = transpose(ZCL95(:,2));
+    Info.dZCL95l = transpose(dZCL95(:,1));
+    Info.dZCL95u = transpose(dZCL95(:,2));
+end
 
 Z = transpose(Z);
 

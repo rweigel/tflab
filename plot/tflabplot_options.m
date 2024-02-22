@@ -10,6 +10,8 @@ else
     filestr = S.Options.filestr;
 end
 
+assert(isstruct(opts),'opts must be a struct.')
+
 dopts = struct(); % Defalt opts
 
 dopts.title = '';

@@ -1,4 +1,6 @@
 
+clear;
+
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 outdir = fullfile(scriptdir(),'data','Middelpos');
@@ -10,8 +12,8 @@ stop = '20121106';
 stop = '20120716';
 
 for tfn = 1:2
-    f{tfn} = fullfile(outdir, sprintf('Middelpos-%s-%s-tf%d.mat',start,stop,tfn));
-    TFs{tfn} = loadtf(f{tfn});
+    fname{tfn} = fullfile(outdir, sprintf('Middelpos-%s-%s-tf%d.mat',start,stop,tfn));
+    TFs{tfn} = loadtf(fname{tfn});
     TFs{tfn} = tflab_preprocess(TFs{tfn});
     TFs{tfn} = tflab_metrics(TFs{tfn});
 end

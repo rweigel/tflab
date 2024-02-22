@@ -21,9 +21,8 @@ if 1
 end
 
 %% Set output file base name using start/stop times of input data
-filestr = sprintf('Middelpos-%s-%s',...
-                  datestr(t(1),'yyyymmdd'),...
-                  datestr(t(end),'yyyymmdd'));
+fmt = 'yyyymmdd';
+filestr = sprintf('Middelpos-%s-%s',datestr(t(1),fmt),datestr(t(end),fmt));
 
 %% Set metadata
 meta = struct();
@@ -43,15 +42,15 @@ meta = struct();
 tfn = 1;
 opts{tfn} = tflab_options(1);
     opts{tfn}.tflab.loglevel = 1;
-    opts{tfn}.td.window.width = pps;
-    opts{tfn}.td.window.shift = pps;
+    %opts{tfn}.td.window.width = pps;
+    %opts{tfn}.td.window.shift = pps;
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
     opts{tfn}.description = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
 
-TF{tfn} = tflab(B(:,1:2),E,opts{tfn});
-TF{tfn}.Metadata = meta;
+TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
+TFs{tfn}.Metadata = meta;
 
-savetf(TF{tfn}, fullfile(scriptdir(),'data','Middelpos',opts{tfn}.filestr));
+savetf(TFs{tfn}, fullfile(scriptdir(),'data','Middelpos',opts{tfn}.filestr));
 
 %% Compute TF2
 tfn = 2;
@@ -67,11 +66,10 @@ opts{tfn} = opts{1};
 opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
 opts{tfn}.description = sprintf('OLS; 6-day bandpass; %d %d-day segments',size(B_,1)/pps,pps/86400);
 
+TFs{tfn} = tflab(B_(:,1:2),E_,opts{tfn});
+TFs{tfn}.Metadata = meta;
 
-TF{tfn} = tflab(B_(:,1:2),E_,opts{tfn});
-TF{tfn}.Metadata = meta;
-
-savetf(TF{tfn}, fullfile(scriptdir(),'data','Middelpos',opts{tfn}.filestr));
+savetf(TFs{tfn}, fullfile(scriptdir(),'data','Middelpos',opts{tfn}.filestr));
 
 if 0
 if 1

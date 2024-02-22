@@ -39,41 +39,45 @@ end
 if opts.tflab.loglevel > 0
     logmsg(['Starting freq band and regression '...
             'calcs for %d frequencies.\n'],length(fe));
-    logmsg(['Using %s() with additional arguments given in\n'...
-            'opts.fd.regression.functionargs\n'],...
-            func2str(opts.fd.regression.function));
+    logmsg('Doing regression using %s\n',opts.fd.regression.functionstr);
 end
 
 boot_note = 1;
+dZ = [];
 for j = 1:length(fe)
 
     ftIn = DFTIn{j,1};
     ftOut = DFTOut{j,1};
 
-    Regression.Residuals{j,1} = [];
+    Z(j,:) = nan(1,size(ftIn,2));
+    dZ(j,1) = nan;
+    Regression.Residuals{j,1} = nan(size(ftOut,1),1);
 
     if opts.fd.window.loglevel > 0
-        logmsg(['Band with center of fe = %.8f has %d '...
-                'points; fl = %.8f fh = %.8f\n'],...
-                 fe(j),length(f),min(f),max(f));
+        msg = 'Band with center of fe = %.8f has %d points; fl = %.8f fh = %.8f\n';
+        logmsg(msg,fe(j),length(f),min(f),max(f));
     end
 
-    if size(ftIn,2) == 1 && length(f) == 1
+    if 0 && size(ftIn,2) == 1 && length(f) == 1
+        % One input component
         z = ftOut./ftIn;
         if isinf(z)
             z = nan;
         end
-        keyboard
         Z(j,1) = z;
         dZ(j,1) = 0;
         continue;
     end
     
-    if length(f{j}) < size(ftIn,2)
-        Z(j,:) = nan(1,size(ftIn,2));
-        dZ(j,1) = nan;
-        logmsg(['!!! System is underdetermined for fe = %f. ',...
-                'Setting Z equal to NaN(s).\n'],fe(j));
+    if length(f{j}) < 2*size(ftIn,2)
+        msg = '!!! System is underdetermined for fe = %f. Setting Z equal to NaN(s).\n';
+        logmsg(msg,fe(j));
+        continue;
+    end
+
+    if length(f{j}) == 2*size(ftIn,2)
+        msg = '!!! System is exactly determined for fe = %f. Setting Z equal to NaN(s).\n';
+        logmsg(msg,fe(j));
         continue;
     end
 
@@ -81,12 +85,15 @@ for j = 1:length(fe)
 
     regressargs = opts.fd.regression.functionargs;
     regressfunc = opts.fd.regression.function;
-    
-    [Z(j,:),dZ(j,:),Info] = regressfunc(ftOut,ftIn,regressargs{:});
+    [Z(j,:),dz,Info] = regressfunc(ftOut,ftIn,regressargs{:});
+
+    if ~isempty(dz)
+        dZ(j,1) = dz;
+    end
 
     if ~isempty(lastwarn)
-        logmsg('Above warning is for eval. freq. #%d; fe = %f; Te = %f\n', ...
-            j,fe(j),1/fe(j));
+        msg = 'Above warning is for eval. freq. #%d; fe = %f; Te = %f\n';
+        logmsg(msg,j,fe(j),1/fe(j));
         logmsg('ftE =');
         ftOut
         logmsg('ftB =');
@@ -94,26 +101,38 @@ for j = 1:length(fe)
     end
 
     if any(isinf(Z(j,:)))
-        logmsg(['!!! Z has Infs for fe = %f. ',...
-                'Setting Z equal to NaN(s).\n'],fe(j));
+        msg = '!!! Z has Infs for fe = %f. Setting all element of Z to NaN(s).\n';
+        logmsg(msg,fe(j));
         Z(j,:) = nan;
-        dZ(j,:) = nan;
+        dZ(j,1) = nan;
         continue;
     end
 
     if isfield(Info,'Residuals')
+        % Residuals are also computed in tflab_metrics because we remove
+        % Regression.Residuals when saving file to reduce file size. The
+        % following is not needed but is kept because if tflab_metrics
+        % finds this, it will check that its calculation matches.
         Regression.Residuals{j,1} = Info.Residuals;
     end
-    if isfield(Info,'ZCL95')
-        Regression.ZCL95l(j,:) = Info.ZCL95(:,1);
-        Regression.ZCL95u(j,:) = Info.ZCL95(:,2);
+    if isfield(Info,'ZCL95l')
+        Regression.ZCL95l(j,:) = Info.ZCL95l;
+    end
+    if isfield(Info,'ZCL95u')
+        Regression.ZCL95u(j,:) = Info.ZCL95u;
+    end
+    if isfield(Info,'dZCL95l')
+        Regression.dZCL95l(j,:) = Info.dZCL95l;
+    end
+    if isfield(Info,'dZCL95u')
+        Regression.dZCL95u(j,:) = Info.dZCL95u;
     end
 
     n = size(ftOut,1);
     if opts.fd.zerrorbars_ && n > 10
         Nb = 100; % Number of bootstrap samples
         fract = 1; % Fraction to sample; Efron's original bootstrap method uses 1;
-                      % If f != 1, called m of n bootstrap; see 10.1002/9781118445112.stat08002
+                   % If f != 1, called m of n bootstrap; see 10.1002/9781118445112.stat08002
         if boot_note == 1
             logmsg(sprintf('Computing confidence limits using %d bootstrap samples and m/n = %.2f\n',Nb,fract));
             boot_note = 0;
@@ -134,8 +153,9 @@ for j = 1:length(fe)
             Regression.Bootstrap.ZCL95u(j,c) = u;
         end
     end
-           
+
 end
+
 if opts.fd.regression.loglevel > 0
     logmsg(['Finished freq band and regression '...
             'calculations for %d eval. freqs.\n'],...
