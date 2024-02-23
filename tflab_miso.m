@@ -116,16 +116,16 @@ for j = 1:length(fe)
         Regression.Residuals{j,1} = Info.Residuals;
     end
     if isfield(Info,'ZCL95l')
-        Regression.ZCL95l(j,:) = Info.ZCL95l;
+        Regression.ConfidenceLimits.Parametric.ZCL95l(j,:) = Info.ZCL95l;
     end
     if isfield(Info,'ZCL95u')
-        Regression.ZCL95u(j,:) = Info.ZCL95u;
+        Regression.ConfidenceLimits.Parametric.ZCL95u(j,:) = Info.ZCL95u;
     end
     if isfield(Info,'dZCL95l')
-        Regression.dZCL95l(j,:) = Info.dZCL95l;
+        Regression.ConfidenceLimits.Parametric.dZCL95l(j,:) = Info.dZCL95l;
     end
     if isfield(Info,'dZCL95u')
-        Regression.dZCL95u(j,:) = Info.dZCL95u;
+        Regression.ConfidenceLimits.Parametric.dZCL95u(j,:) = Info.dZCL95u;
     end
 
     n = size(ftOut,1);
@@ -148,9 +148,9 @@ for j = 1:length(fe)
             Zb(:,c) = sort(abs(Zb(:,c)),1); % Sort rows
             l = abs(Zb(nl,c));    % Select the nth lowest
             u = abs(Zb(nh,c));    % Select the nth highest
-            Regression.Bootstrap.ZVAR(j,c) = var(abs(Zb(:,c)),0,1);
-            Regression.Bootstrap.ZCL95l(j,c) = l;
-            Regression.Bootstrap.ZCL95u(j,c) = u;
+            Regression.ConfidenceLimits.Bootstrap.ZVAR(j,c) = var(abs(Zb(:,c)),0,1);
+            Regression.ConfidenceLimits.Bootstrap.ZCL95l(j,c) = l;
+            Regression.ConfidenceLimits.Bootstrap.ZCL95u(j,c) = u;
         end
     end
 

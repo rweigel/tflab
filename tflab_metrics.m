@@ -209,6 +209,7 @@ for k = 1:size(In,3) % Third dimension is segment
     end
 end
 
+
 for k = 1:size(In,3)
     [DFTError(:,:,k),f,fe] = dftbands(Error(:,:,k), opts);
     DFTPredicted(:,:,k) = dftbands(OutPredicted(:,:,k), opts);
