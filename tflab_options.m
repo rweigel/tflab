@@ -145,7 +145,11 @@ opts.fd.regression = struct();
         %ropts.verbose = 0;    
         %opts.fd.regression.functionargs = {ropts};
 
-opts.fd.zerrorbars_ = 0;
+opts.fd.bootstrap = struct();
+    opts.fd.bootstrap.N = 100;
+    opts.fd.bootstrap.fraction = 1;
+    % Fraction to sample; Efron's original bootstrap method uses 1;
+    % If fraction != 1, called m of n bootstrap; see 10.1002/9781118445112.stat08002
 
 if os == 0
     % When no noise, should get exact TF used to generate the

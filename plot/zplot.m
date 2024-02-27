@@ -35,153 +35,122 @@ Phistrs = popts.phistrs;
 
 % Single transfer function
 if length(S) == 1
+    logmsg('Plotting single transfer function.\n')
 
-    interp_Z_exists = 0;
-    if isfield(S,'Zi')
-        interp_Z_exists = 1;
-    end
-
-    if popts.vs_period
-        if interp_Z_exists
-            xi = 1./(S{1}.fi*S.Metadata.freqsf);
+    yl1 = unitstr_(S{1}.Metadata);
+    yl2 = '[$^\circ$]';
+    if popts.type == 1 || popts.type == 2
+        template2 = '$%s$';
+        strings2 = Phistrs;        
+        if popts.type == 1
+            template1 = '$|%s|$';
+            strings1 = Zstrs;
+        else
+            template1 = '$%s$';
+            strings1 = Rhostrs;
         end
     else
-        if interp_Z_exists
-            xi = S{1}.fi*S{1}.Metadata.freqsf;
+        template1 = 'Re$(%s)$';
+        strings1 = Zstrs;
+        template2 = 'Im$(%s)$';
+        strings2 = Zstrs;
+        yl2 = unitstr_(S{1}.Metadata);
+    end
+
+    for j = 1:length(comps)
+        ls1{j} = sprintf(template1,strings1{comps(j)});
+        [x1,y1(:,j),dyu1(:,j),dyl1(:,j)] = xyvals_(S,popts,comps(j),'top','parametric');
+        if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
+            [~,~,dyu1b(:,j),dyl1b(:,j)] = xyvals_(S,popts,comps(j),'top','bootstrap');
+        end
+
+        ls2{j} = sprintf(template2,strings2{comps(j)});
+        [x2,y2(:,j),dyu2(:,j),dyl2(:,j)] = xyvals_(S,popts,comps(j),'bottom','parametric');
+        if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
+            [~,~,dyu2b(:,j),dyl2b(:,j)] = xyvals_(S,popts,comps(j),'top','bootstrap');
         end
     end
     
     figprep();
     ax1 = subplot('Position', popts.PositionTop);
-        switch popts.type
-            case 1
-                if interp_Z_exists
-                    yi = abs(S.Zi);
-                end
-                for j = 1:length(comps)
-                    ls{j} = sprintf('$|%s|$',Zstrs{comps(j)});
-                end
-            case 2
-                if interp_Z_exists
-                    yi = z2rho(x, S.Zi);
-                end
-                for j = 1:length(comps)
-                    ls{j} = sprintf('$%s$',Rhostrs{comps(j)});
-                end
-            case 3
-                for j = 1:length(comps)
-                    ls{j} = sprintf('Re$(%s)$',Zstrs{comps(j)});
-                end
-                if interp_Z_exists
-                    yi = real(S.Zi);
-                    jx = size(S.Z,2);
-                    for j = 1:length(comps)
-                        ls{jx+j} = sprintf('Re$(%s)$ Interpolated',Zstrs{comps(j)});
-                    end
-                end
-        end
 
-        for j = 1:length(comps)
-            [x,y(:,j),dyebu(:,j),dyebl(:,j)] = xyvals_(S,popts,comps(j),'top');
-        end
-
-        if interp_Z_exists
-            yi = y(:,comps);
-        end
         popts.line = linepopts_(size(S{1}.Z,1), 1);
 
-        h1 = plot(x, y, popts.line{:});
+        h1 = plot(x1, y1, popts.line{:});
         hold on;grid on;box on;
         titlestr(S{1},popts,'z');
-        colororder_(ax1,y);
-        
-        if interp_Z_exists
-            plot(xi, yi, popts.line{:}, 'markersize', 15);
+        colororder_(ax1,y1);
+
+        if length(ls1) > 1
+            ylabel(yl1);
+            legend(ls1,popts.legend{:});
+        else
+            ylabel(sprintf('%s %s',ls1{1},yl1));
         end
 
-        if length(ls) > 1
-            ylabel(unitstr_(S{1}.Metadata));
-            legend(ls,popts.legend{:});
-        else
-            ylabel(sprintf('%s %s',ls{1},unitstr_(S{1}.Metadata)));
-        end
         if popts.vs_period
             set(gca,'XScale','log');
         end
-
-        plot_errorbars_(h1,x,y,dyebl,dyebu)
 
         if popts.type < 3
             set(gca,'YScale','log');            
-            adjust_ylim('upper');
-        else
-            adjust_ylim('both');
         end
+        
+        % Must be called after scale type is set.
+        if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
+            plot_errorbars_(h1,0.97*x1,y1,dyl1,dyu1,1);
+            plot_errorbars_(h1,x1*1.03,y1,dyl1b,dyu1b,1);
+        else
+            plot_errorbars_(h1,x1,y1,dyl1,dyu1,2);            
+        end
+        
         adjust_yticks(1e-4);
         adjust_exponent('y');
         setx(popts,0,frequnit);
+
+        if popts.type == 3
+            xlims = get(gca(),'XLim');
+            line(xlims,[0,0])
+        end
+        
     ax2 = subplot('Position', popts.PositionBottom);
-        if popts.type ~= 3
-            yl = '[$^\circ$]';
-            if popts.unwrap
-                if interp_Z_exists
-                    yi = (180/pi)*unwrap(atan2(imag(S.Zi),real(S.Zi)));
-                end
-            else
-                if interp_Z_exists
-                    yi = (180/pi)*(atan2(imag(S.Zi),real(S.Zi)));
-                end
-            end
-            for j = 1:length(comps)
-                ls{j} = sprintf('$%s$',Phistrs{comps(j)});
-            end
-        else
-            yl = unitstr_(S{1}.Metadata);
-            for j = 1:length(comps)
-                ls{j} = sprintf('Im$(%s)$',Zstrs{comps(j)});
-            end
-            if interp_Z_exists
-                yi = imag(S.Zi);
-                jx = size(S.Z,2);
-                for j = 1:length(comps)
-                    ls{jx+j} = sprintf('Im$(%s)$ Interpolated',Zstrs{comps(j)});
-                end
-            end
-        end
 
-        for j = 1:length(comps)
-            [x(:,j),y(:,j)] = xyvals_(S,popts,comps(j),'bottom');
-        end
-
-        plot(x, y, popts.line{:}, 'markersize', 20);
+        h2 = plot(x2, y2, popts.line{:}, 'markersize', 20);
+        
         hold on;grid on;box on;
-        colororder_(ax2,y);
+        colororder_(ax2,y2);
 
-        if interp_Z_exists
-            plot(xi, yi, popts.line{:}, 'markersize', 15);
-        end
-
-        if length(ls) > 1
-            ylabel(yl);
-            legend(ls,popts.legend{:});
+        if length(ls2) > 1
+            ylabel(yl2);
+            legend(ls2,popts.legend{:});
         else
-            ylabel(sprintf('%s %s',ls{1},yl));
+            ylabel(sprintf('%s %s',ls2{1},yl2));
         end
+
         if popts.vs_period
             set(gca,'XScale','log');
         end
+
         if ~popts.unwrap && popts.type ~= 3
             set(gca,'YScale','linear');
             set(gca,'YTick',-180:45:180);
         end
 
-        plot_errorbars_(h1,x,y,dyebl,dyebu)
+        % Must be called after scale type is set.
+        if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
+            plot_errorbars_(h2,0.97*x2,y2,dyl2,dyu2,1);
+            plot_errorbars_(h2,x2*1.03,y2,dyl2b,dyu2b,1);
+        else
+            plot_errorbars_(h2,x2,y2,dyl2,dyu2,2);            
+        end
 
-        adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
         setx(popts,1,frequnit);
 
+        xlims = get(gca(),'XLim');
+        line(xlims,[0,0])
+        
     if popts.print == 1
         exts = {};
         if length(Zstrs) == 2
@@ -205,6 +174,7 @@ end % if isstruct(S)
 
 % Multiple transfer functions
 if length(S) > 1
+    logmsg('Plotting multiple transfer functions.\n')
 
     if length(comps) == 1
         comp = comps;
@@ -313,185 +283,92 @@ end % if iscell(S)
 
 end % function
 
-function plot_errorbars_(h,x,y,dyebl,dyebu)
-    if ~isempty(dyebl)
-        colors = get(h,'Color');
-        if ~iscell(colors)
-            colors = {colors};
-        end
-        for j = 1:size(y,2)
-            errorbars(x,y(:,j),dyebl(:,j),dyebu(:,j),...
-                     'y','Color',colors{j},'LineWidth',2);
-        end
+function plot_errorbars_(h,x,y,dyl,dyu,lw)
+    if isempty(dyl)
+        return;
+    end
+    colors = get(h,'Color');
+    if ~iscell(colors)
+        colors = {colors};
+    end
+    for comp = 1:size(y,2)
+        errorbars(x,y(:,comp),dyl(:,comp),dyu(:,comp),...
+                 'y','Color',colors{comp},'LineWidth',lw);
     end
 end
 
-function [dyebu,dyebl] = compute_errorbars_(S,popts,panel,comp)
+function [x,y,dyu,dyl] = xyvals_(S,popts,comp,panel,errorbar_method)
 
-    dyebu = zeros(size(S.Z(:,comp)));
-    dyebl = zeros(size(S.Z(:,comp)));
+% TODO: Assumes units are the same for all Zs.
+%       Check this before plotting.
 
-    if isfield(S,'Regression')
-        if isfield(S.Regression,'Bootstrap')
-            if popts.type == 1 && strcmp(panel,'top')
-                dyebl = abs(S.Z(:,comp)) - S.Regression.Bootstrap.ZCL95l(:,comp);            
-                dyebu = S.Regression.Bootstrap.ZCL95u(:,comp) - abs(S.Z(:,comp));
-            end
-        return;
-        end
-    end
-
-    %dyebl = abs(S.Z(:,comp)) - 2*sqrt(S.Regression.Bootstrap.ZVAR(:,comp));
-    %dyebu = 2*sqrt(S.Regression.Bootstrap.ZVAR(:,comp)) - abs(S.Z(:,comp));
-
-    if isfield(S,'Regression')
-        if isfield(S.Regression,'ZCL95l')
-            if popts.type == 1
-                % For real Zx and Zy, if
-                % Z = sqrt(Zx^2 + Zy^2) standard propagation of errors is
-                % |ΔZ| = (|Zx|/Z)ΔZx + (|Zy|/Z)ΔZy
-                % or
-                % |ΔZ| = sqrt( [(Zx/Z)ΔZx]^2 + [(|Zy|/Z)ΔZy]^2 )
-                %
-                % For complex Zx and Zy, if
-                % Z = sqrt(Zr^2 + Zi^2) standard propagation of errors is
-                % |ΔZ| = (|Zr|/Z)ΔZr + (|Zi|/Z)ΔZi
-                % or the equivalent sum-of-square in pattern above.
-                if strcmp(panel,'top')
-                    Zmag = abs(S.Z(:,comp));
-                    dZr = real(S.Regression.ZCL95u(:,comp) - S.Regression.ZCL95l(:,comp));
-                    dZi = imag(S.Regression.ZCL95u(:,comp) - S.Regression.ZCL95l(:,comp));
-                    Zr = real(S.Z(:,comp));
-                    Zi = imag(S.Z(:,comp));
-                    terms = abs(Zr).*dZr + abs(Zi).*dZi;
-                    deltaZ = terms./Zmag;
-                    dyebl = deltaZ/2;
-                    dyebu = deltaZ/2;
-                end
-            end
-            if popts.type == 3
-                dyebl = S.Z(:,comp) - S.Regression.ZCL95l(:,comp);
-                dyebu = S.Regression.ZCL95u(:,comp) - S.Z(:,comp);
-                if strcmp(panel,'top')
-                    dyebl = real(dyebl);
-                    dyebu = real(dyebu);
-                end
-                if strcmp(panel,'bottom')
-                    dyebl = imag(dyebl);
-                    dyebu = imag(dyebu);
-                end
-            end
-            return;
-        end
-    end
+for s = 1:length(S)
     
-    if ~isfield(S,'ZVAR')
-        return;
+    if strcmp(errorbar_method,'parametric')
+        ErrorEstimates = S{s}.Metrics.ErrorEstimates.Parametric;
+    end
+    if strcmp(errorbar_method,'bootstrap')
+        ErrorEstimates = S{s}.Metrics.ErrorEstimates.Bootstrap;
     end
 
-    % https://ds.iris.edu/spud/resources/pdf/SPUD-XML-change-log.pdf
-    % (cached in runs/data/EarthScope/SPUD-XML-change-log.pdf)
-    % "To compute the standard error of a real or imaginary part, e.g.,
-    % for plotting, one would divide the variance by 2, then take square root
-    % (i.e. Std = sqrt(Var/2)). To plot the error bars for a real or imaginary part,
-    % one would then multiply that number by 2 ..."
-
-    % http://ds.iris.edu/spudservice/data/15014569
-    % Here I multiply by sqrt(2) to get an approxmate visual
-    % match to error bars at http://ds.iris.edu/spud/emtf/15014571.
-    % The documentation does not indicate if the error bars
-    % are 1 or 2 Standard Errors. Also, it may be that the plots
-    % have not been updated since 2018 when the
-    % reprocessing of the files was performed as mentioned
-    % in https://ds.iris.edu/spud/resources/pdf/SPUD-XML-change-log.pdf
-    %
-    % TODO: Find out what is plotted at http://ds.iris.edu/spud/emtf/15014571
-    % so that I can state the error bar length in SEs.
-
-    % See also
-    %   https://ds.iris.edu/files/products/emtf/definitions/
-    %   http://ds.iris.edu/files/products/emtf/definitions/variance.html
-    %   https://library.seg.org/doi/epdf/10.1190/geo2018-0679.1
-    
     if strcmp(panel,'top')
-        dZ = sqrt(2)*sqrt(S.ZVAR(:,comp));
         if popts.type == 1
-            dyebl = dZ;
-            dyebu = dZ;
+            y{s} = abs(S{s}.Z(:,comp));
+            dyl{s} = y{s} - ErrorEstimates.ZMAGCL95l(:,comp);
+            dyu{s} = ErrorEstimates.ZMAGCL95u(:,comp) - y{s};
         end
         if popts.type == 2
-            % ρ = |Z|^2/(5*f) => Δρ = 2|Z|dZ/(5*f)
-            dyebl = 2*abs(S.Z(:,comp)).*dZ./(5*S.fe);
-            dyebu = yebl;
+            f = S{s}.fe*S{s}.Metadata.freqsf;
+            y{s} = z2rho(f, S{s}.Z(:,comp));
+            dyl{s} = y{s} - ErrorEstimates.RHOCL95l(:,comp);
+            dyu{s} = ErrorEstimates.RHOCL95u(:,comp) - y{s};
         end
         if popts.type == 3
-            dyebl = dZ;
-            dyebu = dZ;
-        end            
+            y{s} = real(S{s}.Z(:,comp));
+            dyl{s} = y{s} - real(ErrorEstimates.ZCL95l(:,comp));
+            dyu{s} = real(ErrorEstimates.ZCL95u(:,comp)) - y{s};
+        end
     end
+    
     if strcmp(panel,'bottom')
         if popts.type == 3
-            dZ = sqrt(2)*sqrt(S.ZVAR(:,comp)/2);
-            dyebl = dZ;
-            dyebu = dZ;
-        end            
-    end
-end
-
-function [x,y,dyebu,dyebl] = xyvals_(S,popts,comp,panel)
-
-    % TODO: Assumes units are the same for all Zs.
-    %       Check this before plotting.
-
-    for s = 1:length(S)
-        
-        if strcmp(panel,'top')
-            if popts.type == 1
-                y{s} = abs(S{s}.Z(:,comp));
-            end
-            if popts.type == 2
-                f = S{s}.fe*S{s}.Metadata.freqsf;
-                y{s} = z2rho(f, S{s}.Z(:,comp));
-            end
-            if popts.type == 3
-                y{s} = real(S{s}.Z(:,comp));
-            end
-        end
-        
-        if strcmp(panel,'bottom')
-            if popts.type == 3
-                y{s} = imag(S{s}.Z(:,comp));
-            else
-                if popts.unwrap
-                    y{s} = (180/pi)*unwrap(atan2(imag(S{s}.Z(:,comp)),real(S{s}.Z(:,comp))));
-                else
-                    y{s} = (180/pi)*atan2(imag(S{s}.Z(:,comp)),real(S{s}.Z(:,comp)));
-                end
-            end
-        end
-
-        [dyebu{s},dyebl{s}] = compute_errorbars_(S{s},popts,panel,comp);            
-
-        if popts.vs_period
-            x{s} = 1./(S{s}.fe*S{s}.Metadata.freqsf);
+            y{s} = imag(S{s}.Z(:,comp));
+            dyl{s} = y{s} - imag(ErrorEstimates.ZCL95l(:,comp));
+            dyu{s} = imag(ErrorEstimates.ZCL95u(:,comp)) - y{s};
         else
-            x{s} = S{s}.fe*S{s}.Metadata.freqsf;
-        end
-        
-        if popts.vs_period && ~isempty(popts.period_range)
-            idx = x{s} <= popts.period_range(1) | x{s} >= popts.period_range(2);
-            y{s}(idx) = NaN;
+            ang = atan2(imag(S{s}.Z(:,comp)),real(S{s}.Z(:,comp)));
+            if popts.unwrap
+                y{s} = (180/pi)*unwrap(ang);
+            else
+                y{s} = (180/pi)*atan2(ang);
+            end
+            dyl{s} = y{s} - ErrorEstimates.PHICL95l(:,comp);
+            dyu{s} = ErrorEstimates.PHICL95u(:,comp)- y{s};
         end
     end
-    if length(S) == 1
-        x = x{s};
-        y = y{s};
-        dyebl = dyebl{s};
-        dyebu = dyebu{s};
+
+    if popts.vs_period
+        x{s} = 1./(S{s}.fe*S{s}.Metadata.freqsf);
+    else
+        x{s} = S{s}.fe*S{s}.Metadata.freqsf;
+    end
+    
+    if popts.vs_period && ~isempty(popts.period_range)
+        idx = x{s} <= popts.period_range(1) | x{s} >= popts.period_range(2);
+        y{s}(idx) = NaN;
     end
 end
 
-function line = linepopts_(Nz, s);
+if length(S) == 1
+    x = x{s};
+    y = y{s};
+    dyl = dyl{s};
+    dyu = dyu{s};
+end
+
+end % xyvals_ function
+
+function line = linepopts_(Nz, s)
     if Nz == 1 % Single point
         ms = 30;
         line = {'.','markersize', ms};
@@ -516,5 +393,6 @@ function str = unitstr_(meta)
         outunit = sprintf('(%s)',outunit);
     end
     str = sprintf('[%s/%s]',outunit,inunit);
+
 end
 

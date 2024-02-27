@@ -37,8 +37,8 @@ else
 end
 
 if opts.tflab.loglevel > 0
-    logmsg(['Starting freq band and regression '...
-            'calcs for %d frequencies.\n'],length(fe));
+    msg = 'Starting freq band and regression calcs for %d frequencies.\n';
+    logmsg(msg,length(fe));
     logmsg('Doing regression using %s\n',opts.fd.regression.functionstr);
 end
 
@@ -49,9 +49,19 @@ for j = 1:length(fe)
     ftIn = DFTIn{j,1};
     ftOut = DFTOut{j,1};
 
-    Z(j,:) = nan(1,size(ftIn,2));
-    dZ(j,1) = nan;
-    Regression.Residuals{j,1} = nan(size(ftOut,1),1);
+    Z(j,:) = (1+1j)*nan(1,size(ftIn,2));
+    dZ(j,1) = (1+1j)*nan;
+    Regression.Residuals{j,1} = (1+1j)*nan(size(ftOut,1),1);
+    Regression.ErrorEstimates.Parametric.ZCL95l(j,:)  = (1+1j)*nan*ones(1,size(Z,2));
+    Regression.ErrorEstimates.Parametric.ZCL95u(j,:)  = (1+1j)*nan*ones(1,size(Z,2));
+    Regression.ErrorEstimates.Parametric.dZCL95l(j,1) = (1+1j)*nan;
+    Regression.ErrorEstimates.Parametric.dZCL95u(j,1) = (1+1j)*nan;
+
+    if isfield(opts.fd,'bootstrap')
+        Regression.ErrorEstimates.Bootstrap.ZVAR(j,:)   = (1+1j)*nan*ones(1,size(Z,2));
+        Regression.ErrorEstimates.Bootstrap.ZCL95l(j,:) = (1+1j)*nan*ones(1,size(Z,2));
+        Regression.ErrorEstimates.Bootstrap.ZCL95u(j,:) = (1+1j)*nan*ones(1,size(Z,2));
+    end
 
     if opts.fd.window.loglevel > 0
         msg = 'Band with center of fe = %.8f has %d points; fl = %.8f fh = %.8f\n';
@@ -62,7 +72,7 @@ for j = 1:length(fe)
         % One input component
         z = ftOut./ftIn;
         if isinf(z)
-            z = nan;
+            z = nan*(1+1j);
         end
         Z(j,1) = z;
         dZ(j,1) = 0;
@@ -103,11 +113,12 @@ for j = 1:length(fe)
     if any(isinf(Z(j,:)))
         msg = '!!! Z has Infs for fe = %f. Setting all element of Z to NaN(s).\n';
         logmsg(msg,fe(j));
-        Z(j,:) = nan;
-        dZ(j,1) = nan;
+        Z(j,:) = (1+1j)*nan;
+        dZ(j,1) = (1+1j)*nan;
         continue;
     end
 
+    
     if isfield(Info,'Residuals')
         % Residuals are also computed in tflab_metrics because we remove
         % Regression.Residuals when saving file to reduce file size. The
@@ -116,41 +127,49 @@ for j = 1:length(fe)
         Regression.Residuals{j,1} = Info.Residuals;
     end
     if isfield(Info,'ZCL95l')
-        Regression.ConfidenceLimits.Parametric.ZCL95l(j,:) = Info.ZCL95l;
+        Regression.ErrorEstimates.Parametric.ZCL95l(j,:) = Info.ZCL95l;
     end
     if isfield(Info,'ZCL95u')
-        Regression.ConfidenceLimits.Parametric.ZCL95u(j,:) = Info.ZCL95u;
+        Regression.ErrorEstimates.Parametric.ZCL95u(j,:) = Info.ZCL95u;
     end
     if isfield(Info,'dZCL95l')
-        Regression.ConfidenceLimits.Parametric.dZCL95l(j,:) = Info.dZCL95l;
+        Regression.ErrorEstimates.Parametric.dZCL95l(j,:) = Info.dZCL95l;
     end
     if isfield(Info,'dZCL95u')
-        Regression.ConfidenceLimits.Parametric.dZCL95u(j,:) = Info.dZCL95u;
+        Regression.ErrorEstimates.Parametric.dZCL95u(j,:) = Info.dZCL95u;
     end
 
     n = size(ftOut,1);
-    if opts.fd.zerrorbars_ && n > 10
-        Nb = 100; % Number of bootstrap samples
-        fract = 1; % Fraction to sample; Efron's original bootstrap method uses 1;
-                   % If f != 1, called m of n bootstrap; see 10.1002/9781118445112.stat08002
+    if isfield(opts.fd,'bootstrap') && n > 10
+        Nb = opts.fd.bootstrap.N;
+        fraction = opts.fd.bootstrap.fraction;
+        m = round(fraction*n);
         if boot_note == 1
-            logmsg(sprintf('Computing confidence limits using %d bootstrap samples and m/n = %.2f\n',Nb,fract));
+            msg = 'Computing confidence limits using %d bootstrap samples and m/n = %.2f\n';
+            logmsg(msg,Nb,fraction);
             boot_note = 0;
         end
         for b = 1:Nb
-            I = randsample(n,round(fract*n),1); % Resample with replacement
+            I = randsample(n,m,1); % Resample with replacement
             Zb(b,:) = regressfunc(ftOut(I,:),ftIn(I,:),regressargs{:});
         end
+
         nl = round((0.05/2)*Nb);
         nh = round((1-0.05/2)*Nb);
-
         for c = 1:size(Z,2)
-            Zb(:,c) = sort(abs(Zb(:,c)),1); % Sort rows
-            l = abs(Zb(nl,c));    % Select the nth lowest
-            u = abs(Zb(nh,c));    % Select the nth highest
-            Regression.ConfidenceLimits.Bootstrap.ZVAR(j,c) = var(abs(Zb(:,c)),0,1);
-            Regression.ConfidenceLimits.Bootstrap.ZCL95l(j,c) = l;
-            Regression.ConfidenceLimits.Bootstrap.ZCL95u(j,c) = u;
+
+            Zbr(:,c) = sort(real(Zb(:,c)),1);
+            Zbrl = Zbr(nl,c); % Select the nl th lowest
+            Zbru = Zbr(nh,c); % Select the nh th lowest
+
+            Zbi(:,c) = sort(imag(Zb(:,c)),1);
+            Zbil = Zbi(nl,c); % Select the nl th lowest
+            Zbiu = Zbi(nh,c); % Select the nh th lowest
+
+            Regression.ErrorEstimates.Bootstrap.ZCL95l(j,c) = Zbrl + 1j*Zbil;
+            Regression.ErrorEstimates.Bootstrap.ZCL95u(j,c) = Zbru + 1j*Zbiu;
+
+            Regression.ErrorEstimates.Bootstrap.ZVAR(j,c) = var(abs(Zb(:,c)),0,1);
         end
     end
 

@@ -28,9 +28,16 @@ function S = tflab_metrics(S,onsegments)
 if nargin < 2
     onsegments = 0;
 end
+logmsg('Computing metrics.\n')
 
 opts = S.Options;
 if onsegments == 0
+    if isfield_(S,'Regression.ErrorEstimates')
+        % Compute Metrics.ErrorEstimates based on content of
+        % S.Regression.ErrorEstimates.Parametric
+        logmsg('Computing error estimates.\n');
+        Metrics = error_estimates(S);
+    end
     if ~iscell(S.In)
         logmsg('Computing metrics on full unsegmented data using top-level Z.\n');
         In  = S.In;
@@ -93,8 +100,8 @@ else
 end
 
 if size(Out,2)*size(In,2) ~= size(Z,2)
-    assert(size(Out,2)*size(In,2) == size(Z,2) || size(Out,2)*size(In,2) == size(Z,2) - 1,...
-           'size(Out,2) must equal size(Z,2)/size(In,2)');
+    cond = size(Out,2)*size(In,2) == size(Z,2) || size(Out,2)*size(In,2) == size(Z,2) - 1;
+    assert(cond, 'size(Out,2) must equal size(Z,2)/size(In,2)');
 end
 
 OutPredicted = nan(size(Out));
@@ -144,9 +151,11 @@ for k = 1:size(In,3) % Third dimension is segment
 end
 
 if ~isfield(S,'DFT')
-    logmsg(sprintf('DFT field not found. Computing.\n'));
+    logmsg('DFT field not found. Computing.\n');
     S = tflab_fdpreprocess(S);
     DFT = S.DFT;
+else
+    logmsg('DFT field found. Not recomputing.\n');
 end
 
 logmsg('Computing residuals.\n')

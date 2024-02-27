@@ -79,6 +79,7 @@ else
     timeunit  = S.Metadata.timeunit;
     timedelta = S.Metadata.timedelta;
     if strcmp(popts.type,'error')
+        logmsg('Plotting output and predicted for single transfer function.\n')
         y1{1} = S.Out;
         if ~isfield(S,'Out_')
             S = tflab_tdpreprocess(S);
@@ -94,6 +95,7 @@ else
         trange = [t1(1),t1(end)];
         lg1 = {'Measured', 'Predicted'};
     else
+        logmsg('Plotting input/output for single transfer function.\n')
         if strcmp(popts.type,'original')
             y1 = S.In;
             y2 = S.Out;
@@ -112,8 +114,8 @@ else
                 S = tflab_tdpreprocess(S);
             end
             if ~isfield(S,'In_') || ~isfield(S.In_,typeuc)
-                error('Invalid plot type request of %s: data were not %s.',...
-                      popts.type,popts.type);
+                msg = 'Invalid plot type request of %s: data were not %s.';
+                error(msg, popts.type,popts.type);
             end
             y1 = S.In_.(typeuc);
             y2 = S.Out_.(typeuc);
@@ -133,7 +135,7 @@ end
 figprep();
 
 if ~iscell(S) && ~strcmp(popts.type,'error')
-    
+
     ax(1) = subplot('Position',popts.PositionTop);
         plot(t1,y1);
         if size(y1,2) == 1

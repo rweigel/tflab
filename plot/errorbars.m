@@ -23,18 +23,18 @@ function errorbars(x,y,dyl,dyu,dir,varargin)
         end
     end
     if strcmp(scalex,'log') && strcmp(scaley,'log')
+        Im = min(find(y-dyl > 0));
         for i = 1:length(x)
             add_head = 0;
             if y(i) - dyl(i) <= 0
                 add_head = 1;
-                ylims = get(gca,'YLim');
-                ylow = ylims(1);
+                ylow = y(Im) - dyl(Im);
             else
-                ylow = y(i)-dyl(i);
+                ylow = y(i) - dyl(i);
             end
             loglog([x(i),x(i)],[y(i)+dyu(i),ylow],linestyle{:});
             if add_head
-                loglog(x(i),ylow,'kx');
+                loglog(x(i),ylow,'ko','MarkerSize',10);
             end
         end
     end

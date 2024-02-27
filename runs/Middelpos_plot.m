@@ -15,17 +15,27 @@ for tfn = 1:2
     fname{tfn} = fullfile(outdir, sprintf('Middelpos-%s-%s-tf%d.mat',start,stop,tfn));
     TFs{tfn} = loadtf(fname{tfn});
     TFs{tfn} = tflab_preprocess(TFs{tfn});
-    TFs{tfn} = tflab_metrics(TFs{tfn});
+    %TFs{tfn} = tflab_metrics(TFs{tfn});
 end
 
 %% Set common print options
-
 copts = struct();
     copts.print = 0; % Set to 1 to print pdf of each figure created.
     copts.printOptions.printDir = fullfile(scriptdir(),'data','Middelpos','figures');
     copts.printOptions.printFormats = {'pdf'};
 
 dock on;figure(1);close all;
+
+%% Z plots
+% Compare Z between S1 and S2
+figure();
+    zopts = copts;
+    zopts.type = 1;
+    zopts.period_range = [1, 86400];
+    zplot(TFs(:),zopts,[1,2]);
+figure();
+    zplot(TFs(:),zopts,[3,4]);
+keyboard
 
 %% Time series plots
 % Plot raw time series data used for TF1 (will be same as that for TF2)
@@ -84,7 +94,7 @@ figure();
         dftplot(TF(1:2),dftopts);
 end
 
-    
+
 %% SN plots
 % Plot SN for TF1 only
 if 0
@@ -107,6 +117,7 @@ figure();
 % Compare Z between S1 and S2
 figure();
     zopts = copts;
+    zopts.type = 1;
     zopts.period_range = [1, 86400];
     zplot(TFs(:),zopts,[1,2]);
 figure();
