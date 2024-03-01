@@ -28,7 +28,7 @@ S = tflab_metadata(S);
 
 % TODO: Check all same units and sfs or allow different.
 frequnit = S{1}.Metadata.frequnit;
-popts = tflabplot_options(S, popts, 'zplot');
+popts   = tflabplot_options(S, popts, 'zplot');
 Zstrs   = popts.zstrs;
 Rhostrs = popts.rhostrs;
 Phistrs = popts.phistrs;
@@ -41,7 +41,7 @@ if length(S) == 1
     yl2 = '[$^\circ$]';
     if popts.type == 1 || popts.type == 2
         template2 = '$%s$';
-        strings2 = Phistrs;        
+        strings2 = Phistrs;
         if popts.type == 1
             template1 = '$|%s|$';
             strings1 = Zstrs;
@@ -67,10 +67,10 @@ if length(S) == 1
         ls2{j} = sprintf(template2,strings2{comps(j)});
         [x2,y2(:,j),dyu2(:,j),dyl2(:,j)] = xyvals_(S,popts,comps(j),'bottom','parametric');
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
-            [~,~,dyu2b(:,j),dyl2b(:,j)] = xyvals_(S,popts,comps(j),'top','bootstrap');
+            [~,~,dyu2b(:,j),dyl2b(:,j)] = xyvals_(S,popts,comps(j),'bottom','bootstrap');
         end
     end
-    
+
     figprep();
     ax1 = subplot('Position', popts.PositionTop);
 
@@ -93,17 +93,17 @@ if length(S) == 1
         end
 
         if popts.type < 3
-            set(gca,'YScale','log');            
+            set(gca,'YScale','log');
         end
-        
+
         % Must be called after scale type is set.
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
             plot_errorbars_(h1,0.97*x1,y1,dyl1,dyu1,1);
             plot_errorbars_(h1,x1*1.03,y1,dyl1b,dyu1b,1);
         else
-            plot_errorbars_(h1,x1,y1,dyl1,dyu1,2);            
+            plot_errorbars_(h1,x1,y1,dyl1,dyu1,2);
         end
-        
+
         adjust_yticks(1e-4);
         adjust_exponent('y');
         setx(popts,0,frequnit);
@@ -112,11 +112,11 @@ if length(S) == 1
             xlims = get(gca(),'XLim');
             line(xlims,[0,0])
         end
-        
+
     ax2 = subplot('Position', popts.PositionBottom);
 
         h2 = plot(x2, y2, popts.line{:}, 'markersize', 20);
-        
+
         hold on;grid on;box on;
         colororder_(ax2,y2);
 
@@ -141,7 +141,7 @@ if length(S) == 1
             plot_errorbars_(h2,0.97*x2,y2,dyl2,dyu2,1);
             plot_errorbars_(h2,x2*1.03,y2,dyl2b,dyu2b,1);
         else
-            plot_errorbars_(h2,x2,y2,dyl2,dyu2,2);            
+            plot_errorbars_(h2,x2,y2,dyl2,dyu2,2);
         end
 
         adjust_yticks(1e-4);
@@ -150,7 +150,7 @@ if length(S) == 1
 
         xlims = get(gca(),'XLim');
         line(xlims,[0,0])
-        
+
     if popts.print == 1
         exts = {};
         if length(Zstrs) == 2
@@ -169,7 +169,7 @@ if length(S) == 1
         end
         figsave_(popts,ext);
     end
-        
+
 end % if isstruct(S)
 
 % Multiple transfer functions
@@ -179,24 +179,25 @@ if length(S) > 1
     if length(comps) == 1
         comp = comps;
     else
-        for comp = 1:length(comps)
-            if comp > 1
+        for c = 1:length(comps)
+            if c > 1
                 figure;
             end
-            [ax1(comp),ax2(comp)] = zplot(S,popts,comp);
+            logmsg('Plotting component %d.\n',comps(c))
+            [ax1(c),ax2(c)] = zplot(S,popts,comps(c));
         end
-        return;
+        return
     end
-    
+
     figprep();
 
     ax1 = subplot('Position', popts.PositionTop);
 
-        [x,y,dyebu,dyebl] = xyvals_(S,popts,comp,'top');
+        [x,y,dyu,dyl] = xyvals_(S,popts,comp,'top','parametric');
 
         for s = 1:length(S)
             ls{s} = sprintf('%s',S{s}.Options.description);
-            popts.line = linepopts_(size(S{s}.Z,1), s);            
+            popts.line = linepopts_(size(S{s}.Z,1), s);
             h(s) = plot(x{s}, y{s}, popts.line{:});
             if s == 1
                 grid on;hold on;box on;
@@ -205,12 +206,6 @@ if length(S) > 1
 
         legend(h,ls,popts.legend{:});
 
-        for s = 1:length(S)
-            if ~isempty(dyebl{s})
-                errorbars(x{s},y{s},dyebl{s},dyebu{s},...
-                    'y','Color',get(h(s),'Color'),'LineWidth',2);
-            end
-        end
         if popts.type < 3
             set(gca,'YScale','log');
         end
@@ -231,8 +226,16 @@ if length(S) > 1
             set(gca,'XLim',popts.period_range);
         end
         ylabel(yl);
+
+        if length(x) == 2
+            % Must be called after scale type is set.
+            plot_errorbars_(h(1),0.97*x{1},y{1},dyl{1},dyu{1},1);
+            plot_errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},1);
+        end
+
         adjust_yticks(1e-4);
         adjust_exponent('y');
+
         if popts.type == 3
             adjust_ylim('both');
         else
@@ -242,20 +245,19 @@ if length(S) > 1
 
     ax2 = subplot('Position', popts.PositionBottom);
 
-        [x,y,dyebu,dyebl] = xyvals_(S,popts,comp,'bottom');
+        [x,y,dyu,dyl] = xyvals_(S,popts,comp,'bottom','parametric');
+
         for s = 1:length(S)
             ls{s} = sprintf('%s',S{s}.Options.description);
 
             popts.line = linepopts_(size(S{s}.Z,1), s);
             if popts.vs_period
-                semilogx(x{s}, y{s}, popts.line{:});
+                h(s) = semilogx(x{s}, y{s}, popts.line{:});
             else
-                plot(x{s}, y{s}, popts.line{:});
+                h(s) = plot(x{s}, y{s}, popts.line{:});
             end
 
-            if s == 1
-                grid on;box on;hold on;
-            end
+            if s == 1,grid on;box on;hold on;end
         end
 
         yl = sprintf('$%s$ [$^\\circ]$',Phistrs{comp});
@@ -263,6 +265,7 @@ if length(S) > 1
             yl = sprintf('Im$(%s)$ %s',Zstrs{comp},unitstr_(S{1}.Metadata));
         end
         ylabel(yl);
+        legend(ls,popts.legend{:});
 
         if popts.type ~= 3 && ~popts.unwrap
             set(gca,'YScale','linear');
@@ -272,101 +275,103 @@ if length(S) > 1
         else
             adjust_ylim('upper');
         end
-        legend(ls,popts.legend{:});
+
+        if length(x) == 2
+            % Must be called after scale type is set.
+            plot_errorbars_(h(1),0.97*x{1},y{1},dyl{1},dyu{1},1);
+            plot_errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},1);
+        end
+
         adjust_yticks(1e-4);
         adjust_exponent();
         setx(popts,1,frequnit);
 
     figsave_(popts,Zstrs{comp});
-    
+
 end % if iscell(S)
 
-end % function
+end % function zplot()
 
 function plot_errorbars_(h,x,y,dyl,dyu,lw)
-    if isempty(dyl)
-        return;
-    end
+    if isempty(dyl),return,end
     colors = get(h,'Color');
     if ~iscell(colors)
         colors = {colors};
     end
     for comp = 1:size(y,2)
-        errorbars(x,y(:,comp),dyl(:,comp),dyu(:,comp),...
-                 'y','Color',colors{comp},'LineWidth',lw);
+        args = {'y','Color',colors{comp},'LineWidth',lw};
+        errorbar_(x,y(:,comp),dyl(:,comp),dyu(:,comp),args{:});
     end
 end
 
 function [x,y,dyu,dyl] = xyvals_(S,popts,comp,panel,errorbar_method)
 
-% TODO: Assumes units are the same for all Zs.
-%       Check this before plotting.
+    % TODO: Assumes units are the same for all Zs.
+    %       Check this before plotting.
 
-for s = 1:length(S)
-    
-    if strcmp(errorbar_method,'parametric')
-        ErrorEstimates = S{s}.Metrics.ErrorEstimates.Parametric;
-    end
-    if strcmp(errorbar_method,'bootstrap')
-        ErrorEstimates = S{s}.Metrics.ErrorEstimates.Bootstrap;
-    end
+    for s = 1:length(S)
 
-    if strcmp(panel,'top')
-        if popts.type == 1
-            y{s} = abs(S{s}.Z(:,comp));
-            dyl{s} = y{s} - ErrorEstimates.ZMAGCL95l(:,comp);
-            dyu{s} = ErrorEstimates.ZMAGCL95u(:,comp) - y{s};
+        if strcmp(errorbar_method,'parametric')
+            ErrorEstimates = S{s}.Metrics.ErrorEstimates.Parametric;
         end
-        if popts.type == 2
-            f = S{s}.fe*S{s}.Metadata.freqsf;
-            y{s} = z2rho(f, S{s}.Z(:,comp));
-            dyl{s} = y{s} - ErrorEstimates.RHOCL95l(:,comp);
-            dyu{s} = ErrorEstimates.RHOCL95u(:,comp) - y{s};
+        if strcmp(errorbar_method,'bootstrap')
+            ErrorEstimates = S{s}.Metrics.ErrorEstimates.Bootstrap;
         end
-        if popts.type == 3
-            y{s} = real(S{s}.Z(:,comp));
-            dyl{s} = y{s} - real(ErrorEstimates.ZCL95l(:,comp));
-            dyu{s} = real(ErrorEstimates.ZCL95u(:,comp)) - y{s};
-        end
-    end
-    
-    if strcmp(panel,'bottom')
-        if popts.type == 3
-            y{s} = imag(S{s}.Z(:,comp));
-            dyl{s} = y{s} - imag(ErrorEstimates.ZCL95l(:,comp));
-            dyu{s} = imag(ErrorEstimates.ZCL95u(:,comp)) - y{s};
-        else
-            ang = atan2(imag(S{s}.Z(:,comp)),real(S{s}.Z(:,comp)));
-            if popts.unwrap
-                y{s} = (180/pi)*unwrap(ang);
-            else
-                y{s} = (180/pi)*atan2(ang);
+        if strcmp(panel,'top')
+            if popts.type == 1
+                y{s} = abs(S{s}.Z(:,comp));
+                dyl{s} = y{s} - ErrorEstimates.ZMAGCL95l(:,comp);
+                dyu{s} = ErrorEstimates.ZMAGCL95u(:,comp) - y{s};
             end
-            dyl{s} = y{s} - ErrorEstimates.PHICL95l(:,comp);
-            dyu{s} = ErrorEstimates.PHICL95u(:,comp)- y{s};
+            if popts.type == 2
+                f = S{s}.fe*S{s}.Metadata.freqsf;
+                y{s} = z2rho(f, S{s}.Z(:,comp));
+                dyl{s} = y{s} - ErrorEstimates.RHOCL95l(:,comp);
+                dyu{s} = ErrorEstimates.RHOCL95u(:,comp) - y{s};
+            end
+            if popts.type == 3
+                y{s} = real(S{s}.Z(:,comp));
+                dyl{s} = y{s} - real(ErrorEstimates.ZCL95l(:,comp));
+                dyu{s} = real(ErrorEstimates.ZCL95u(:,comp)) - y{s};
+            end
+        end
+
+        if strcmp(panel,'bottom')
+            if popts.type == 3
+                y{s} = imag(S{s}.Z(:,comp));
+                dyl{s} = y{s} - imag(ErrorEstimates.ZCL95l(:,comp));
+                dyu{s} = imag(ErrorEstimates.ZCL95u(:,comp)) - y{s};
+            else
+                ang = atan2(imag(S{s}.Z(:,comp)),real(S{s}.Z(:,comp)));
+                if popts.unwrap
+                    y{s} = (180/pi)*unwrap(ang);
+                else
+                    y{s} = (180/pi)*ang;
+                end
+                dyl{s} = y{s} - ErrorEstimates.PHICL95l(:,comp);
+                dyu{s} = ErrorEstimates.PHICL95u(:,comp)- y{s};
+            end
+        end
+
+        if popts.vs_period
+            x{s} = 1./(S{s}.fe*S{s}.Metadata.freqsf);
+        else
+            x{s} = S{s}.fe*S{s}.Metadata.freqsf;
+        end
+
+        if popts.vs_period && ~isempty(popts.period_range)
+            idx = x{s} <= popts.period_range(1) | x{s} >= popts.period_range(2);
+            y{s}(idx) = NaN;
         end
     end
 
-    if popts.vs_period
-        x{s} = 1./(S{s}.fe*S{s}.Metadata.freqsf);
-    else
-        x{s} = S{s}.fe*S{s}.Metadata.freqsf;
+    if length(S) == 1
+        x = x{s};
+        y = y{s};
+        dyl = dyl{s};
+        dyu = dyu{s};
     end
-    
-    if popts.vs_period && ~isempty(popts.period_range)
-        idx = x{s} <= popts.period_range(1) | x{s} >= popts.period_range(2);
-        y{s}(idx) = NaN;
-    end
-end
-
-if length(S) == 1
-    x = x{s};
-    y = y{s};
-    dyl = dyl{s};
-    dyu = dyu{s};
-end
-
-end % xyvals_ function
+end % function xyvals_()
 
 function line = linepopts_(Nz, s)
     if Nz == 1 % Single point
@@ -376,7 +381,7 @@ function line = linepopts_(Nz, s)
         ms = max(22-2*s,1);
         line = {'.','markersize',ms};
     end
-end
+end % function line()
 
 function str = unitstr_(meta)
 
@@ -393,6 +398,4 @@ function str = unitstr_(meta)
         outunit = sprintf('(%s)',outunit);
     end
     str = sprintf('[%s/%s]',outunit,inunit);
-
-end
-
+end % function unitstr_()

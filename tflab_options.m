@@ -8,7 +8,7 @@ function opts = tflab_options(os,iopts)
 %  opts = TFLAB_OPTIONS(os, opts1) returns opts with values in opts1 by
 %  calling updatedefaults. opts1 does not need to contain all options
 %  returned by TFLAB_OPTIONS.
-% 
+%
 %  See also TFLAB, TFLAB_OPTIONS, UPDATEDEFAULTS.
 
 if nargin == 0
@@ -42,7 +42,7 @@ opts.td.detrend.function = struct();
 
 opts.td.window = struct();
     % Note: Same window applied to input and output
-    opts.td.window.function = ''; 
+    opts.td.window.function = '';
     opts.td.window.functionstr = 'none';
     opts.td.window.functionargs = {};
     opts.td.window.width = NaN;   % Segment width.
@@ -55,7 +55,7 @@ opts.td.window = struct();
         % for list of available MATLAB functions that can be passed to
         % tdwindow() (which is function in this package).
         % Default is equivalent to
-        %opts.td.window.function = @tdwindow; 
+        %opts.td.window.function = @tdwindow;
         %opts.td.window.functionstr = 'Rectangular';
         %opts.td.window.functionargs = {@rectwin};
     end
@@ -64,7 +64,7 @@ opts.td.whiten = struct();
     % Note: Same prewhitening filter applied to input and output
     opts.td.whiten.function = '';
     opts.td.whiten.loglevel = 0;
-    
+
     % Example of prewhitening.
     if 0
         opts.td.whiten.function = @prewhiten;
@@ -85,16 +85,16 @@ opts.fd.program = struct();
 opts.fd.evalfreq = struct();
     opts.fd.evalfreq.loglevel = 0;
     % See evalfreq_demo.m for evalfreq() examples.
-    opts.fd.evalfreq.function = @evalfreq;   
+    opts.fd.evalfreq.function = @evalfreq;
     opts.fd.evalfreq.functionargs = {7, 'logarithmic'};
     opts.fd.evalfreq.functionstr  = ...
                                     sprintf('%d frequencies per decade',...
                                     opts.fd.evalfreq.functionargs{1});
 
 opts.fd.window = struct();
-    opts.fd.window.function = @rectwin; 
+    opts.fd.window.function = @rectwin;
     opts.fd.window.functionstr = 'rectangular';
-    opts.fd.window.loglevel = 0; 
+    opts.fd.window.loglevel = 0;
 
 % When stack.average.function = @transferfnAverage is used, ffts in each
 % time window are computed and the ffts in a frequency band are used for a
@@ -116,7 +116,7 @@ opts.fd.interpolation = struct();
     opts.fd.interpolation.functionargs = {...
                     struct('loglevel',0,...
                            'interp1args',{{'linear',0}})};
-    
+
 opts.fd.regression = struct();
     opts.fd.regression.function = @regress_ols;
     opts.fd.regression.functionstr = 'OLS using regress() on real values and offset term';
@@ -129,7 +129,7 @@ opts.fd.regression = struct();
 
     %opts.fd.regression.functionargs = {'backslash'};
     %opts.fd.regression.functionstr = 'OLS using backslash function';
-    
+
     %opts.fd.regression.function = @regres_robustfit_matlab;
     %opts.fd.regression.functionstr = 'Robust regression using robustfit()';
     %opts.fd.regression.functionargs = {[],[],'off'};
@@ -142,14 +142,15 @@ opts.fd.regression = struct();
         %ropts.zeps = sqrt(eps);
         %ropts.hardcut = Inf; % 2.8
         %ropts.snstop = 1000;
-        %ropts.verbose = 0;    
+        %ropts.verbose = 0;
         %opts.fd.regression.functionargs = {ropts};
 
 opts.fd.bootstrap = struct();
     opts.fd.bootstrap.N = 100;
+    opts.fd.bootstrap.nmin = 5; % Minumum number of points needed to perform bootstrap
     opts.fd.bootstrap.fraction = 1;
     % Fraction to sample; Efron's original bootstrap method uses 1;
-    % If fraction != 1, called m of n bootstrap; see 10.1002/9781118445112.stat08002
+    % If fraction = m/n != 1 called m of n bootstrap; see 10.1002/9781118445112.stat08002
 
 if os == 0
     % When no noise, should get exact TF used to generate the
@@ -167,11 +168,11 @@ elseif os == 2
     opts.td.prewhiten.options = 10;
 elseif os == 3
     opts.description = 'Parzen window in FD';
-    opts.fd.window.function = @parzenwin; 
+    opts.fd.window.function = @parzenwin;
     opts.fd.window.functionstr = 'parzen';
 elseif os == 4
     opts.description = 'Robust regression';
-    opts.fd.regression.method = 'robust_robustfit'; 
+    opts.fd.regression.method = 'robust_robustfit';
     opts.fd.regression.methodstr = 'Robust regression using robustfit()';
 elseif os == 5
     opts.description = 'PCA rotation';

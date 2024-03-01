@@ -1,5 +1,5 @@
-function errorbars(x,y,dyl,dyu,dir,varargin)
-%ERRORBARS  Similar to ERRORBAR except handles loglog and semilogx
+function errorbar_(x,y,dyl,dyu,dir,varargin)
+%ERRORBAR_  Similar to ERRORBAR except handles loglog and semilogx
 
     if nargin < 4
         dyu = dyl;
@@ -7,7 +7,7 @@ function errorbars(x,y,dyl,dyu,dir,varargin)
     if nargin < 5
         % Only dir = 'y' is handled.
         dir = 'y';
-    end    
+    end
     if nargin < 6
         linestyle = {'k'};
     else
@@ -16,7 +16,7 @@ function errorbars(x,y,dyl,dyu,dir,varargin)
 
     scalex = get(gca,'XScale');
     scaley = get(gca,'YScale');
-    
+
     if strcmp(scalex,'linear') && strcmp(scaley,'linear')
         for i = 1:length(x)
             plot([x(i),x(i)],[y(i)+dyu(i),y(i)-dyl(i)],linestyle{:});
@@ -47,6 +47,6 @@ function errorbars(x,y,dyl,dyu,dir,varargin)
         for i = 1:length(x)
             semilogy([x(i),x(i)],[y(i)+dyu(i),y(i)-dyl(i)],linestyle{:});
         end
-    end    
+    end
 
 end

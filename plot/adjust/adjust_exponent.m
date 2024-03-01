@@ -36,7 +36,6 @@ end
 
 assert(any(strcmp(direction,{'x','y'})), 'dir must be x or y');
 
-%pause(0.1)
 drawnow;
 ax = gca();
 

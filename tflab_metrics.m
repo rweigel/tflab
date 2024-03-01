@@ -1,34 +1,26 @@
 function S = tflab_metrics(S,onsegments)
 %TFLAB_METRICS Compute metrics using TFLab structure
 %
-%   S = TFLAB_METRICS(S) adds metrics calculations to TFlab structure or
-%   cell array of TFlab structures.
+%   S = TFLAB_METRICS(S) adds metrics calculations to TFlab structure.
 %
-%   If S is a structure and 
+%   If S.In is a matrix, structures S.Metrics, S.Out_, and S.DFT.Out_
+%   are computed using calculations based on S.In, S.Out, S.DFT, S.Z,
+%   and S.fe.
 %
-%       1. S.In is a matrix, structures S.Metrics, S.Out_, and S.DFT.Out_
-%          are computed using calculations based on S.In, S.Out, S.DFT, S.Z,
-%          and S.fe.
+%   If S has a Segment field, S.Segment.Metrics, S.Segment.Out_, and
+%   S.Segment.DFT.Out_ are computed using matrices S.Segment.In,
+%   S.Segment.Out, S.Segment.DFT, S.Segment.Z, and S.Segment.fe. If
+%   S.Segment.Z does not exist, S.Z and S.fe are used.
 %
-%          If S has a Segment field, S.Segment.Metrics, S.Segment.Out_, and
-%          S.Segment.DFT.Out_ are computed using matrices S.Segment.In, 
-%          S.Segment.Out, S.Segment.DFT, S.Segment.Z, and S.Segment.fe. If
-%          S.Segment.Z does not exist, S.Z and S.fe are used.
-%
-%       2. S.In is a cell array, cell array elements S.Metrics{i},
-%          S.Out_{i}, and S.DFT.Out_{i} are computed for each i of S using 
-%          calculations based on matrices S.In{i}, S.Out{i}, S.DFT{i}, S.Z,
-%          and S.fe.
-%       
-%          If S has a Segment field, S.Segment.Metrics, S.Segment.Out_, and
-%          S.Segment.DFT.Out_ are computed using matrices S.Segment.In, 
-%          S.Segment.Out, S.Segment.DFT, S.Segment.Z, and S.Segment.fe. If
-%          S.Segment.Z does not exist, S.Z and S.fe are used
+%   If S.In is a cell array, cell array elements S.Metrics{i},
+%   S.Out_{i}, and S.DFT.Out_{i} are computed for each i of S using
+%   calculations based on matrices S.In{i}, S.Out{i}, S.DFT{i}, S.Z,
+%   and S.fe. If S has a Segment field, metrics are computed on the 
+%   segments in the same way as described in the previous paragraph.
 
 if nargin < 2
     onsegments = 0;
 end
-logmsg('Computing metrics.\n')
 
 opts = S.Options;
 if onsegments == 0
@@ -36,7 +28,7 @@ if onsegments == 0
         % Compute Metrics.ErrorEstimates based on content of
         % S.Regression.ErrorEstimates.Parametric
         logmsg('Computing error estimates.\n');
-        Metrics = error_estimates(S);
+        Metrics.ErrorEstimates = error_estimates(S,0);
     end
     if ~iscell(S.In)
         logmsg('Computing metrics on full unsegmented data using top-level Z.\n');
@@ -44,12 +36,12 @@ if onsegments == 0
         Out = S.Out;
         DFT = S.DFT;
         Z = S.Z;
+        fe = S.fe;
         dZ = [];
         if isfield(S,'dZ')
             dZ = S.dZ;
         end
-        fe = S.fe;
-    else 
+    else
         % S.In is a cell array of intervals.
         Ni = length(S.In);
         msg = sprintf('Computing metrics on %d intervals using top-level Z.\n',Ni);
@@ -62,14 +54,14 @@ if onsegments == 0
             S.In = In_intervals{i};
             S.Out = Out_intervals{i};
             S.DFT = DFT_intervals{i};
-            Ss = tflab_metrics(S,0);            
+            Ss = tflab_metrics(S,0);
             Metrics{i} = Ss.Metrics;
         end
         S.In = In_intervals;
         S.Out = Out_intervals;
         S.DFT = DFT_intervals;
         if isfield(S,'Segment')
-            logmsg('Computing metrics on segments derived from intervals.\n')
+            logmsg('Computing metrics on segments.\n')
             S = tflab_metrics(S,1);
         end
         S.Metrics = Metrics;
@@ -83,6 +75,8 @@ else
     dZ = [];
     if isfield(S.Segment,'Z')
         logmsg('Computing metrics on segments using segment Zs.\n');
+        logmsg('Computing error estimates.\n');
+        S.Metrics.ErrorEstimates = error_estimates(S,1);
         Z = S.Segment.Z;
         fe = S.Segment.fe;
         if isfield(S.Segment,'dZ')
@@ -100,7 +94,8 @@ else
 end
 
 if size(Out,2)*size(In,2) ~= size(Z,2)
-    cond = size(Out,2)*size(In,2) == size(Z,2) || size(Out,2)*size(In,2) == size(Z,2) - 1;
+    cond = size(Out,2)*size(In,2) == size(Z,2);
+    cond = cond || size(Out,2)*size(In,2) == size(Z,2) - 1;
     assert(cond, 'size(Out,2) must equal size(Z,2)/size(In,2)');
 end
 
@@ -121,7 +116,7 @@ for k = 1:size(In,3) % Third dimension is segment
         end
 
         zcols = (1:size(In,2)) + (j-1)*size(In,2);
-                
+
         if ~isempty(dZ)
             OutPredicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k),dZi);
         else
@@ -134,7 +129,7 @@ for k = 1:size(In,3) % Third dimension is segment
 
         [Metrics.Coherence(:,j,k), Metrics.fe] = ...
             coherence(Out(:,j,k), OutPredicted(:,j,k), 1, opts);
-        
+
         Error(:,j,k) = OutPredicted(:,j,k)-Out(:,j,k);
 
         [Metrics.SN(:,j,k),~,Metrics.SNCLl(:,j,k),Metrics.SNCLu(:,j,k)] = ...
@@ -143,13 +138,21 @@ for k = 1:size(In,3) % Third dimension is segment
         for i = 1:size(In,2)
             % If In and out both have two components, columns are
             %   <Outx,Inx>, <Outx,Iny>, <Outy,Iny>, <Outy,Iny>
-            u = i + (j-1)*size(Out,2); 
+            u = i + (j-1)*size(Out,2);
             Metrics.Xcoherence(:,u,k) = coherence(Out(:,j,k), In(:,i,k), 1, opts);
         end
-        
+
     end
 end
 
+logmsg('Computing DFT of Error and Predicted time series.\n')
+for k = 1:size(In,3)
+    DFTError(:,:,k) = dftbands(Error(:,:,k), opts);
+    DFTPredicted(:,:,k) = dftbands(OutPredicted(:,:,k), opts);
+end
+
+logmsg('Computing residuals.\n')
+if 0
 if ~isfield(S,'DFT')
     logmsg('DFT field not found. Computing.\n');
     S = tflab_fdpreprocess(S);
@@ -157,8 +160,8 @@ if ~isfield(S,'DFT')
 else
     logmsg('DFT field found. Not recomputing.\n');
 end
+end
 
-logmsg('Computing residuals.\n')
 for k = 1:size(In,3) % Third dimension is segment
 
     Zi = Z;
@@ -180,7 +183,7 @@ for k = 1:size(In,3) % Third dimension is segment
             dZi = zinterp(fe,dZ,DFT.fe,{'linear', NaN});
         end
     end
-    
+
     for j = 1:size(Out,2) % Second dimension is component
         zcols = (1:size(In,2)) + (j-1)*size(In,2);
         for i = 1:length(DFT.In) % First dimension is frequency
@@ -193,18 +196,9 @@ for k = 1:size(In,3) % Third dimension is segment
                 ftB = [ftB, ones(size(ftB,1),1)];
             end
             Metrics.Residuals{i,1}(:,j,k) =  ftE - ftB*transpose(Zf);
-
-            if 0 && i == 10
-                DFT.In{i}(:,:,k)
-                DFT.Out{i}(:,j,k)
-                Zi(i,zcols)
-                dZi(i,j)
-                Metrics.Residuals{i,1}(:,j,k)
-                keyboard
-            end
         end
     end
-    
+
     if isfield(S,'Regression') && isfield(S.Regression,'Residuals')
         if size(S.Regression.Residuals,1) == size(Metrics.Residuals{i},1)
             logmsg('Checking residuals calculation.')
@@ -218,26 +212,16 @@ for k = 1:size(In,3) % Third dimension is segment
     end
 end
 
-
-for k = 1:size(In,3)
-    [DFTError(:,:,k),f,fe] = dftbands(Error(:,:,k), opts);
-    DFTPredicted(:,:,k) = dftbands(OutPredicted(:,:,k), opts);
-end
-
 if onsegments
     S.Segment.Metrics = Metrics;
-    S.Segment.Out_.Error = Error;    
-    S.Segment.Out_.Predicted = OutPredicted;    
-    S.Segment.DFT.f = f;
-    S.Segment.DFT.fe = fe;
+    S.Segment.Out_.Error = Error;
+    S.Segment.Out_.Predicted = OutPredicted;
     S.Segment.DFT.Out_.Error = DFTError;
     S.Segment.DFT.Out_.Predicted = DFTPredicted;
 else
     S.Metrics = Metrics;
     S.Out_.Error = Error;
     S.Out_.Predicted = OutPredicted;
-    S.DFT.f = f;
-    S.DFT.fe = fe;
     S.DFT.Out_.Error = DFTError;
     S.DFT.Out_.Predicted = DFTPredicted;
 end

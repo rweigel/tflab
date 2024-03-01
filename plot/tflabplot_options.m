@@ -64,14 +64,14 @@ if strcmp(plotfun,'zplot')
     dopts.unwrap = 0;
     if ~isfield(opts,'type') || isempty(opts.type)
         opts.type = 1;
-    end    
+    end
     switch opts.type
         case 1
             dopts.printOptions.printName = [dopts.printOptions.printName,'-magnitude_phase'];
         case 2
-            dopts.printOptions.printName = [dopts.printOptions.printName,'-rhoa_phase'];            
+            dopts.printOptions.printName = [dopts.printOptions.printName,'-rhoa_phase'];
         case 3
-            dopts.printOptions.printName = [dopts.printOptions.printName,'-real_imaginary'];            
+            dopts.printOptions.printName = [dopts.printOptions.printName,'-real_imaginary'];
     end
 end
 
@@ -99,7 +99,7 @@ if any(strcmp(plotfun,{'zplot','qqplot'}))
         dopts.zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
         dopts.rhostrs = {'\rho^a_{xx}','\rho^a_{xy}','\rho^a_{yx}','\rho^a_{yy}'};
         dopts.phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{yx}','\phi_{yy}'};
-    end    
+    end
 end
 
 if any(strcmp(plotfun,{'dftplot','zplot','snplot'}))
@@ -170,5 +170,5 @@ function namestrs = namestrs_(namestrs, nc)
         end
     else
         namestrs = {namestrs};
-    end    
+    end
 end

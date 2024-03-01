@@ -1,98 +1,75 @@
-function Metrics = error_estimates(S)
+function ErrorEstimates = error_estimates(S,onsegments)
+
+if onsegments
+    Z = S.Segment.Z;
+    fe = S.Segment.fe;
+    t = tinv(0.975,size(Z,3)-1);
+    for comp = 1:size(Z,2) % Second dimension is component
+        Zc = squeeze(Z(:,comp,:)); % Columns of Zc are segment Zs
+        STDr = std(real(Zc),1,2);
+        STDi = std(imag(Zc),1,2);
+        delta = t*(STDr + 1j*STDi)/sqrt(size(Z,3));
+        Zave = mean(Zc,2);
+        ZCL95l(:,comp) = Zave - delta;
+        ZCL95u(:,comp) = Zave + delta;
+    end
+    ErrorEstimates.Parametric = error_estimates_derived(fe,Z,ZCL95l,ZCL95u);
+
+    if isfield_(S,'Options.fd.bootstrap')
+        if S.Options.fd.bootstrap.nmin < size(Z,3)
+            logmsg('Not enough segments for bootstrap error estimates on segment Zs.\n')
+            return
+        end
+        logmsg('Computing bootstrap error estimates on segment Zs.\n')
+        for j = 1:size(S.Segment.Z,1)
+            Zb = reshape(transpose(squeeze(S.Segment.Z(j,:,:))),size(Z,3),size(Z,2));
+            Bootstrap(j) = error_estimates_bootstrap(fe(j),Zb,S.Z(j,:));
+        end
+        ErrorEstimates.Bootstrap = combineBootstrap(Bootstrap);
+    end
+    return
+end
 
 %logmsg('Computing additional error estimates.\n');
-if isfield_(S,'Regression.ErrorEstimates.Parametric')
-    ParametricErrorEstimates = S.Regression.ErrorEstimates.Parametric;    
-end
+
 if isfield_(S,'Regression.ErrorEstimates.Bootstrap')
-    Metrics.ErrorEstimates.Bootstrap = S.Regression.ErrorEstimates.Bootstrap;
+    % The Regression field is removed on save. So move into ErrorEstimates.
+    ErrorEstimates.Bootstrap = S.Regression.ErrorEstimates.Bootstrap;
 end
 
-for comp = 1:size(S.Z,2)
+if isfield_(S,'Regression.ErrorEstimates.Parametric')
+    logmsg('Computing derived parametric CLs based on ZCL95{u,l}.\n');
 
-    if isfield(S,'ZVAR') && ~isfield(ParametricErrorEstimates,'ZCL95l')
+    % ZCL95{l,u} are (complex-valued) error estimates on Z, not |Z|.
+    ZCL95l = S.Regression.ErrorEstimates.Parametric.ZCL95l;
+    ZCL95u = S.Regression.ErrorEstimates.Parametric.ZCL95u;
+    ErrorEstimates.Parametric = error_estimates_derived(S.fe,S.Z,ZCL95l,ZCL95u);
+    return;
+else
+    if ~isfield(S,'ZVAR')
+        logmsg('No ZVAR field at top-level and no ZCL95l in Regression.ErrorEstimates.Parametric.\n');
+        logmsg('No error estimates available.\n');
+        return
+    end
+    for comp = 1:size(S.Z,2)
+
         % This will occcur when S is based on content of EDI file, so no
         % TFLab regression information is available.
-    
+
         logmsg('Found ZVAR field at top-level and no ZCL95l in Regression.ErrorEstimates.\n');
         logmsg('Computing ZMAGCL95{u,l} using it.\n');
-        
-        % The following assumes ZVAR is variance on |Z| estimate.
-        ZMAGCL95l = abs(S.Z(:,comp)) - sqrt(S.ZVAR(:,comp));
-        ZMAGCL95u = abs(S.Z(:,comp)) + sqrt(S.ZVAR(:,comp));
 
-        sf = (1+1j)/sqrt(2);
-        ZCL95l(:,comp) = S.Z(:,comp) - sf*sqrt(S.ZVAR(:,comp));
-        ZCL95u(:,comp) = S.Z(:,comp) + sf*sqrt(S.ZVAR(:,comp));
         ZVAR(:,comp) = S.ZVAR(:,comp);
-        
-    else
-        logmsg('Computing ZMAGCL{l,u} using ZCL95{u,l}.\n');
-    
-        %   |Z| = sqrt(Zr^2 + Zi^2)
-        % standard propagation of errors is either
-        %   Δ|Z| = (|Zr|/|Z|)ΔZr + (|Zi|/|Z|)ΔZr
-        %        = (1/|Z|)(|Zr|ΔZr + |Zi|ΔZr)
-        %
-        % or the more conservative
-        %
-        %   Δ|Z| = sqrt( [(Zr/|Z|)ΔZr]^2 + [(|Zi|/|Z|)ΔZi]^2 )
-        %   Δ|Z| = (1/|Z|)sqrt([ZrΔZr]^2 + [ZiΔZi]^2 )
-        %
-        % TODO: Derive ZCL68{u,l} from ZCL95 for parametric
-            
-        % Z95CL{l,u} are (complex-valued) error estimates on Z, not |Z|.
-        ZCL95l(:,comp) = ParametricErrorEstimates.ZCL95l(:,comp);
-        ZCL95u(:,comp) = ParametricErrorEstimates.ZCL95u(:,comp);
-    
-        delta_Zr_95 = real(ZCL95u(:,comp) - ZCL95l(:,comp));
-        delta_Zi_95 = imag(ZCL95u(:,comp) - ZCL95l(:,comp));
-    
-        % Zmag = |Z|
-        Zmag = abs(S.Z(:,comp));
 
-        Zr = real(S.Z(:,comp));
-        Zi = imag(S.Z(:,comp));
-    
-        sumsq = (abs(Zr).*delta_Zr_95).^2 + (abs(Zi).*delta_Zi_95).^2;
-        delta_Zmag_95 = (1./Zmag).*sqrt(sumsq);
-        
-        ZMAGCL95l(:,comp) = Zmag - delta_Zmag_95/2;
-        ZMAGCL95u(:,comp) = Zmag + delta_Zmag_95/2;
-    
-        % delta_ZMAG_95 is 2σ, so σ = delta_ZMAG_95/2.
-        ZVAR(:,comp) = (delta_Zmag_95/2).^2;
-
-        % φ = (180/pi) * atan(Zi/Zr) => 
-        % Δφ = (180/pi) * (1/|Z|^2) sqrt( (ZiΔZr)^2 + (ZrΔZri)^2 )
-        
-        PHI = (180/pi) * atan2(imag(S.Z(:,comp)),real(S.Z(:,comp)));
-        delta_PHI_95 = (180/pi)*(1./Zmag.^2)...
-                      .*sqrt( (Zi.*delta_Zr_95).^2 + (Zr.*delta_Zi_95).^2);
-        PHICL95l(:,comp) = PHI - delta_PHI_95/2;
-        PHICL95u(:,comp) = PHI + delta_PHI_95/2;
+        sf = t*(1+1j)/sqrt(2);
+        ZCL95l(:,comp) = S.Z(:,comp) - sf*sqrt(ZVAR(:,comp));
+        ZCL95u(:,comp) = S.Z(:,comp) + sf*sqrt(ZVAR(:,comp));
     end
-
-    % ρ = |Z|^2/(5*f) => Δρ = 2|Z|ΔZ/(5*f)
-    delta_Z_95 = 2*sqrt(ZVAR(:,comp)); % See note 1. below.
-    delta_RHO_95 = 2*abs(S.Z(:,comp)).*delta_Z_95./(5*S.fe);
-    
-    RHO = (abs(S.Z(:,comp)).^2)./(5*S.fe);
-    RHOCL95l(:,comp) = RHO - delta_RHO_95/2;
-    RHOCL95u(:,comp) = RHO + delta_RHO_95/2;
-
-
+    ErrorEstimates.Parametric = error_estimates_derived(fe,Z,ZCL95l,ZCL95u);
 end
 
-Metrics.ErrorEstimates.Parametric.ZVAR = ZVAR;
-Metrics.ErrorEstimates.Parametric.ZCL95l = ZCL95l;
-Metrics.ErrorEstimates.Parametric.ZCL95u = ZCL95u;
-Metrics.ErrorEstimates.Parametric.ZMAGCL95l = ZMAGCL95l;
-Metrics.ErrorEstimates.Parametric.ZMAGCL95u = ZMAGCL95u;
-Metrics.ErrorEstimates.Parametric.RHOCL95l = RHOCL95l;
-Metrics.ErrorEstimates.Parametric.RHOCL95u = RHOCL95u;
-Metrics.ErrorEstimates.Parametric.PHICL95l = PHICL95l;
-Metrics.ErrorEstimates.Parametric.PHICL95u = PHICL95u;
+end % function error_estimates()
+
 
 % 1. Computing error bars from SPUD XML ZVAR.
 %
@@ -119,3 +96,27 @@ Metrics.ErrorEstimates.Parametric.PHICL95u = PHICL95u;
 %   https://ds.iris.edu/files/products/emtf/definitions/
 %   http://ds.iris.edu/files/products/emtf/definitions/variance.html
 %   https://library.seg.org/doi/epdf/10.1190/geo2018-0679.1
+%
+%
+% 2. From EDI documentation (https://www.mtnet.info/docs/seg_mt_emap_1987.pdf),
+%
+% In order to provide rigorous error estimates for the surface impedance
+% tensor elements, one must calculate the variance for the real part, the
+% variance for the imaginary part, and a covariance. This is done in the
+% usual manner for a finite number of estimates of the real and imaginary
+% parts, which are clearly independent functions. This defines an error
+% "ellipse" about the impedance tensor element in the complex plane. The
+% >Z**R.VAR, >Z**I.VAR, and >Z**.COV (where ** is XX, XY, YX, or YY)
+% keywords are provided for the real variance, imaginary variance, and
+% covariance, respectively, for each tensor element. (Section 13.0).
+%
+% However, the usual practice is to calculate a simplified "variance" as
+% defined by Gamble, 1978, pp. 66-72^*. This is a real number (an estimate of
+% the average of the variances of the real and imaginary parts) that is the
+% radius of a circle about the tensor element in the complex plane. This
+% circle approximates the error ellipse and for most purposes is an
+% adequate estimate of the statistical uncertainty. The >Z**.VAR keyword is
+% provided (Section 13.0) for this parameter. This is typically the only
+% error estimate provided for impedance tensor components.
+%
+% Gamble, 1978: https://escholarship.org/content/qt1qf5644g/qt1qf5644g_noSplash_db0b80f10299d43aac0d4bba46bb03bf.pdf#page=76

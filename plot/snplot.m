@@ -44,14 +44,14 @@ if length(S) == 1
     end
 
     ax1 = subplot('Position', popts.PositionTop);
-        
+
         plot(x,y1,popts.line{:});
         colororder_(ax1, y1);
         grid on;box on;hold on;
         legend(lg,popts.legend{:});
         hold on;
         for j = 1:size(y1,2)
-            errorbars(x,y1(:,j),y1(:,j)-y1cll(:,j),y1clu(:,j)-y1(:,j));
+            errorbar_(x,y1(:,j),y1(:,j)-y1cll(:,j),y1clu(:,j)-y1(:,j));
         end
         set(gca,'XTickLabel',[]);
         titlestr(S{1},popts,'sn');
@@ -120,7 +120,7 @@ if length(S) > 1
             plot(x{s},y1{s}(:,comp),popts.line{:});
         end
         for s = 1:length(y1)
-            errorbars(x{s},y1{s}(:,comp),y1{s}(:,comp)-y1cll{s}(:,comp),y1clu{s}(:,comp)-y1{s}(:,comp));
+            errorbar_(x{s},y1{s}(:,comp),y1{s}(:,comp)-y1cll{s}(:,comp),y1clu{s}(:,comp)-y1{s}(:,comp));
         end
         if popts.vs_period
             set(gca,'XScale','log');

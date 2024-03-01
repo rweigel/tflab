@@ -24,7 +24,7 @@ function S = tflab(B,E,opts)
 %
 %   Zxx = Z(:,1)   Zxy = Z(:,2)
 %   Zyx = Z(:,3)   Zyy = Z(:,4)
-% 
+%
 %  with the rows of Z being estimates of the transfer function at the
 %  evaluation frequencies given by field fe in S.
 %
@@ -41,8 +41,8 @@ if nargin == 2
     % Use default options.
     opts = tflab_options(1);
     if opts.tflab.loglevel
-        logmsg(['No options given. '...
-                 'Using options returned by tflab_options(1)\n']);
+        msg = 'No options given. Using options returned by tflab_options(1)\n';
+        logmsg(msg);
     end
 end
 
@@ -55,9 +55,8 @@ end
 % Number of time values must be the same.
 assert(size(B,1) == size(E,1),'Required: size(B,1) == size(E,1)');
 
-assert(size(B,1) >= size(B,2),...
-    ['Not enough time samples: size(B,1) must be greater than '...
-     'or equal to size(B,2)']);
+msg = 'Not enough time samples: size(B,1) must be greater than or equal to size(B,2)';
+assert(size(B,1) >= size(B,2),msg);
 
 % If E has more than one column, do TF calculation for each column.
 if size(E,2) > 1
@@ -104,7 +103,7 @@ if isnan(opts.td.window.width) || size(E,1) == opts.td.window.width
     S = struct('In',B,'Out',E,'Options',opts);
     S = tflab_tdpreprocess(S,opts.tflab.loglevel);
     S = tflab_fdpreprocess(S);
-    [S.Z,S.fe,S.dZ,S.Regression] = tflab_miso(S.DFT,opts);
+    [S.Z,S.fe,S.dZ,S.Regression] = tflab_miso(S.DFT,opts,1);
     S = tflab_metrics(S);
     return
 end
@@ -113,15 +112,15 @@ if ~isempty(opts.fd.stack.average.function)
 
     S = tflab_preprocess(B,E,opts,'both',1,0);
     S = stackaverage_(S,opts);
-    
+
     if opts.tflab.loglevel > 0
-        logmsg('Computing metrics on full time range of data using average Z and\n');
-        logmsg('computing metrics on segments using segment Zs.\n');
+        logmsg('Computing metrics on full time range of data using average Z\n');
+        logmsg('and on segments using segment Zs.\n');
     end
     S = tflab_metrics(S);
 else
 
-    logmsg('Computing Z using stack regression.\n');        
+    logmsg('Computing Z using stack regression.\n');
 
     S = tflab_preprocess(B,E,opts,'both',1,1);
     S = stackregression_(S,opts);
@@ -129,19 +128,17 @@ else
     logmsg('Computing metrics on full time series and segments using stack regression Z.\n');
     S = tflab_metrics(S);
 
-    %logmsg('Computing metrics on segments using computed Z.\n');    
-    %S = tflab_metrics(S,1);
 end
 
-end % tflab()
+end % function tflab()
 
 function S = stackregression_(S,opts)
     if opts.tflab.loglevel > 0
         logmsg('Computing Z using stack regression.\n');
     end
     DFT = dftcombine(S.Segment.DFT);
-    [S.Z,S.fe,S.dZ,S.Regression] = tflab_miso(DFT,opts);
-end
+    [S.Z,S.fe,S.dZ,S.Regression] = tflab_miso(DFT,opts,1);
+end % function stackregression_()
 
 function S = stackaverage_(S,opts)
 
@@ -161,9 +158,9 @@ function S = stackaverage_(S,opts)
             logmsg('Starting computations on segment %d of %d\n',s,length(Sc));
             logmsg('Segment time index range = [%d:%d]\n',a,b);
         end
-        
+
         logmsg('Computing Z for segment %d of %d\n',s,length(Sc));
-        [Sc{s}.Z,Sc{s}.fe,Sc{s}.dZ,Sc{s}.Regression] = tflab_miso(Sc{s}.DFT,opts);
+        [Sc{s}.Z,Sc{s}.fe,Sc{s}.dZ,Sc{s}.Regression] = tflab_miso(Sc{s}.DFT,opts,0);
 
         if 0
             if opts.tflab.loglevel > 0
@@ -183,12 +180,11 @@ function S = stackaverage_(S,opts)
     S.Segment = combineStructs(Sc,3);
     S.Z = mean(S.Segment.Z,3);
     S.dZ = mean(S.Segment.dZ,3);
-    S.fe = Sc{1}.fe;    
+    S.fe = Sc{1}.fe;
 
-end
+end % function stackaverage_()
 
 function S = intervals_(B, E, opts)
-    
     if isempty(opts.fd.stack.average.function)
         S = tflab_preprocess(B,E,opts,'both',1,1);
         S = stackregression_(S,opts);
@@ -197,4 +193,4 @@ function S = intervals_(B, E, opts)
         S = stackaverage_(S,opts);
     end
     S = tflab_metrics(S);
-end
+end % function intervals_()
