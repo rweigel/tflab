@@ -3,8 +3,9 @@ function [ax1,ax2] = zplot(S,popts,comps)
 %
 %   ZPLOT(S)
 %   ZPLOT(S, popts)
+%   ZPLOT(S, popts, components)
 %
-%   popts.type is one of, 1, 2, or 3
+%   opts.type is one of 1, 2, or 3, where
 %
 %   1 => Z,phase
 %   2 => rho,phase (assumes Z in (mV/km)/nT and frequencies in Hz).
@@ -74,7 +75,7 @@ if length(S) == 1
     figprep();
     ax1 = subplot('Position', popts.PositionTop);
 
-        popts.line = linepopts_(size(S{1}.Z,1), 1);
+        popts.line = markeropts(size(S{1}.Z,1), 1);
 
         h1 = plot(x1, y1, popts.line{:});
         hold on;grid on;box on;
@@ -197,7 +198,7 @@ if length(S) > 1
 
         for s = 1:length(S)
             ls{s} = sprintf('%s',S{s}.Options.description);
-            popts.line = linepopts_(size(S{s}.Z,1), s);
+            popts.line = markeropts(size(S{s}.Z,1), s);
             h(s) = plot(x{s}, y{s}, popts.line{:});
             if s == 1
                 grid on;hold on;box on;
@@ -250,7 +251,7 @@ if length(S) > 1
         for s = 1:length(S)
             ls{s} = sprintf('%s',S{s}.Options.description);
 
-            popts.line = linepopts_(size(S{s}.Z,1), s);
+            popts.line = markeropts(size(S{s}.Z,1), s);
             if popts.vs_period
                 h(s) = semilogx(x{s}, y{s}, popts.line{:});
             else
@@ -265,7 +266,7 @@ if length(S) > 1
             yl = sprintf('Im$(%s)$ %s',Zstrs{comp},unitstr_(S{1}.Metadata));
         end
         ylabel(yl);
-        legend(ls,popts.legend{:});
+        %legend(ls,popts.legend{:});
 
         if popts.type ~= 3 && ~popts.unwrap
             set(gca,'YScale','linear');
@@ -372,16 +373,6 @@ function [x,y,dyu,dyl] = xyvals_(S,popts,comp,panel,errorbar_method)
         dyu = dyu{s};
     end
 end % function xyvals_()
-
-function line = linepopts_(Nz, s)
-    if Nz == 1 % Single point
-        ms = 30;
-        line = {'.','markersize', ms};
-    else
-        ms = max(22-2*s,1);
-        line = {'.','markersize',ms};
-    end
-end % function line()
 
 function str = unitstr_(meta)
 

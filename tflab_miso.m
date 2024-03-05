@@ -67,43 +67,22 @@ for j = 1:length(fe)
         continue;
     end
 
-    if length(f{j}) < 2*size(ftIn,2)
-        msg = '!!! System is underdetermined for fe = %f. Setting Z equal to NaN(s).\n';
+    if length(f{j}) < 2*(size(ftIn,2) + 1) % +1 assumes offset term
+        msg = '!!! System is underdetermined for fe = %.1e. Setting Z equal to NaN(s).\n';
         logmsg(msg,fe(j));
         continue;
     end
 
-    if length(f{j}) == 2*size(ftIn,2)
-        msg = '!!! System is exactly determined for fe = %f. Setting Z equal to NaN(s).\n';
+    if length(f{j}) == 2*(size(ftIn,2) + 1)
+        msg = '!!! System is exactly determined for fe = %.1e. Setting Z equal to NaN(s).\n';
         logmsg(msg,fe(j));
         continue;
     end
 
-    lastwarn('');
-
-    regressargs = opts.fd.regression.functionargs;
-    regressfunc = opts.fd.regression.function;
-    [Z(j,:),dz,Info] = regressfunc(ftOut,ftIn,regressargs{:});
-
-    if ~isempty(dz)
-        dZ(j,1) = dz;
-    end
-
-    if ~isempty(lastwarn)
-        msg = 'Above warning is for eval. freq. #%d; fe = %f; Te = %f\n';
-        logmsg(msg,j,fe(j),1/fe(j));
-        logmsg('ftE =');
-        ftOut
-        logmsg('ftB =');
-        ftIn
-    end
+    [Z(j,:),dZ(j,:),Info] = callregress_(ftOut,ftIn,j,fe(j),opts);
 
     if any(isinf(Z(j,:)))
-        msg = '!!! Z has Infs for fe = %f. Setting all element of Z to NaN(s).\n';
-        logmsg(msg,fe(j));
-        Z(j,:) = (1+1j)*nan;
-        dZ(j,1) = (1+1j)*nan;
-        continue
+        continue;
     end
 
     if isfield(Info,'Residuals')
@@ -113,9 +92,11 @@ for j = 1:length(fe)
         % finds this, it will check that its calculation matches.
         Residuals{j,1} = Info.Residuals;
     end
+
     if error_estimates
-        % Don't keep error estimats if transfer function is computed based on
-        % segment stack averages.
+        % error_estimates = 0 if transfer function is computed based on
+        % segment stack averages. In that case, we don't keep error estimates
+        % for the Z computed for each segment.
         if isfield(Info,'ZCL95l')
             Parametric.ZCL95l(j,:) = Info.ZCL95l;
         end
@@ -150,11 +131,26 @@ for j = 1:length(fe)
             logmsg(msg,Nb,fraction);
             boot_note = 0;
         end
-        for b = 1:Nb
+        Zb = [];
+        parfor b = 1:Nb
             I = randsample(n,m,1); % Resample with replacement
-            Zb(b,:) = regressfunc(ftOut(I,:),ftIn(I,:),regressargs{:});
+            if length(unique(I)) < 2*(size(ftIn,2) + 1)
+                msg = '!!! System is underdetermined for bootstrap resample %d for fe = %.1e.\n';
+                logmsg(msg,b,fe(j));
+                msg = '!!! Skipping this resampling. Consider increasing bootstrap.nmin to be >> 2*size(In,2) + 1.\n';
+                logmsg(msg);
+                continue;
+            end
+            Zb = [Zb; callregress_(ftOut(I,:),ftIn(I,:),j,fe(j),opts)];
         end
-        Bootstrap(j) = error_estimates_bootstrap(fe(j),Zb,Z(j,:));
+        if size(Zb,1) >= opts.fd.bootstrap.nmin
+            Bootstrap(j) = error_estimates_bootstrap(fe(j),Zb,Z(j,:));
+        else
+            msg1 = '!!! Due to sample skipping, # of bootstrap samples < opts.fd.bootstrap.nmin.\n';
+            msg2 = '!!! Cannot compute boostrap error estimates.\n';
+            msg = sprintf("%s\n%s", msg1, msg2);
+            logmsg(msg);
+        end
     end
 end
 
@@ -174,3 +170,30 @@ if all(isnan(Z(:)))
 end
 
 end % function tflab_miso()
+
+function [Z,dZ,Info] = callregress_(ftOut,ftIn,j,fe,opts)
+
+    regressargs = opts.fd.regression.functionargs;
+    regressfunc = opts.fd.regression.function;
+
+    lastwarn('');
+    [Z,dZ,Info] = regressfunc(ftOut,ftIn,regressargs{:});
+
+    if ~isempty(lastwarn)
+        msg = 'Above warning is for eval. freq. #%d; fe = %f; Te = %f\n';
+        logmsg(msg,j,fe,1/fe);
+        logmsg('ftE =');
+        ftOut
+        logmsg('ftB =');
+        ftIn
+    end
+
+    if any(isinf(Z))
+        msg = '!!! Z has Infs for fe = %f. Setting all elements of Z to NaN(s).\n';
+        logmsg(msg,fe);
+        Z = (1+1j)*nan*ones(1,size(Z,2));
+        if ~isempty(dZ)
+            dZ = (1+1j)*nan;
+        end
+    end
+end % function callregress_()

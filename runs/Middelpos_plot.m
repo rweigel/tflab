@@ -1,53 +1,53 @@
 
-clear;
+clear
 
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-outdir = fullfile(scriptdir(),'data','Middelpos','tfs-20120712-20120716');
+short_run = 0;
+
+if short_run
+    start = '20120712';
+    stop = '20120716';
+else
+    start = '20120712';
+    stop = '20121107';
+end
+
+dirstr  = sprintf('tfs-%s-%s',start,stop);
+rundir = fullfile(scriptdir(),'data','Middelpos',dirstr);
 
 for tfn = 1:4
-    fname{tfn} = fullfile(outdir, sprintf('Middelpos-tf%d.mat',tfn));
+    fname{tfn} = fullfile(rundir, sprintf('Middelpos-tf%d.mat',tfn));
     TFs{tfn} = loadtf(fname{tfn});
-    TFs{tfn} = tflab_preprocess(TFs{tfn});
 end
 
 %% Set common print options
 copts = struct();
     copts.print = 0; % Set to 1 to print pdf of each figure created.
-    copts.printOptions.printDir = fullfile(outdir,'figures');
+    copts.printOptions.printDir = fullfile(rundir,'figures');
     copts.printOptions.printFormats = {'pdf'};
 
 dock on;figure(1);close all;
 
 %% Time series plots
-% Plot raw time series data used for TF1 (will be same as that for TF2)
+tsopts = copts;
+tsopts.type = 'original';
+tsopts.printOptions.printFormats = {'png'};
 figure();
-    tsopts = copts;
-    tsopts.printOptions.printFormats = {'png'};
-    tsopts.type = 'original';
     tsplot(TFs{1},tsopts);
 figure();
-    tsplot(TFs{2},tsopts);
+    tsopts.type = 'final';
+    tsplot(TFs{3},tsopts);
 
-% Plot error for S1 only
-if 1
-    figure();
-        tsopts = copts;
-        tsopts.type = 'error';
-        tsplot(TFs{1},tsopts);
-end
-
-% Compare S1 and S2 error
-if 0
-    figure();
-        tsopts = copts;
-        tsopts.type  = 'error';
-        %tsplot({TF1,TF2},tsopts);
-end
+tsopts = copts;
+tsopts.type = 'error';
+figure();
+    tsplot(TFs{1},tsopts);
+figure();
+    tsplot(TFs{3},tsopts);
 
 %% DFT plots
-% Plot Fourier amplitudes for In/Out of TF1 (will be the same for both)
 if 0
     figure();
         dftopts = copts;
@@ -78,32 +78,16 @@ if 0
 end
 
 %% SN plots
-% Plot SN for TF1 only
-if 0
-    figure();
-        snopts = copts;
-        snplot(TF1,snopts);
-
-    % Plot SN for TF2 only
-    figure();
-        snopts = copts;
-        snplot(TF2,snopts);
-end
-
-% Compare all
 figure();
     snopts = copts;
-    snplot(TFs(:),snopts);
+    snplot(TFs([1,2]),snopts);
 
 %% Z plots
-% Compare Z
 figure();
     zopts = copts;
     zopts.type = 1;
-    zopts.period_range = [1, 86400];
-    zplot(TFs(:),zopts,[1,2]);
-figure();
-    zplot(TFs(:),zopts,[3,4]);
+    %zopts.period_range = [1, 86400];
+    zplot(TFs([1,2]),zopts);
 
 %% Regression plots
 % Plot regression errors for a component of S1's Z at a single frequency

@@ -26,10 +26,6 @@ opts.tflab = struct();
 % Time domain options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% # of points at start and end to trim before computing metrics
-% (pe/cc/mse/sn/coherence). NaN => no trim.
-opts.td.Ntrim = NaN;
-
 % Number of zeros added to the end of all time series prior to computing
 % DFT. NaN => no pad.
 opts.td.zeropad = NaN;
@@ -147,7 +143,7 @@ opts.fd.regression = struct();
 
 opts.fd.bootstrap = struct();
     opts.fd.bootstrap.N = 100;
-    opts.fd.bootstrap.nmin = 5; % Minumum number of points needed to perform bootstrap
+    opts.fd.bootstrap.nmin = 20; % Minumum number of points needed to perform bootstrap
     opts.fd.bootstrap.fraction = 1;
     % Fraction to sample; Efron's original bootstrap method uses 1;
     % If fraction = m/n != 1 called m of n bootstrap; see 10.1002/9781118445112.stat08002

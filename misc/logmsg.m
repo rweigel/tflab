@@ -23,12 +23,23 @@ if length(stack) > 1
             which(stack(1).file),...
             stack(1).line,...
             stack(1).line);
-    fmtx = msg(end);
     % Replace newlines not at end of string with a newline
     % and then indentation.
-    msg = strrep(msg(1:end-1), '\n',...
-                ['\n',repmat(' ', 1, length(str)+length(indent))]);
-    fprintf([link, ': ', msg, fmtx], varargin{:});
+    msgs = splitlines(msg);
+
+    if iscell(msgs)
+        fprintf([link, ': ', msgs{1}], varargin{:});
+    else
+        for i = 1:length(msgs)
+            if i == 1
+               fprintf([link, ': ', msgs{i}], varargin{:});
+            else
+                blanks = repmat(' ', 1, length(str)+length(indent));
+                tmp = sprintf('%s%s',blanks,msgs{i});
+                fprintf(tmp, varargin{:});
+            end
+        end
+    end
 else
     % Called from command line.
     fprintf(msg, varargin{:});

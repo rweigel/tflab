@@ -2,7 +2,7 @@ function [x,aib] = bandpass_(x,fb)
 %BANDPASS_ - Bandpass filter signal in frequency domain
 %
 %  y = bandpass_(x,fb) Given a time series x and low/high bandpass
-%  frequencies fb = [fl,fh], sets to zero the fourier coefficients of x 
+%  frequencies fb = [fl,fh], sets the fourier coefficients of x to zero
 %  outside of the range fb and returns the inverse fourier transform of
 %  the modified coefficients.
 %
@@ -27,7 +27,7 @@ end
 if length(fb) == 1
     Ib = find(fb == abs(f));
     if isempty(Ib)
-        [~,Ib] = min(abs(fb - f));  
+        [~,Ib] = min(abs(fb - f));
         warning('No exact match for requested frequency. Using nearest frequency = %f',f(Ib));
     end
 else

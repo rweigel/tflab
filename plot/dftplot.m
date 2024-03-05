@@ -5,7 +5,7 @@ function ax = dftplot(S,popts,comp)
 %   DFTPLOT(S, popts)
 %   DFTPLOT(S, popts, component)
 %
-%   For non-prediction error related plots, popts.type has form 
+%   For non-prediction error related plots, popts.type has form
 %   'a-b-c', where
 %
 %   a is one of: original, final, detrended, windowed, whitened, zeropadded
@@ -48,7 +48,7 @@ for s = 1:length(S)
         % error-{raw,averaged}-{magphase,realimag}
         if strcmp(tparts{2},'averaged')
             dftError = dftaverage(S{s}.DFT.Out_.Error);
-            fe{s} = S{s}.DFT.fe;            
+            fe{s} = S{s}.DFT.fe;
         else
             tmp = cat(1,S{s}.DFT.f{:});
             fe{s,1} = tmp(:);
@@ -68,6 +68,10 @@ for s = 1:length(S)
         end
     else
         % {original,detrended,windowed,whitened,zeropadded,final}-{raw,averaged}-{magnitudes,phases}
+        if ~isfield_(S,'DFT')
+            logmsg('DFT not found. Computing.\n');
+            S{s} = tflab_preprocess(S{s});
+        end
         if any(strcmp(tparts{1},{'detrended','windowed','whitened','zeropadded','final'}))
             % Capatilize first letter
             tparts1uc = [upper(tparts{1}(1)),tparts{1}(2:end)];
@@ -96,7 +100,7 @@ for s = 1:length(S)
             DFTIn{s} = cat(1,segsIn{:});
             DFTOut{s} = cat(1,segsOut{:});
         end
-        
+
         if length(S) > 1
             % Compare mode. One plot per component.
             DFTIn{s} = DFTIn{s}(:,comp);
@@ -168,7 +172,7 @@ if strcmp(tparts{1},'error')
     ax(2) = subplot('Position',popts.PositionBottom);
         plot_(x,y2,popts);
         colororder_(ax(2),y2);
-        grid on;box on;        
+        grid on;box on;
         if popts.vs_period
             set(gca,'XScale','log');
         end
@@ -189,7 +193,7 @@ if ~strcmp(tparts{1},'error')
 
     [lg1, lg2] = legend_(S,tparts{3},popts);
     [yl1, yl2] = ylabel_(S,tparts{3},popts,comp);
-    
+
     ax(1) = subplot('Position',popts.PositionTop);
         plot_(x,y1,popts);
         colororder_(ax(1),y1);
@@ -226,8 +230,7 @@ if length(S) > 1 && size(S{1}.In,2) > 1
     compstr = sprintf('-%s-',comp);
 end
 
-pfname = fullfile(popts.printdir,[popts.printname,comptstr,S{1}.Options.filestr]);
-figsave_(popts);
+figsave_(popts,compstr);
 
 if strcmp(tparts{1},'error')
     if comp < size(S{1}.In,2)
@@ -297,13 +300,13 @@ function [lg1, lg2] = legend_(S,what,popts)
                 lg2{j} = labelstr_(popts.outstr{j},'',what);
             end
         end
-    end    
+    end
 end
 
 function [yl1, yl2] = ylabel_(S,what,popts,comp)
 
     meta = S{1}.Metadata;
-    
+
     if length(S) > 1
         if strcmp(what,'magnitudes')
             yl1 = [labelstr_(popts.instr{comp}), ' ',meta.inunit];
@@ -325,7 +328,7 @@ function [yl1, yl2] = ylabel_(S,what,popts,comp)
         yl1 = single_(S{1}.In, what, comp, popts.instr, meta.inunit);
         yl2 = single_(S{1}.Out, what, comp, popts.outstr, meta.outunit);
     end
-    
+
     function yl = single_(X, what, comp, instr, inunit)
         if size(X,2) > 1
             if any(strcmp(what,{'magnitudes','reals','imaginaries'}))
@@ -435,5 +438,5 @@ function ls1 = plotnoise(ls1,comp,unit)
             end
         end
     end
-    
+
 end

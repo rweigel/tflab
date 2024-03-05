@@ -1,10 +1,10 @@
-function [B,E,t,infile,outfile] = Middelpos_clean()
+function [B,E,t,infile,outfile] = Middelpos_clean(start,stop,basedir)
 
-% Dir of this script
-scriptpath = fileparts(mfilename('fullpath')); 
+mat_raw = sprintf('Middelpos_%s-%s_raw.mat',start,stop);
+mat_clean = sprintf('Middelpos_%s-%s_cleaned.mat',start,stop);
 
-mat_raw = [scriptpath,'/data/Middelpos/Middelpos_20120712-20121107_raw.mat']; 
-mat_clean = [scriptpath,'/data/Middelpos/Middelpos_20120712-20121107_cleaned.mat']; 
+mat_raw = fullfile(basedir,'data','Middelpos',mat_raw);
+mat_clean = fullfile(basedir,'data','Middelpos',mat_clean);
 
 if exist(mat_clean,'file')
     fprintf('Reading: %s\n',mat_clean);
@@ -13,11 +13,13 @@ if exist(mat_clean,'file')
 end
 
 if ~exist(mat_raw,'file')
-    LEMI_read(name, ext, inpath, outpath);
+    [B,E,t] = LEMI_read(inpath, ext, start, stop);
+    fprintf('Writing: %s\n',mat_clean);
+    save(mat_raw,'B','E','t');
+else
+    fprintf('Reading: %s\n',mat_raw);
+    load(mat_raw);
 end
-
-fprintf('Reading: %s\n',mat_raw);
-load(mat_raw)
 
 E = despike(E,3,[-1,5]);
 
@@ -28,14 +30,15 @@ for i = 1:size(B,2)
     B(:,i) = interp1(tg,B(tg,i),ti);
 end
 for i = 1:size(E,2)
-    tg = find(~isnan(E(:,i)));    
-    E(:,i) = interp1(tg,E(tg,i),ti);    
+    tg = find(~isnan(E(:,i)));
+    E(:,i) = interp1(tg,E(tg,i),ti);
 end
 
 for i = 1:size(E,2)
     I = find(isnan(E(:,i)));
     if ~isempty(I)
-        logmsg(sprintf('Set %d leading or trailing NaNs in column %d of E to zero\n',length(I),i))
+        msg = 'Set %d leading or trailing NaNs in column %d of E to zero\n';
+        logmsg(msg,length(I),i);
         E(I,:) = 0;
     end
 end
@@ -46,4 +49,4 @@ end
 infile = mat_raw;
 outfile = mat_clean;
 fprintf('Writing: %s\n',mat_clean);
-save(mat_clean,'E','B','t','infile','outfile')
+save(mat_clean,'B','E','t','infile','outfile')

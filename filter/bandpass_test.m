@@ -35,17 +35,26 @@ figure(2);clf
 
 
 % 3. Power law
-S = demo_signals('powerlaw')
+S = demo_signals('powerlaw');
+x = S.In;
+[x_bp,aib_bp] = bandpass_(x,fb);
 
-S = tflab_preprocess(S);
+title('Test 3');
+plot(x,'k','LineWidth',4);hold on;
+plot(x_bp,'y','LineWidth',2);
+%plot((x_bp-x)/eps,'k');
+%legend('Original','Bandpassed','Difference/eps');
+legend('Original','Bandpassed');
 
+
+if 0
 dock on;figure(1);close all;
 
 figure();
     tsplot(S);
 
 figure();
-    % Populate S with data needed for psdplot().
+    % Populate S with data needed for dftplot().
     [PSDIn,~,f] = psd(S.In);
     S.Metrics.PSD.Raw.fe = f;
     S.Metrics.PSD.Raw.In = PSDIn;
@@ -53,4 +62,5 @@ figure();
     PSDOut = psd(S.Out);
     S.Metrics.PSD.Raw.Out = PSDOut;
     psdplot(S, struct('type','raw'));
-    
+
+end

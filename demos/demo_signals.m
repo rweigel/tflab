@@ -14,7 +14,7 @@ tflab_setpaths();
 
 
 if strcmp(stype,'simple')
-    
+
     if nargin < 2
         opts = struct();
         opts.Nt = 1000;
@@ -23,7 +23,7 @@ if strcmp(stype,'simple')
         opts.dB = 0;
         opts.dE = 0;
     end
-    
+
     Nt = opts.Nt;
     Z = opts.Z;
 
@@ -36,9 +36,9 @@ if strcmp(stype,'simple')
         f = k/Nt;
     end
     t = (0:Nt-1)';
-    
+
     % Generate input/output using exact amplitude and phase
-    % (A faster and less memory-intensive way to do this is with ifft() 
+    % (A faster and less memory-intensive way to do this is with ifft()
     % on a frequency domain representation of the signals being
     % constructed.)
     for i = 1:length(f)
@@ -66,7 +66,7 @@ if strcmp(stype,'powerlaw')
         opts.n = 1000;
 
         opts.A.B = [1];     % Amplitude of Bx
-        opts.alpha.B = [1]; 
+        opts.alpha.B = [1];
 
         opts.A.dB = [0];
         opts.alpha.dB = [0];
@@ -77,10 +77,10 @@ if strcmp(stype,'powerlaw')
         opts.A.dE = 0;     % Must be scalar
         opts.alpha.dE = 0; % Must be scalar
     end
-    
+
     assert(opts.N > 1, 'N > 1 is required');
 
-    % Create signal using N frequencies    
+    % Create signal using N frequencies
     [~,F] = fftfreq(opts.N);
 
     t = (0:opts.n-1)';
@@ -89,22 +89,22 @@ if strcmp(stype,'powerlaw')
     % TODO: In the case that n = N, we could create time series by first
     % creating ffts and then inverting ffts. (Analytic formulas also exist
     % for n ~= N).
- 
+
     if isfield(opts,'keep')
         F = F(opts.keep);
     end
-    
+
     % Keep only frequencies in range of frequencies in f.
     F = F(F >= f(2) & F <= f(end));
-    
+
     Ff = repmat(F',length(t),1);
     tf = repmat(t, 1, length(F));
     E = zeros(length(t),length(F));
 
-    for k = 1:length(opts.A.B) % Loop over vector component        
+    for k = 1:length(opts.A.B) % Loop over vector component
         % Give each frequency a random phase
         Phi = 2*pi*rand(1, length(F));
-        %Phi = zeros(1, length(F)); 
+        %Phi = zeros(1, length(F));
         PhiB = repmat(Phi, length(t), 1);
 
         % PhiB depends on column, not row.
@@ -115,15 +115,15 @@ if strcmp(stype,'powerlaw')
         % Add noise to B
         PhidB = 2*pi*rand(1, length(F));
         %PhidB = zeros(1, length(F));
-        PhidB = repmat(PhidB, length(t), 1);        
+        PhidB = repmat(PhidB, length(t), 1);
         dB(:,:,k) = opts.A.dB(k)*(Ff.^opts.alpha.dB(k)).*cos(2*pi*Ff.*tf + PhidB);
 
         E = E + opts.A.Z(k)*(Ff.^opts.alpha.Z(k)).*B(:,:,k);
     end
-    
+
     % Add noise to E
     PhidE = 2*pi*rand(1, length(F));
-    PhidE = repmat(PhidE, length(t), 1);    
+    PhidE = repmat(PhidE, length(t), 1);
     dE = opts.A.dE.*(Ff.^opts.alpha.dE).*cos(2*pi*Ff.*tf + PhidE);
 
     E = sum(E,2);
@@ -134,7 +134,7 @@ if strcmp(stype,'powerlaw')
     for j = 1:size(E,2)
         %E(:,j) = E(:,j)/std(E(:,j));
     end
-    
+
     B = squeeze(sum(B,2)); % Sum across frequencies
     if dB ~= 0
         S.InNoise = squeeze(sum(dB,2));
@@ -143,12 +143,12 @@ if strcmp(stype,'powerlaw')
     for j = 1:size(B,2)
         %B(:,j) = B(:,j)/std(B(:,j));
     end
-    
+
     % Compute exact Z at n frequencies
     for k = 1:length(opts.A.B)
         Z(:,k) = opts.A.Z(k)*(f.^opts.alpha.Z(k));%*(cos(Phi(i)) + sqrt(-1)*sin(Phi(i)));
     end
-    
+
     S.In  = B;
     S.Out = E;
     S.Z  = Z;
@@ -161,13 +161,13 @@ end
 if strcmp(stype,'fromH/zpredict()')
 
     assert(nargin == 2,'Two inputs are required');
-    
+
     N = opts.N;
     [~,f] = fftfreq(N);
     H = opts.H;
     f = f';
     z = freqz(opts.H,1,f,1);
-    Z = zinterp(f,z,opts.N);    
+    Z = zinterp(f,z,opts.N);
 
     rng(1);
     B = randn(opts.N,1);
@@ -183,17 +183,17 @@ if strcmp(stype,'fromH/zpredict()')
 end
 
 if strcmp(stype,'fromH/filter()')
-    
+
     assert(nargin == 2,'Two inputs are required');
-    
+
     H = opts.H;
     N = opts.N;
-    
+
     B = randn(opts.N+length(H),1);
     E = filter(H,1,B);
-    
+
     % Remove non-steady-state
-    B = B(length(H)+1:end); 
+    B = B(length(H)+1:end);
     E = E(length(H)+1:end);
 
     S.In  = B;
@@ -203,18 +203,18 @@ end
 if strcmp(stype,'fromlowpassH')
 
     assert(nargin == 2,'Two inputs are required');
-    
+
     % Low pass filter impulse responses
 
     ndim = opts;
-    
+
     description = '';
-    
+
     tau  = 10;  % Filter decay constant
     Ntau = 100; % Number of filter coefficients = Ntau*tau + 1
     N    = 2e4; % Simulation length
     nR   = 2;   % Width of rectangualar window is 2*nR+1
-    Nss  = 4;   % Will remove Nss*Ntau*tau from start of all time series 
+    Nss  = 4;   % Will remove Nss*Ntau*tau from start of all time series
     nb   = 0.0; % Noise in B
     ne   = 0.0; % Noise in E
     ndb  = 0.0; % Noise in dB
@@ -265,7 +265,7 @@ if strcmp(stype,'fromlowpassH')
     end
     if ndim == 4
         H = zeros(length(h),ndim);
-        if tn == 1 
+        if tn == 1
             % Doing all equal will lead to rank deficient warnings.
             H(:,1) = 0.1*h;
             H(:,2) = 0.2*h;
@@ -274,7 +274,7 @@ if strcmp(stype,'fromlowpassH')
         end
         if tn == 2
             % Need to explain why Zxx and Zyy are not zero for this case.
-            H(:,1) = 0*h; 
+            H(:,1) = 0*h;
             H(:,2) = h;
             H(:,3) = 0*h;
             H(:,4) = h;

@@ -23,6 +23,7 @@ opts = tflab_options(0);
     opts.tflab.loglevel = 1;
     opts.fd.evalfreq.functionargs = {[1,5], 'linear'};
 [Cxy2,fxy2] = coherence(E,B,1,opts);
+Cxy2 = Cxy2.^2; % coherence() returns coherence, not magnitude squared coherence
 
 % Manual version of mscohere with given arguments
 [dftE,fxy3] = fftu(reshape(E,256,4));

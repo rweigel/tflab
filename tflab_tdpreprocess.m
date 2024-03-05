@@ -5,7 +5,7 @@ if nargin < 2
 end
 
 
-if isfield(S.Options,'td')
+if isfield_(S,'Options.td')
     tdopts = S.Options.td;
 else
     logmsg('No time domain preprocessing b/c no S.Options.td.\n');
@@ -42,7 +42,7 @@ if ~isempty(tdopts.window.function)
     Inx = tdopts.window.function(Inx,tdopts.window.functionargs{:});
     Outx = tdopts.window.function(Outx,tdopts.window.functionargs{:});
     S.In_.Windowed = Inx;
-    S.Out_.Windowed = Outx;    
+    S.Out_.Windowed = Outx;
 else
     if loglevel > 0
         %logmsg('No windowing applied b/c no window function given.\n');

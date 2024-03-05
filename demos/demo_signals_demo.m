@@ -25,7 +25,7 @@ figure();
 
 figure();
     tsplot(S, struct('type','error'));
-    
+
 figure();
     dftplot(S, struct('type','original'));
 
@@ -37,7 +37,7 @@ figure();
 
 figure();
     dftplot(S, struct('type','error-averaged'));
-    
+
 figure();
     snplot(S);
 

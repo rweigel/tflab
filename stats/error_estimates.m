@@ -9,11 +9,13 @@ if onsegments
         STDr = std(real(Zc),1,2);
         STDi = std(imag(Zc),1,2);
         delta = t*(STDr + 1j*STDi)/sqrt(size(Z,3));
-        Zave = mean(Zc,2);
-        ZCL95l(:,comp) = Zave - delta;
-        ZCL95u(:,comp) = Zave + delta;
+        Zave(:,comp) = mean(Zc,2);
+        ZCL95l(:,comp) = Zave(:,comp) - delta;
+        ZCL95u(:,comp) = Zave(:,comp) + delta;
     end
-    ErrorEstimates.Parametric = error_estimates_derived(fe,Z,ZCL95l,ZCL95u);
+    % This is a check that we are computing the average in the same way.
+    assert(isequaln(Zave,S.Z),'Zave does not match S.Z in error_estimates.m');
+    ErrorEstimates.Parametric = error_estimates_derived(fe,Zave,ZCL95l,ZCL95u);
 
     if isfield_(S,'Options.fd.bootstrap')
         if S.Options.fd.bootstrap.nmin < size(Z,3)

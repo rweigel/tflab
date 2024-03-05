@@ -1,27 +1,35 @@
-function [ax1,ax2] = snplot(S,popts,comp)
+function [ax1,ax2] = snplot(S,popts,comps)
 %SNPLOT
+%
+%   SNPLOT(S)
+%   SNPLOT(S, opts)
+%   SNPLOT(S, opts, component)
 
-assert(isstruct(S) || iscell(S), ...
-    'S must be a tflab struct or cell array of tflab structs');
+msg = 'S must be a tflab struct or cell array of tflab structs';
+assert(isstruct(S) || iscell(S), msg);
+
+if isstruct(S)
+    S = {S};
+end
 
 if nargin < 2
     popts = struct();
 end
 if nargin < 3
-    comp = 1;
+    comps = 1:size(S{1}.Metrics.SN,2);
 end
+comps = sort(comps);
 
 show_xcoh = 1;
 
 % Apply default metadata for fields not specified in S.Metadata.
 S = tflab_metadata(S);
-
-
 popts = tflabplot_options(S,popts,'snplot');
 
-if ~iscell(S)
-    S = {S};
+if nargin < 3
+    comps = 1:size(S{1}.Z,2);
 end
+comps = sort(comps);
 
 frequnit = S{1}.Metadata.frequnit;
 
@@ -33,7 +41,7 @@ if length(S) == 1
 
     if (nargin > 2)
         lg = lg{comp};
-    end        
+    end
 
     [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts);
     if nargin > 2
@@ -90,13 +98,13 @@ if length(S) == 1
                         '$(E_y,B_x)$','$(E_y,B_y)$'...
                       };
             end
-            legend(lg,popts.legend{:});                
-            ylabel('Coherence');        
+            legend(lg,popts.legend{:});
+            ylabel('Coherence');
         else
             if size(y2,2) > 1
                 legend(lg,popts.legend{:});
             end
-            ylabel('Meas. to Pred. Coherence');        
+            ylabel('Meas. to Pred. Coherence');
         end
         set(gca,'YLim',[0,1]);
         yline(1,'k');
@@ -111,13 +119,37 @@ if length(S) > 1
     % Multiple TFs
     figprep();
 
+    if length(comps) == 1
+        comp = comps;
+    else
+        for c = 1:length(comps)
+            if c > 1
+                figure;
+            end
+            logmsg('Plotting component %d.\n',comps(c))
+            [ax1(c),ax2(c)] = snplot(S,popts,comps(c));
+        end
+        return
+    end
+
     lg = legend_(S,popts,comp);
     [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts);
+
+    if iscell(popts.outstr)
+        outstr = popts.outstr{comp};
+    else
+        if size(S.Out,2) == 1
+            outstr = sprintf('%s\n',popts.outstr);
+        else
+            outstr = sprintf('%s(:,%d)%s\n',popts.outstr,j);
+        end
+    end
 
     ax1 = subplot('Position', popts.PositionTop);
         grid on;box on;hold on;
         for s = 1:length(y1)
-            plot(x{s},y1{s}(:,comp),popts.line{:});
+            marker = markeropts(length(S),s);
+            plot(x{s},y1{s}(:,comp),marker{:});
         end
         for s = 1:length(y1)
             errorbar_(x{s},y1{s}(:,comp),y1{s}(:,comp)-y1cll{s}(:,comp),y1clu{s}(:,comp)-y1{s}(:,comp));
@@ -129,7 +161,7 @@ if length(S) > 1
             set(gca,'YScale','log');
         end
         legend(lg,popts.legend{:});
-        ylabel('Signal to Error');
+        ylabel(sprintf('%s Signal to Error',outstr));
         adjust_ylim('upper');
         adjust_yticks();
         yl = get(gca,'YLim');
@@ -141,12 +173,13 @@ if length(S) > 1
     ax2 = subplot('Position', popts.PositionBottom);
         grid on;box on;hold on;
         for s = 1:length(y2)
-            plot(x{s},y2{s}(:,comp),popts.line{:});
+            marker = markeropts(length(S),s);
+            plot(x{s},y2{s}(:,comp),marker{:});
         end
         if show_xcoh == 1
             lg = legend_(S,popts,comp);
             plot(x{s},y3{s}(:,comp),'ko');
-            ylabel(sprintf('Coherence with %s',popts.outstr{comp}));
+            ylabel(sprintf('Coherence with %s',outstr));
             if length(popts.instr) == 2
                 if comp == 1
                     lg{end+1} = popts.instr{2};
@@ -155,7 +188,8 @@ if length(S) > 1
                 end
             end
         else
-            ylabel('Meas. to Pred. Coherence');
+            tmp = '%s Meas. to %s Pred. Coherence';
+            ylabel(sprintf(tmp,outstr,outstr));
         end
         if popts.vs_period
             set(gca,'XScale','log');
@@ -163,18 +197,11 @@ if length(S) > 1
         legend(lg,popts.legend{:});
         set(gca,'YLim',[0,1]);
         adjust_ylim('upper');
-        adjust_exponent('x');            
+        adjust_exponent('x');
         setx(popts,1,frequnit);
 
     figsave_(popts,S{1}.Metadata.outstr{comp})
 
-    if comp < size(S{1}.In,2)
-        figure();
-        comp = comp + 1;
-        ax1 = {ax1};
-        ax2 = {ax2};
-        [ax1{comp},ax2{comp}] = snplot(S,popts,comp);
-    end
 end
 
 end % function
@@ -184,10 +211,10 @@ function [x,y1,y2,y3,y1cll,y1clu] = xyvals_(S,popts)
     for s = 1:length(S)
         fe{s} = S{s}.Metrics.fe;
         y1{s} = S{s}.Metrics.SN;
-        y2{s} = sqrt(S{s}.Metrics.Coherence);
+        y2{s} = S{s}.Metrics.PredictionCoherence;
         y1clu{s} = S{s}.Metrics.SNCLu;
         y1cll{s} = S{s}.Metrics.SNCLl;
-        y3{s} = sqrt(S{s}.Metrics.Xcoherence);
+        y3{s} = sqrt(S{s}.Metrics.CrossCoherence);
         if popts.vs_period
             x{s} = 1./(fe{s}*S{s}.Metadata.freqsf);
         else
@@ -204,7 +231,7 @@ function [x,y1,y2,y3,y1cll,y1clu] = xyvals_(S,popts)
             y1cll{s} = y1cll{s}(idx,:);
         end
     end
-    
+
     if length(S) == 1
         x  = x{1};
         y1 = y1{1};
@@ -212,7 +239,7 @@ function [x,y1,y2,y3,y1cll,y1clu] = xyvals_(S,popts)
         y1clu = y1clu{1};
         y2 = y2{1};
         y3 = y3{1};
-    end    
+    end
 end
 
 function lg = legend_(S,popts,comp)
@@ -220,18 +247,7 @@ function lg = legend_(S,popts,comp)
     if iscell(S)
         for s = 1:length(S)
             desc = S{s}.Options.description;
-            if ~isempty(desc)
-                desc = [' ',desc];
-            end
-            if iscell(popts.outstr)
-                lg{s} = sprintf('%s%s',popts.outstr{comp}, desc);
-            else
-                if size(S{s}.Out,2) == 1
-                    lg{s} = sprintf('%s',desc);
-                else
-                    lg{s} = sprintf('%s(:,%d)%s',popts.outstr,comp,desc);
-                end
-            end
+            lg{s} = sprintf('%s',desc);
         end
     else
         for j = 1:size(S.Out,2)
@@ -246,5 +262,5 @@ function lg = legend_(S,popts,comp)
             end
         end
     end
-    
+
 end

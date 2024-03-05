@@ -22,14 +22,14 @@ if ~endsWith(fnamefull,'.mat')
     fnamefull = append(fnamefull,'.mat');
 end
 
-logmsg(sprintf('Reading: %s\n',fnamefull));
+logmsg('Reading: %s\n',fnamefull);
 if exist('variable','var') && ~isempty(variable)
     tf = load(fname,variable);
     tf = tf.(variable);
-    logmsg(sprintf('Read:    ''%s'' from %s\n',variable,fnamefull));
+    logmsg('Read:    ''%s'' from %s\n',variable,fnamefull);
 else
     tf = load(fname);
-    logmsg(sprintf('Read:    %s\n',fnamefull));
+    logmsg('Read:    %s\n',fnamefull);
 end
 
 if nargin > 2 && preprocess

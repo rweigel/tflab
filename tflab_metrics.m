@@ -99,10 +99,10 @@ if size(Out,2)*size(In,2) ~= size(Z,2)
     assert(cond, 'size(Out,2) must equal size(Z,2)/size(In,2)');
 end
 
-OutPredicted = nan(size(Out));
+Predicted = nan(size(Out));
 Error = nan(size(Out));
 
-logmsg('Computing PE, MSE, CC, SE, and Coherences.\n')
+logmsg('Computing Out_.Predicted, Out_.Error, PE, MSE, CC, SE, and Coherences.\n')
 for k = 1:size(In,3) % Third dimension is segment
     for j = 1:size(Out,2) % Second dimension is component of Out
 
@@ -118,19 +118,19 @@ for k = 1:size(In,3) % Third dimension is segment
         zcols = (1:size(In,2)) + (j-1)*size(In,2);
 
         if ~isempty(dZ)
-            OutPredicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k),dZi);
+            Predicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k),dZi);
         else
-            OutPredicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k));
+            Predicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k));
         end
 
-        Metrics.PE(1,j,k)  = pe_nonflag(Out(:,j,k), OutPredicted(:,j,k));
-        Metrics.MSE(1,j,k) = mse_nonflag(Out(:,j,k), OutPredicted(:,j,k));
-        Metrics.CC(1,j,k)  = cc_nonflag(Out(:,j,k), OutPredicted(:,j,k));
+        Metrics.PE(1,j,k)  = pe_nonflag(Out(:,j,k), Predicted(:,j,k));
+        Metrics.MSE(1,j,k) = mse_nonflag(Out(:,j,k), Predicted(:,j,k));
+        Metrics.CC(1,j,k)  = cc_nonflag(Out(:,j,k), Predicted(:,j,k));
 
-        [Metrics.Coherence(:,j,k), Metrics.fe] = ...
-            coherence(Out(:,j,k), OutPredicted(:,j,k), 1, opts);
+        [Metrics.PredictionCoherence(:,j,k), Metrics.fe] = ...
+            coherence(Out(:,j,k), Predicted(:,j,k), 1, opts);
 
-        Error(:,j,k) = OutPredicted(:,j,k)-Out(:,j,k);
+        Error(:,j,k) = Predicted(:,j,k)-Out(:,j,k);
 
         [Metrics.SN(:,j,k),~,Metrics.SNCLl(:,j,k),Metrics.SNCLu(:,j,k)] = ...
             signaltoerror(Out(:,j,k), Error(:,j,k), 1, opts);
@@ -139,7 +139,8 @@ for k = 1:size(In,3) % Third dimension is segment
             % If In and out both have two components, columns are
             %   <Outx,Inx>, <Outx,Iny>, <Outy,Iny>, <Outy,Iny>
             u = i + (j-1)*size(Out,2);
-            Metrics.Xcoherence(:,u,k) = coherence(Out(:,j,k), In(:,i,k), 1, opts);
+            Metrics.CrossCoherence(:,u,k) = ...
+                coherence(Out(:,j,k), In(:,i,k), 1, opts);
         end
 
     end
@@ -148,20 +149,10 @@ end
 logmsg('Computing DFT of Error and Predicted time series.\n')
 for k = 1:size(In,3)
     DFTError(:,:,k) = dftbands(Error(:,:,k), opts);
-    DFTPredicted(:,:,k) = dftbands(OutPredicted(:,:,k), opts);
+    DFTPredicted(:,:,k) = dftbands(Predicted(:,:,k), opts);
 end
 
-logmsg('Computing residuals.\n')
-if 0
-if ~isfield(S,'DFT')
-    logmsg('DFT field not found. Computing.\n');
-    S = tflab_fdpreprocess(S);
-    DFT = S.DFT;
-else
-    logmsg('DFT field found. Not recomputing.\n');
-end
-end
-
+logmsg('Computing residuals.\n');
 for k = 1:size(In,3) % Third dimension is segment
 
     Zi = Z;
@@ -215,13 +206,13 @@ end
 if onsegments
     S.Segment.Metrics = Metrics;
     S.Segment.Out_.Error = Error;
-    S.Segment.Out_.Predicted = OutPredicted;
+    S.Segment.Out_.Predicted = Predicted;
     S.Segment.DFT.Out_.Error = DFTError;
     S.Segment.DFT.Out_.Predicted = DFTPredicted;
 else
     S.Metrics = Metrics;
     S.Out_.Error = Error;
-    S.Out_.Predicted = OutPredicted;
+    S.Out_.Predicted = Predicted;
     S.DFT.Out_.Error = DFTError;
     S.DFT.Out_.Predicted = DFTPredicted;
 end

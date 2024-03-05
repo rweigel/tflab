@@ -14,7 +14,7 @@ end
 
 base = fileparts(fname);
 if ~isempty(base) && ~exist(base, 'dir')
-    logmsg(sprintf('Creating: %s\n', base));
+    logmsg('Creating: %s\n', base);
     mkdir(base);
 end
 
@@ -22,7 +22,7 @@ fnamefull = fname;
 if ~endsWith(fnamefull,'.mat')
     fnamefull = append(fnamefull,'.mat');
 end
-logmsg(sprintf('Saving: %s\n',fnamefull));
+logmsg('Saving: %s\n',fnamefull);
 
 if isfield(tf,'Segment')
     if isfield(tf.Segment,'Residuals')
@@ -52,5 +52,5 @@ end
 
 save(fname,'-v7.3','-struct','tf','In','Out',keeps{:});
 
-logmsg(sprintf('Saved:  %s\n',fnamefull));
+logmsg('Saved:  %s\n',fnamefull);
 

@@ -4,13 +4,11 @@ function ax = tsplot(S,popts)
 %  TSPLOT(S), where S is the output of TRANSFERFNFD or a cell array of such
 %  outputs.
 %
-%  TSPLOT(S, opts) creates a plot using options in structure opts.
-%  
-%   mldatenum_range
-%   time_range
+%  TSPLOT(S, opts) creates a plot using options in structure opts. Use
+%  tflabplot_options(S, struct(), 'tsplot') to determine defaults.
 %
-%   Use tflabplot_options(S, struct(), 'tsplot') to determine
-%   defaults.
+%  opts.type can be 'original', 'error', 'final', or the name of one of the
+%  fields in S.In_ and S.Out_.
 
 if ischar(S)
     S = loadtf(S);
@@ -59,7 +57,7 @@ if iscell(S)
 
     t = index2mldn_(S{1}, size(S{1}.In,1));
     trange = [t(1),t(end)];
-    
+
     timeunits = {};
     timestarts = {};
     for s = 1:length(S)
@@ -81,12 +79,13 @@ else
     if strcmp(popts.type,'error')
         logmsg('Plotting output and predicted for single transfer function.\n')
         y1{1} = S.Out;
-        if ~isfield(S,'Out_')
-            S = tflab_tdpreprocess(S);
+        if ~isfield_(S,'Out_.Predicted')
+            logmsg('Out_.Predicted and Out_.Error not found. Computing.\n')
+            S = tflab_preprocess(S);
             S = tflab_metrics(S);
         end
         y1{2} = S.Out_.Predicted;
-            
+
         t1 = index2mldn_(S, size(y1{1},1));
 
         y2 = S.Out_.Error;
@@ -108,7 +107,7 @@ else
             end
             y1 = S.In_.Final;
             y2 = S.Out_.Final;
-        else    
+        else
             typeuc = [upper(popts.type(1)),popts.type(2:end)];
             if ~isfield(S,'In_')
                 S = tflab_tdpreprocess(S);
@@ -122,7 +121,7 @@ else
         end
         t1 = index2mldn_(S, size(y1,1));
         t2 = index2mldn_(S, size(y2,1));
-        trange = [t1(1),t1(end)];        
+        trange = [t1(1),t1(end)];
         [yl1, yl2] = ylabel_(S,popts);
         [lg1, lg2] = legend_(popts);
     end
@@ -152,14 +151,14 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
         adjust_ylim();
         adjust_exponent('y');
         setx_(0,info,trange);
-        
+
     ax(2) = subplot('Position',popts.PositionBottom);
         plot(t1,y2);
         if size(y2,2) == 1
             % If single line, make black
             colororder(ax(1), {'k'})
         end
-        grid on;grid minor;box on;    
+        grid on;grid minor;box on;
         ylabel(yl2);
         if ~isempty(lg2)
             [~, lo] = legend(lg2,popts.legend{:});
@@ -178,7 +177,7 @@ end
 
 
 if ~iscell(S) && strcmp(popts.type,'error')
-    
+
     for j = 1:size(S.Out,2)
         if j > 1
             figure();
@@ -220,9 +219,9 @@ if ~iscell(S) && strcmp(popts.type,'error')
         ax(2,j) = subplot('Position',popts.PositionBottom);
             plot(t2,y2(:,j));
             grid on;grid minor;box on;
-            ylabel(outunit);            
+            ylabel(outunit);
             %adjust_ylim();
-            adjust_exponent('y')            
+            adjust_exponent('y')
             [~, lo] = legend(lg2,popts.legend{:});
             adjust_legend_lines(lo);
             setx_(1,info,trange);
@@ -266,7 +265,7 @@ if iscell(S)
         adjust_ylim();
         adjust_exponent('y');
         setx_(0,info,trange);
-        
+
     ax(2) = subplot('Position',popts.PositionBottom);
         plot(t(tidx),S{1}.Out(tidx,2));
         % Force first line to be black so color order
@@ -282,19 +281,19 @@ if iscell(S)
             lg{j} = sprintf('Predicted %s\n',...
                         S{j}.Options.description);
         end
-        
+
         [~, lo] = legend({lg0,lg{:}},...
                         'Location','NorthEast','Orientation','Vertical');
         adjust_legend_lines(lo);
         adjust_ylim();
         adjust_exponent('y');
         setx_(1,info,trange);
-    
+
     % Force "Observed" line to be black.
     % Other lines follow default color order.
     %co = [0,0,0;colororder()];
     %colororder(gcf,co);
-    
+
     if popts.print == 1
         pfname = fullfile(popts.printOptions.printDir,popts.printOptions.printName);
         figsave(pfname,popts.printOptions.export_fig,popts.printOptions.printFormats);
@@ -316,11 +315,11 @@ function setx_(last,info,tl)
             xt = get(gca,'XTick');
             io = 1;
             if xt(1) < tl(1) % First label is not visible.
-                io = 2; 
+                io = 2;
             end
             xtl = cellstr(get(gca,'XTickLabel'));
             if xt(2)-xt(1) < 1
-                labl = datestr(tl(1),'yyyy/mm/dd');            
+                labl = datestr(tl(1),'yyyy/mm/dd');
             else
                 labl = datestr(tl(1),'yyyy');
             end
@@ -329,7 +328,7 @@ function setx_(last,info,tl)
             set(gca,'XTickLabel',xtl, 'TickLabelInterpreter', 'latex');
         end
     end
-    
+
     if last == 0
         % Hide tick labels
         set(gca,'XTickLabel',[]);
@@ -344,7 +343,7 @@ function setx_(last,info,tl)
         end
         adjust_exponent('x');
     end
-        
+
 end
 
 function [lg1, lg2] = legend_(popts)
@@ -356,7 +355,7 @@ function [lg1, lg2] = legend_(popts)
     end
     if length(popts.outstr) > 1
         lg2 = popts.outstr;
-    end    
+    end
 end
 
 function [yl1, yl2] = ylabel_(S,popts)
