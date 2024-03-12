@@ -1,9 +1,9 @@
-clear;
-close all; % To reduce memory.
+clear
+close all % To reduce memory.
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-short_run = 0;
+short_run = 1;
 
 if short_run
     start = '20120712';

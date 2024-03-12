@@ -1,20 +1,21 @@
-function [B,E,t,infile,outfile] = Middelpos_clean(start,stop,basedir)
+function [B,E,t,infile,outfile] = Middelpos_clean(start,stop,rundir)
 
-mat_raw = sprintf('Middelpos_%s-%s_raw.mat',start,stop);
-mat_clean = sprintf('Middelpos_%s-%s_cleaned.mat',start,stop);
+mat_raw = fullfile(rundir,'measurements-raw.mat');
+mat_cleaned = fullfile(rundir,'measurements-cleaned.mat');
 
-mat_raw = fullfile(basedir,'data','Middelpos',mat_raw);
-mat_clean = fullfile(basedir,'data','Middelpos',mat_clean);
-
-if exist(mat_clean,'file')
-    fprintf('Reading: %s\n',mat_clean);
-    load(mat_clean)
+if ~exist(rundir,'dir')
+    mkdir(rundir);
+end
+if exist(mat_cleaned,'file')
+    fprintf('Reading: %s\n',mat_cleaned);
+    load(mat_cleaned)
     return
 end
 
 if ~exist(mat_raw,'file')
-    [B,E,t] = LEMI_read(inpath, ext, start, stop);
-    fprintf('Writing: %s\n',mat_clean);
+    datadir = fullfile(rundir,'..','measurements');
+    [B,E,t] = LEMI_read(datadir,'t82',start,stop);
+    fprintf('Writing: %s\n',mat_cleaned);
     save(mat_raw,'B','E','t');
 else
     fprintf('Reading: %s\n',mat_raw);
@@ -47,6 +48,6 @@ end
 [B,E] = removemean(B,E);
 
 infile = mat_raw;
-outfile = mat_clean;
-fprintf('Writing: %s\n',mat_clean);
-save(mat_clean,'B','E','t','infile','outfile')
+outfile = mat_cleaned;
+fprintf('Writing: %s\n',mat_cleaned);
+save(mat_cleaned,'B','E','t','infile','outfile')

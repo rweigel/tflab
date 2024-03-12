@@ -17,6 +17,7 @@ assert(isstruct(S) || iscell(S), msg);
 if isstruct(S)
     S = {S};
 end
+
 if nargin < 2
     popts = struct();
 end

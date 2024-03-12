@@ -4,6 +4,9 @@ function Bootstrap = error_estimates_bootstrap(fe,Zb,Zm)
 % Returns a structure with fields ZCL95l, ZCL95u, and ZVAR
 % ZCL95l and ZCL95u are estimates of the 95% confidence limits for Z
 % ZVAR is an estimate of the variance of Z
+
+% Consider also pivot CI:
+% https://www2.stat.duke.edu/~banks/111-lectures.dir/lect13.pdf
 for c = 1:size(Zb,2) % Columns are the transfer function components
     Bootstrap.ZCL95l(c) = prctile(real(Zb(:,c)),2.5) + 1j*prctile(imag(Zb(:,c)),2.5);
     Bootstrap.ZCL95u(c) = prctile(real(Zb(:,c)),97.5) + 1j*prctile(imag(Zb(:,c)),97.5);

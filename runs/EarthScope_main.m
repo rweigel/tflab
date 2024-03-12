@@ -1,17 +1,23 @@
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-id = 'VAQ58';
-edifile = 'VAQ58bc_FRDcoh.xml';
-% http://ds.iris.edu/spud/emtf/15014571
-% http://ds.iris.edu/spudservice/data/15014570
-
 if 1
-id = 'ORF03';
-%edifile = 'ORF03bc_G3x.xml';
-%edifile = 'USArray.ORF03.2007.xml'; % Older version
-% http://ds.iris.edu/spud/emtf/14866915
-% http://ds.iris.edu/spudservice/data/14866913
+    id = 'VAQ58';
+    edifile = 'VAQ58bc_FRDcoh.xml';
+    Ikeep = [];
+    %Ikeep = 1:4*86400;
+    %Ikeep = 1:6*86400;
+    % http://ds.iris.edu/spud/emtf/15014571
+    % http://ds.iris.edu/spudservice/data/15014570
+end
+
+if 0
+    id = 'ORF03';
+    edifile = 'ORF03bc_G3x.xml';
+    Ikeep = [];
+    %edifile = 'USArray.ORF03.2007.xml'; % Older version
+    % http://ds.iris.edu/spud/emtf/14866915
+    % http://ds.iris.edu/spudservice/data/14866913
 end
 
 outdir = fullfile(scriptdir(),'data','EarthScope',id);
@@ -27,29 +33,10 @@ B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-if strcmp(id,'VAQ58')
-    B = B(1:6*86400,:);
-    E = E(1:6*86400,:);
-    t = t(1:6*86400);
-end
-
-if 1 || strcmp(id,'VAQ58')
-    %% Band pass
-    Tm = 2*86400;
-    band = [1/Tm,0.5];
-    B = bandpass_(B,band);
-    E = bandpass_(E,band);
-    %keyboard
-    %E = E(Tm+1:end-Tm,:);
-    %B = B(Tm+1:end-Tm,:);
-    %t = t(Tm+1:end-Tm,:);
-end
-
-if 0
-    I = find(t > 736498.3 & t < 736502);
-    B = B(I,:);
-    E = E(I,:);
-    t = t(I);
+if ~isempty(Ikeep)
+    B = B(Ikeep,:);
+    E = E(Ikeep,:);
+    t = t(Ikeep);
 end
 
 %% Set output file base name using start/stop times of input data
@@ -70,86 +57,82 @@ meta = struct();
     meta.chainid   = 'EarthScope';
     meta.stationid = id;
 
-if 1
-%% Compute first TF
+%% First TF
 tfn = 1;
-Ns = size(B,1)/pps;
-%desc1 = sprintf('TFLab; %d %d-day segment%s',Ns,pps/86400,plural(Ns));
-desc1 = sprintf('TFLab');
-opts1 = tflab_options(1);
-    opts1.tflab.loglevel = 1;
-    opts1.td.window.width = pps;
-    opts1.td.window.shift = pps;
-    opts1.filestr = sprintf('%s-tf%d',filestr,tfn);
-    opts1.description = desc1;
-TF1 = tflab(B(:,1:2),E,opts1);
-
-TF1.Metadata = meta; % Attach metadata used in plots
-
-savetf(TF1, fullfile(outdir, opts1.filestr));
-end
-
-
-%% Compute second TF
-tfn = 2;
-Ns = 1;
 pps = size(B,1);
-%desc2 = sprintf('TFLab; %d %d-day segment%s',Ns,pps/86400,plural(Ns));
-desc2 = sprintf('TFLab');
-opts2 = tflab_options(1);
-    opts2.tflab.loglevel = 1;
-    opts2.td.window.width = NaN;
-    opts2.td.window.shift = NaN;
-    opts2.filestr = sprintf('%s-tf%d',filestr,tfn);
-    opts2.description = desc2;
-TF2 = tflab(B(:,1:2),E,opts2);
+desc = sprintf('OLS; 1 %d-day segment',pps/86400);
+opts{tfn} = tflab_options(1);
+    opts{tfn}.tflab.loglevel = 1;
+    opts{tfn}.td.window.width = NaN;
+    opts{tfn}.td.window.shift = NaN;
+    opts{tfn}.td.detrend.function = @bandpass_;
+    opts{tfn}.td.detrend.functionstr = 'bandpass_';
+    opts{tfn}.td.detrend.functionargs = {[1/86400,0.5]};
+    opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
+    opts{tfn}.description = desc;
+TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
 
-TF2.Metadata = meta; % Attach metadata used in plots
+TFs{tfn}.Metadata = meta; % Attach metadata used in plots
 
-savetf(TF2, fullfile(outdir, opts2.filestr));
+savetf(TFs{tfn}, fullfile(outdir, opts{tfn}.filestr));
 
-%zplot(TF2)
+%% Second TF
+tfn = tfn + 1;
+Ns = size(B,1)/pps;
+desc = sprintf('OLS; %d %d-day segment%s',Ns,pps/86400,plural(Ns));
+opts{tfn} = tflab_options(1);
+    opts{tfn}.tflab.loglevel = 1;
+    opts{tfn}.td.window.width = pps;
+    opts{tfn}.td.window.shift = pps;
+    opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
+    opts{tfn}.description = desc;
+TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
+
+TFs{tfn}.Metadata = meta; % Attach metadata used in plots
+savetf(TFs{tfn}, fullfile(outdir, opts{tfn}.filestr));
 
 if 1
-%% Read TF computed using EMTF
-zread_dir = [fileparts(mfilename('fullpath')),'/zread'];
-if ~exist(zread_dir,'dir')
-    url = 'https://github.com/rweigel/zread';
-    com = sprintf('cd %s; git clone %s; cd zread; git checkout master; git checkout 1519ed4',...
-                  fileparts(mfilename('fullpath')),url);
-    fprintf('Calling system with command: %s\n',com);
-    [status,msg] = system(com);
-    if status ~= 0
-        fprintf(['Command failed. Download and unzip '...
-                 'github.com/rweigel/zread/archive/refs/heads/master.zip'...
-                 'in this directory\n']);
-        error('System command failed: %s\nMessage:\n%s\n',com,msg);            
+    tfn = tfn + 1;
+    %% TF computed using EMTF
+    zread_dir = fullfile(scriptdir(),'zread');
+    if ~exist(zread_dir,'dir')
+        url = 'https://github.com/rweigel/zread';
+        cmd = 'cd %s; git clone %s; cd zread; git checkout master; git checkout 1519ed4';
+        cmd = sprintf(cmd,scriptdir(),url);
+        fprintf('Calling system with command: %s\n',cmd);
+        [status,msg] = system(cmd);
+        if status ~= 0
+            fprintf(['Command failed. Download and unzip '...
+                    'github.com/rweigel/zread/archive/refs/heads/master.zip'...
+                    'in this directory\n']);
+            error('System command failed: %s\nMessage:\n%s\n',cmd,msg);
+        end
     end
-end
-addpath(zread_dir);
+    addpath(zread_dir);
 
-edifilefull = fullfile(scriptdir(),'data','EarthScope',id,'edi',edifile);
-EDI = read_edixml(edifilefull);
+    edifilefull = fullfile(scriptdir(),'data','EarthScope',id,'edi',edifile);
+    EDI = read_edixml(edifilefull);
 
-% Set options and data needed for metrics and plotting
-TF3.Metadata = meta;
-TF3.Metadata.EDI = EDI;
-TF3.Metadata.timestart = TF2.Metadata.timestart;
-%TF3.Metadata.timestart = [TF3.Metadata.EDI.Start,'.000'];
-TF3.Options.filestr = sprintf('%s-tf3',filestr);
+    % Set options and data needed for metrics and plotting
+    TFs{tfn}.Metadata = meta;
+    TFs{tfn}.Metadata.EDI = EDI;
+    TFs{tfn}.Metadata.timestart = TFs{1}.Metadata.timestart;
+    %TF3.Metadata.timestart = [TF3.Metadata.EDI.Start,'.000'];
+    TFs{tfn}.Options.filestr = sprintf('%s-tf%d',filestr,tfn);
 
-% EMTF is listed as software at http://ds.iris.edu/spud/emtf/15014571
-TF3.Options.description = 'EMTF';
-TF3.Options.fd = opts1.fd;
-TF3.Options.tflab.loglevel = opts1.tflab.loglevel;
-TF3.Z = -transpose(TF3.Metadata.EDI.Z); % Negative due to e^{+iwt} convention
-TF3.ZVAR = transpose(TF3.Metadata.EDI.ZVAR);
-TF3.fe = 1./transpose(TF3.Metadata.EDI.PERIOD);
-TF3.In  = TF1.In(:,1:2); 
-TF3.Out = TF1.Out;
+    % EMTF is listed as software at http://ds.iris.edu/spud/emtf/15014571
+    TFs{tfn}.Options.description = 'EMTF';
+    TFs{tfn}.Options.fd = opts{1}.fd;
+    TFs{tfn}.Options.tflab.loglevel = opts{1}.tflab.loglevel;
+    TFs{tfn}.Z = -transpose(TFs{tfn}.Metadata.EDI.Z); % Negative due to e^{+iwt} convention
+    TFs{tfn}.ZVAR = transpose(TFs{tfn}.Metadata.EDI.ZVAR);
+    TFs{tfn}.fe = 1./transpose(TFs{tfn}.Metadata.EDI.PERIOD);
+    TFs{tfn}.In  = TFs{1}.In(:,1:2);
+    TFs{tfn}.Out = TFs{1}.Out;
 
-TF3 = tflab_metrics(TF3);
+    TFs{tfn} = tflab_preprocess(TFs{tfn});
+    TFs{tfn} = tflab_metrics(TFs{tfn});
 
-fname = fullfile(outdir,[TF3.Options.filestr,'.mat']);
-savetf(TF3,fname);
+    fname = fullfile(outdir,[TFs{tfn}.Options.filestr,'.mat']);
+    savetf(TFs{tfn},fname);
 end

@@ -53,21 +53,17 @@ else
         logmsg('No error estimates available.\n');
         return
     end
+    % This will occcur when S is based on content of EDI file, so no
+    % TFLab regression information is available.
+
+    logmsg('Found ZVAR field at top-level and no ZCL95l in Regression.ErrorEstimates.\n');
+    logmsg('Computing ZMAGCL95{u,l} using it.\n');
     for comp = 1:size(S.Z,2)
-
-        % This will occcur when S is based on content of EDI file, so no
-        % TFLab regression information is available.
-
-        logmsg('Found ZVAR field at top-level and no ZCL95l in Regression.ErrorEstimates.\n');
-        logmsg('Computing ZMAGCL95{u,l} using it.\n');
-
-        ZVAR(:,comp) = S.ZVAR(:,comp);
-
-        sf = t*(1+1j)/sqrt(2);
-        ZCL95l(:,comp) = S.Z(:,comp) - sf*sqrt(ZVAR(:,comp));
-        ZCL95u(:,comp) = S.Z(:,comp) + sf*sqrt(ZVAR(:,comp));
+        sf = 2*(1+1j)/sqrt(2);
+        ZCL95l(:,comp) = S.Z(:,comp) - sf*sqrt(S.ZVAR(:,comp));
+        ZCL95u(:,comp) = S.Z(:,comp) + sf*sqrt(S.ZVAR(:,comp));
     end
-    ErrorEstimates.Parametric = error_estimates_derived(fe,Z,ZCL95l,ZCL95u);
+    ErrorEstimates.Parametric = error_estimates_derived(S.fe,S.Z,ZCL95l,ZCL95u);
 end
 
 end % function error_estimates()

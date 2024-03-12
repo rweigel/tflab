@@ -30,6 +30,11 @@ if onsegments == 0
         logmsg('Computing error estimates.\n');
         Metrics.ErrorEstimates = error_estimates(S,0);
     end
+    if isfield_(S,'Metrics.ErrorEstimates')
+        Metrics.ErrorEstimates = S.Metrics.ErrorEstimates;
+    else
+        Metrics.ErrorEstimates = error_estimates(S,0);
+    end
     if ~iscell(S.In)
         logmsg('Computing metrics on full unsegmented data using top-level Z.\n');
         In  = S.In;
@@ -102,7 +107,7 @@ end
 Predicted = nan(size(Out));
 Error = nan(size(Out));
 
-logmsg('Computing Out_.Predicted, Out_.Error, PE, MSE, CC, SE, and Coherences.\n')
+logmsg('Computing Out_.Predicted, Out_.Error, PE, MSE, CC, SE, and Coherences.\n');
 for k = 1:size(In,3) % Third dimension is segment
     for j = 1:size(Out,2) % Second dimension is component of Out
 
@@ -146,7 +151,7 @@ for k = 1:size(In,3) % Third dimension is segment
     end
 end
 
-logmsg('Computing DFT of Error and Predicted time series.\n')
+logmsg('Computing DFT of Error and Predicted time series.\n');
 for k = 1:size(In,3)
     DFTError(:,:,k) = dftbands(Error(:,:,k), opts);
     DFTPredicted(:,:,k) = dftbands(Predicted(:,:,k), opts);

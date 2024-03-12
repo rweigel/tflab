@@ -4,40 +4,44 @@ tflab_setpaths();
 
 id = 'VAQ58';
 %id = 'ORF03';
+
+if strcmp(id,'ORF03')
+    start = '20070831';
+    stop = '20070903';
+    time_range_full = {'2007-08-31T00:00:00.000','2007-09-04T00:00:00.000'};
+    time_range_zoom = {};
+end
+
+if strcmp(id,'VAQ58')
+    if 0
+        start = '20160610';
+        stop = '20160614';
+        time_range_full = {'2016-06-11T00:00:00.000','2016-06-15T00:00:00.000'};
+        time_range_zoom = {};
+    end
+
+    if 0
+        start = '20160610';
+        stop = '20160616';
+        time_range_full = {'2016-06-11T00:00:00.000','2016-06-16T12:00:00.000'};
+        time_range_zoom = {'2016-06-14T18:00:00.000','2016-06-15T06:00:00.000'};
+    end
+
+    if 1
+        start = '20160610';
+        stop = '20160623';
+        time_range_full = {'2016-06-11T00:00:00.000','2016-06-16T12:00:00.000'};
+        time_range_zoom = {};
+        %time_range_zoom = {'2016-06-14T18:00:00.000','2016-06-23T12:00:00.000'};
+    end
+end
+
 outdir = fullfile(scriptdir(),'data','EarthScope',id);
 
 %% Set common print options
 copts.print    = 0; % Set to 1 to print
 copts.printdir = fullfile(outdir,'figures');
 copts.printfmt = {'pdf','png'};
-
-if 0
-    start = '20160610';
-    stop = '20160614';
-    time_range_full = {'2016-06-11T00:00:00.000','2016-06-16T12:00:00.000'};
-    time_range_zoom = {'2016-06-14T18:00:00.000','2016-06-15T06:00:00.000'};
-end
-
-if 1
-    start = '20160610';
-    stop = '20160616';
-    time_range_full = {'2016-06-11T00:00:00.000','2016-06-16T12:00:00.000'};
-    time_range_zoom = {'2016-06-14T18:00:00.000','2016-06-15T06:00:00.000'};
-end
-
-if 0
-    start = '20160610';
-    stop = '20160623';
-    time_range_full = {'2016-06-11T00:00:00.000','2016-06-16T12:00:00.000'};
-    time_range_zoom = {'2016-06-14T18:00:00.000','2016-06-23T12:00:00.000'};
-end
-
-if strcmp(id,'ORF03')
-    start = '20070831';
-    stop = '20070903';
-    time_range_full = {'2007-08-31T00:00:00.000','2007-09-04T00:00:00.000'};
-    time_range_zoom = time_range_full;
-end
 
 for tfn = 1:3
     fname = fullfile(outdir, sprintf('%s-%s-%s-tf%d.mat',id,start,stop,tfn));
@@ -56,19 +60,23 @@ figure();
     tsopts.print = 0;
     tsplot(TFs{1},tsopts);
 
-if 1
+figure();
+    tsopts.type = 'final';
+    tsplot(TFs{1},tsopts);
+
+if 0
     % Plot error for TF1 only
     figure();
         tsopts = copts;
         tsopts.type = 'error';
         tsplot(TFs{1},tsopts);
-    
+
     % Plot error for TF2 only
     figure();
         tsopts = copts;
         tsopts.type = 'error';
         tsplot(TFs{2},tsopts);
-    
+
     % Plot error for TF3 only
     figure();
         tsopts = copts;
@@ -76,40 +84,42 @@ if 1
         tsplot(TFs{3},tsopts);
 end
 
-%%
-% Compare errors
+%% Compare errors
 figure();
     tsopts = copts;
-    tsopts.time_range = time_range_full;
+    %tsopts.time_range = time_range_full;
     tsopts.type  = 'error';
     tsopts.printname = 'ts-error-tf1-tf3';
     tsplot({TFs{1},TFs{3}},tsopts);
 
 figure();
-    tsopts = copts;
-    tsopts.time_range = time_range_zoom;
-    tsopts.type  = 'error';
-    tsopts.printname = 'ts-error-zoom-tf1-tf3';
-    tsplot({TFs{1},TFs{3}},tsopts);
+    if ~isempty(time_range_zoom)
+        tsopts = copts;
+        tsopts.time_range = time_range_zoom;
+        tsopts.type  = 'error';
+        tsopts.printname = 'ts-error-zoom-tf1-tf3';
+        tsplot({TFs{1},TFs{3}},tsopts);
+    end
 
 
-%% DFT plots
+%% DFTs
 % Plot DFTs for TF1 only (will be same for both)
 if 0
     figure();
         dftopts = copts;
         dftopts.type = 'original-averaged';
         dftplot(TFs{1},dftopts);
-    
-    
+
+
     figure();
         dftopts = copts;
         dftopts.type = 'error-averaged-magphase';
         dftplot(TFs{2},dftopts);
 end
 
-%%
-figure()
+%% Histograms
+if 0
+    figure();
 
     fmt = 'yyyy-mm-ddTHH:MM:SS.FFF';
     time_range = {'2016-06-14T18:00:00.000','2016-06-15T06:00:00.000'};
@@ -121,7 +131,7 @@ figure()
     t = to + (0:nt-1)'/ppd;
     tidx = find(t >= mldn_range(1) & t <= mldn_range(2));
 
-    figprep();    
+    figprep();
     popts = tflabplot_options(TFs{2}, copts, 'tsplot');
     popts.Positions = {popts.PositionTop, popts.PositionBottom};
     popts.Positions{1}(4) = 0.35;
@@ -141,18 +151,12 @@ figure()
         ylabel('Probability')
         xlabel(sprintf('$%s$ Predicted [mV/m]',TFs{2}.Metadata.outstr{comp}),'Interpreter','Latex')
     end
-    if copts.print == 1   
+    if copts.print == 1
         figsave(fullfile(copts.printdir, 'pdf-tf1-tf3.png'));
     end
+end
 
 %% SN plots
-figure();
-    snopts = copts;
-    snopts.period_range = [7,6*3600];
-    snopts.printname = 'sn-tf1';
-    snopts.print = 0;
-    snplot(TFs{1},snopts,1);
-
 % Compare all
 figure();
     snopts = copts;
@@ -161,29 +165,21 @@ figure();
     snopts.print = 0;
     snplot(TFs,snopts);
 
-% Compare
-figure();
-    snopts = copts;
-    snopts.period_range = [7,6*3600];
-    snopts.printname = 'sn-tf1-tf3';
-    snopts.print = 0;
-    snplot({TFs{1},TFs{3}},snopts);
-
 %% Z plots
 if 0
     figure();
         zopts = copts;
         zopts.type = 2;
         zplot(TFs{1},zopts);
-    
-    figure();    
+
+    figure();
         zopts = copts;
         zopts.type = 2;
         zplot(TFs{2},zopts);
 end
 
 if 1
-    % Compare Z
+    % Compare
     figure();
         zopts = copts;
         %zopts.print = 1;
@@ -191,7 +187,7 @@ if 1
         zopts.period_range = [7,6*3600];
         zopts.unwrap = 0;
         zopts.type = 1;
-        zplot({TFs{2},TFs{3}},zopts);
+        zplot(TFs,zopts);
         %zplot({TFs{1},TFs{2},TFs{3}},zopts);
 end
 
@@ -216,4 +212,5 @@ sidx = 1;  % segment number
 figure();
     qopts = copts;
     %qqplot_({TF1,TF2,TF3},qopts,fidx,comp,sidx);
-    qqplot_({TFs{1},TFs{3}},qopts,fidx,comp,sidx);
+    %qqplot_({TFs{1},TFs{3}},qopts,fidx,comp,sidx);
+    qqplot_(TFs{3},qopts,fidx,comp,sidx);

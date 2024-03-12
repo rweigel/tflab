@@ -19,17 +19,25 @@ if nargin < 3
     comps = 1:size(S{1}.Metrics.SN,2);
 end
 comps = sort(comps);
+comp = comps(1);
+
+if length(comps) > 1
+    for c = 1:length(comps)
+        if c > 1
+            figure;
+        end
+        logmsg('Plotting component %d.\n',comps(c))
+        [ax1(c),ax2(c)] = snplot(S,popts,comps(c));
+    end
+    return
+end
+
 
 show_xcoh = 1;
 
 % Apply default metadata for fields not specified in S.Metadata.
 S = tflab_metadata(S);
 popts = tflabplot_options(S,popts,'snplot');
-
-if nargin < 3
-    comps = 1:size(S{1}.Z,2);
-end
-comps = sort(comps);
 
 frequnit = S{1}.Metadata.frequnit;
 
@@ -118,19 +126,6 @@ end
 if length(S) > 1
     % Multiple TFs
     figprep();
-
-    if length(comps) == 1
-        comp = comps;
-    else
-        for c = 1:length(comps)
-            if c > 1
-                figure;
-            end
-            logmsg('Plotting component %d.\n',comps(c))
-            [ax1(c),ax2(c)] = snplot(S,popts,comps(c));
-        end
-        return
-    end
 
     lg = legend_(S,popts,comp);
     [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts);

@@ -1,10 +1,9 @@
-
 clear
 
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-short_run = 0;
+short_run = 1;
 
 if short_run
     start = '20120712';
@@ -17,9 +16,11 @@ end
 dirstr  = sprintf('tfs-%s-%s',start,stop);
 rundir = fullfile(scriptdir(),'data','Middelpos',dirstr);
 
-for tfn = 1:4
+for tfn = 1:2
     fname{tfn} = fullfile(rundir, sprintf('Middelpos-tf%d.mat',tfn));
     TFs{tfn} = loadtf(fname{tfn});
+    TFs{tfn} = tflab_preprocess(TFs{tfn});
+    TFs{tfn} = tflab_metrics(TFs{tfn});
 end
 
 %% Set common print options
@@ -34,18 +35,20 @@ dock on;figure(1);close all;
 tsopts = copts;
 tsopts.type = 'original';
 tsopts.printOptions.printFormats = {'png'};
+if (0)
 figure();
     tsplot(TFs{1},tsopts);
 figure();
     tsopts.type = 'final';
     tsplot(TFs{3},tsopts);
+end
 
 tsopts = copts;
 tsopts.type = 'error';
 figure();
     tsplot(TFs{1},tsopts);
 figure();
-    tsplot(TFs{3},tsopts);
+    tsplot(TFs{2},tsopts);
 
 %% DFT plots
 if 0
@@ -68,19 +71,19 @@ if 0
     figure();
         dftopts = copts;
         dftopts.type = 'original-averaged-phases';
-        dftplot(TF{1},dftopts);
+        dftplot(TFs{1},dftopts);
 
         % Compare TF1 and TF2
         figure();
             dftopts = copts;
-            dftopts.type = 'error-averaged';
-            dftplot(TF(1:2),dftopts);
+            dftopts.type = 'error-averaged-realimag';
+            dftplot(TFs{1},dftopts);
 end
 
 %% SN plots
 figure();
     snopts = copts;
-    snplot(TFs([1,2]),snopts);
+    snplot(TFs(:),snopts);
 
 %% Z plots
 figure();

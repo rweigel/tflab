@@ -154,7 +154,9 @@ if strcmp(tparts{1},'error')
         plot_(x,y1,popts);
         colororder_(ax(1),y1);
         grid on;box on;
-        set(gca,'YScale','log');
+        if strcmp(tparts{3},'magphase')
+            set(gca,'YScale','log');
+        end
         if popts.vs_period
             set(gca,'XScale','log');
         end

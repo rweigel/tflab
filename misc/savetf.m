@@ -25,11 +25,7 @@ end
 logmsg('Saving: %s\n',fnamefull);
 
 if isfield(tf,'Segment')
-    if isfield(tf.Segment,'Residuals')
-        % This is computed by tflab_metrics.
-        rmfield(tf.Segment,'Residuals')
-    end
-    keeps = {'Z','fe','Metrics','Regression'};
+    keeps = {'Z','fe','Metrics'};
     fns = fieldnames(tf.Segment);
     for i = 1:length(fns)
         if ~any(strcmp(fns{i},keeps))
@@ -38,12 +34,7 @@ if isfield(tf,'Segment')
     end
 end
 
-if isfield(tf,'Residuals')
-    % This is computed by tflab_metrics.
-    rmfield(tf,'Residuals')
-end
-
-keeps = {'In','Out','Z','dZ','ZVAR','fe','Metrics','Regression','Options','Metadata','Segment'};
+keeps = {'In','Out','Z','dZ','ZVAR','fe','Metrics','Options','Metadata','Segment'};
 for i = 1:length(keeps)
     if ~isfield(tf,keeps{i})
         keeps{i} = '';

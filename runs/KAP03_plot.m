@@ -25,7 +25,7 @@ if 0
     tfs = tfs(1:3);
 end
 
-if 1
+if 0
     siteid = 'KAP103';
     tfs = {...
             '20031108-20031205-tf1',...
@@ -83,7 +83,7 @@ figure();
 if 0
     topts = copts;
     topts.type  = 'error';
-    %topts.time_range = 
+    %topts.time_range =
     for i = 1:length(TFs)
         figure();
         tsplot(TFs{i},topts);
@@ -121,7 +121,7 @@ if 0
     figure();
         snopts = copts;
         snplot(TFs{1},snopts);
-    
+
     figure();
         snopts = copts;
         snplot(TFs{2},snopts);
@@ -150,7 +150,7 @@ if 0
         dftopts = copts;
         dftopts.type = 'original-averaged';
         dftplot(TFs{1},dftopts);
-    
+
     %%
     figure();
         dftopts = copts;

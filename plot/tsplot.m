@@ -103,7 +103,7 @@ else
                 S = tflab_tdpreprocess(S);
             end
             if ~isfield(S,'In_') || isfield(S.In,'Final')
-                error('Final data is the same as original b/c no filtering applied. Request plot for original instead');
+                error('Final data is the same as original b/c no filtering applied. Request plot for original instead.');
             end
             y1 = S.In_.Final;
             y2 = S.Out_.Final;

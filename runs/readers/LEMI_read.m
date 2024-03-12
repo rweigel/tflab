@@ -21,7 +21,8 @@ for i = 1:length(dlist)
     if ~endsWith(dlist(i).name,ext)
         continue
     end
-    if dlist(i).name(1:8) < start || (dlist(i).name(1:8) > stop)
+    if str2num(dlist(i).name(1:8)) < str2num(start) || str2num(dlist(i).name(1:8)) > str2num(stop)
+        fprintf('Skipping %s b/c out of time range.\n',fname);
         continue
     end
     try
