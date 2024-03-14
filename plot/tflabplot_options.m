@@ -30,8 +30,9 @@ dopts.line = {'marker', '.', 'markersize', 15, 'linestyle', 'none'};
 dopts.legend = {'Location', 'NorthWest', 'Orientation', 'Horizontal'};
 
 % Options passed to subplot()
-dopts.PositionTop = [0.1300 0.5400 0.7750 0.4];
-dopts.PositionBottom = [0.1300 0.1100 0.7750 0.4];
+%                      [left bottom width height]
+dopts.PositionTop    = [0.130 0.540 0.775 0.400];
+dopts.PositionBottom = [0.130 0.110 0.775 0.400];
 
 if strcmp(plotfun,'tsplot')
     if ~isfield(opts,'type') || isempty(opts.type)
@@ -73,6 +74,15 @@ if strcmp(plotfun,'zplot')
         case 3
             dopts.printOptions.printName = [dopts.printOptions.printName,'-real_imaginary'];
     end
+end
+
+if strcmp(plotfun,'qqplot')
+    if ~isfield(opts,'type') || isempty(opts.type)
+        opts.type = 'standard';
+    end
+    % Determined by manually changing the figure size in the GUI and using
+    % get(gcf,'Position').
+    dopts.Position = [0 0 391 625];
 end
 
 dopts.printOptions.printName = [dopts.printOptions.printName,'-',filestr];

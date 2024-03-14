@@ -20,14 +20,14 @@ if strcmp(id,'VAQ58')
         time_range_zoom = {};
     end
 
-    if 0
+    if 1
         start = '20160610';
         stop = '20160616';
         time_range_full = {'2016-06-11T00:00:00.000','2016-06-16T12:00:00.000'};
         time_range_zoom = {'2016-06-14T18:00:00.000','2016-06-15T06:00:00.000'};
     end
 
-    if 1
+    if 0
         start = '20160610';
         stop = '20160623';
         time_range_full = {'2016-06-11T00:00:00.000','2016-06-16T12:00:00.000'};
@@ -92,15 +92,14 @@ figure();
     tsopts.printname = 'ts-error-tf1-tf3';
     tsplot({TFs{1},TFs{3}},tsopts);
 
-figure();
     if ~isempty(time_range_zoom)
-        tsopts = copts;
-        tsopts.time_range = time_range_zoom;
-        tsopts.type  = 'error';
-        tsopts.printname = 'ts-error-zoom-tf1-tf3';
-        tsplot({TFs{1},TFs{3}},tsopts);
+        figure();
+            tsopts = copts;
+            tsopts.time_range = time_range_zoom;
+            tsopts.type  = 'error';
+            tsopts.printname = 'ts-error-zoom-tf1-tf3';
+            tsplot({TFs{1},TFs{3}},tsopts);
     end
-
 
 %% DFTs
 % Plot DFTs for TF1 only (will be same for both)

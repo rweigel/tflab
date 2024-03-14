@@ -51,6 +51,7 @@ else
     if ~isfield(S,'ZVAR')
         logmsg('No ZVAR field at top-level and no ZCL95l in Regression.ErrorEstimates.Parametric.\n');
         logmsg('No error estimates available.\n');
+        ErrorEstimates = [];
         return
     end
     % This will occcur when S is based on content of EDI file, so no

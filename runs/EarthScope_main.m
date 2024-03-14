@@ -1,12 +1,14 @@
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
+short_run = 1;
+
 if 1
     id = 'VAQ58';
     edifile = 'VAQ58bc_FRDcoh.xml';
     Ikeep = [];
     %Ikeep = 1:4*86400;
-    %Ikeep = 1:6*86400;
+    Ikeep = 1:6*86400;
     % http://ds.iris.edu/spud/emtf/15014571
     % http://ds.iris.edu/spudservice/data/15014570
 end
@@ -70,6 +72,10 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.td.detrend.functionargs = {[1/86400,0.5]};
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
     opts{tfn}.description = desc;
+    if short_run
+        opts{tfn}.fd.bootstrap.N = NaN;
+    end
+
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
 
 TFs{tfn}.Metadata = meta; % Attach metadata used in plots
@@ -78,14 +84,17 @@ savetf(TFs{tfn}, fullfile(outdir, opts{tfn}.filestr));
 
 %% Second TF
 tfn = tfn + 1;
-Ns = size(B,1)/pps;
-desc = sprintf('OLS; %d %d-day segment%s',Ns,pps/86400,plural(Ns));
+pps = 86400;
+desc = sprintf('OLS; %d %d-day segment%s',size(B,1)/pps,pps/86400,plural(Ns));
 opts{tfn} = tflab_options(1);
     opts{tfn}.tflab.loglevel = 1;
     opts{tfn}.td.window.width = pps;
     opts{tfn}.td.window.shift = pps;
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
     opts{tfn}.description = desc;
+    if short_run
+        opts{tfn}.fd.bootstrap.N = NaN;
+    end
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
 
 TFs{tfn}.Metadata = meta; % Attach metadata used in plots

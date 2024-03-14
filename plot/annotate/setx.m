@@ -9,8 +9,8 @@ if ~isempty(frequnit)
     periodunit = 's';
 end
 
-if opts.vs_period 
-    if ~isempty(opts.period_range)
+if isfield(opts,'vs_period') && opts.vs_period
+    if isfield(opts,'period_range') && ~isempty(opts.period_range)
         set(gca,'XLim',opts.period_range);
     end
     if ~isempty(periodunit)
@@ -19,9 +19,9 @@ if opts.vs_period
     end
     xlabel(sprintf('$T$%s',periodunit));
 else
-    if ~isempty(opts.frequency_range)
+    if isfield(opts,'frequency_range') && ~isempty(opts.frequency_range)
         set(gca,'XLim',opts.frequency_range);
-    end    
+    end
     if ~isempty(frequnit)
         frequnit = sprintf(' [1/%s]', frequnit);
     end

@@ -120,7 +120,7 @@ for j = 1:length(fe)
         continue
     end
     n = size(ftOut,1);
-    if n >= opts.fd.bootstrap.nmin
+    if ~isnan(opts.fd.bootstrap.N) && n >= opts.fd.bootstrap.nmin
         % Bootstrap confidence limits if requested, nmin samples or more, and
         % transfer function error estimates are not computed a different way.
         Nb = opts.fd.bootstrap.N;

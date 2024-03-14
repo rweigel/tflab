@@ -35,6 +35,7 @@ dock on;figure(1);close all;
 tsopts = copts;
 tsopts.type = 'original';
 tsopts.printOptions.printFormats = {'png'};
+
 if (0)
 figure();
     tsplot(TFs{1},tsopts);
@@ -97,9 +98,15 @@ figure();
 % for one of the segments. (For S2, there is only one segment that was
 % used to compute Z.)
 
-fidx = 20; % frequency number
-comp = 2;  % component (Zxx=1, Zxy=2, Zyx=3, Zyy=4).
-sidx = 1;  % segment number
+figure();
+    qqopts = copts;
+    qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
+    fidx = 20; % frequency number
+    comp = 2;  % component (x = 1, y = 2)
+    qqplot_(TFs{1},qqopts,comp,fidx);
 
-%figure();
-%    qqplot_(TFs{1},struct(),fidx,comp,sidx);
+figure();
+        qqopts = copts;
+        qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
+        qqopts.type = 'combined';
+        qqplot_(TFs{1},qqopts);
