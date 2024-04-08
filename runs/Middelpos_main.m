@@ -3,7 +3,8 @@ close all % To reduce memory.
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-short_run = 1;
+short_run = 0;
+Nboot = NaN;
 
 if short_run
     start = '20120712';
@@ -13,6 +14,9 @@ else
     stop = '20121107';
 end
 
+start = '20170101';
+stop = '20170131';
+
 %% Set output file base name using start/stop times of input data
 filestr = 'Middelpos';
 dirstr  = sprintf('tfs-%s-%s',start,stop);
@@ -21,6 +25,7 @@ rundir = fullfile(scriptdir(),'data',filestr,dirstr);
 % Read input/output data
 [B,E,t] = Middelpos_clean(start,stop,rundir);
 
+keyboard
 %% Make length an integer number of segments.
 pps = 86400;
 I = pps*floor(size(B,1)/pps);
@@ -56,9 +61,7 @@ desc = sprintf('OLS; One %d-day segment',size(B,1)/pps);
 opts{tfn} = tflab_options(1);
     opts{tfn}.tflab.loglevel = 1;
     opts{tfn}.description = desc;
-    if short_run
-        opts{tfn}.fd.bootstrap.N = 10;
-    end
+    opts{tfn}.fd.bootstrap.N = Nboot;
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
 
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
@@ -76,10 +79,8 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.td.window.width = pps;
     opts{tfn}.td.window.shift = pps;
     opts{tfn}.description = desc;
-    if short_run
-        opts{tfn}.fd.bootstrap.N = 10;
-        opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
-    end
+    opts{tfn}.fd.bootstrap.N = Nboot;
+    opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
 
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
@@ -101,9 +102,7 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.td.detrend.functionstr = 'bandpass_';
     opts{tfn}.td.detrend.functionargs = {band};
     opts{tfn}.description = desc;
-    if short_run
-        opts{tfn}.fd.bootstrap.N = 10;
-    end
+    opts{tfn}.fd.bootstrap.N = Nboot;
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
 
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
@@ -128,10 +127,8 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.td.detrend.functionstr = 'bandpass_';
     opts{tfn}.td.detrend.functionargs = {band};
     opts{tfn}.description = desc;
-    if short_run
-        opts{tfn}.fd.bootstrap.N = 10;
-        opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
-    end
+    opts{tfn}.fd.bootstrap.N = Nboot;
+    opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
 
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});

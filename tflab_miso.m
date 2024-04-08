@@ -1,4 +1,4 @@
-function [Z,fe,dZ,Regression] = tflab_miso(DFT,opts,error_estimates)
+function [Z,fe,Regression] = tflab_miso(DFT,opts,error_estimates)
 %TFLAB_MISO Frequency domain MISO transfer function estimate
 %
 %  S = TFLAB_MISO(DFT) returns a structure with an estimate of the
@@ -37,19 +37,18 @@ if opts.tflab.loglevel > 0
 end
 
 boot_note = 1;
-dZ = [];
 for j = 1:length(fe)
 
-    ftIn = DFTIn{j,1};
     ftOut = DFTOut{j,1};
+    ftIn = DFTIn{j,1};
+    if opts.fd.regression.const_term
+        ftIn = [ftIn,ones(size(ftIn,1),1)];
+    end
 
     Z(j,:) = (1+1j)*nan(1,size(ftIn,2));
-    dZ(j,1) = (1+1j)*nan;
     Residuals{j,1} = (1+1j)*nan(size(ftOut,1),1);
     Parametric.ZCL95l(j,:)  = (1+1j)*nan*ones(1,size(Z,2));
     Parametric.ZCL95u(j,:)  = (1+1j)*nan*ones(1,size(Z,2));
-    Parametric.dZCL95l(j,1) = (1+1j)*nan;
-    Parametric.dZCL95u(j,1) = (1+1j)*nan;
 
     if opts.fd.window.loglevel > 0
         msg = 'Band with center of fe = %.8f has %d points; fl = %.8f fh = %.8f\n';
@@ -63,23 +62,22 @@ for j = 1:length(fe)
             z = nan*(1+1j);
         end
         Z(j,1) = z;
-        dZ(j,1) = 0;
         continue;
     end
 
-    if length(f{j}) < 2*(size(ftIn,2) + 1) % +1 assumes offset term
+    if length(f{j}) < 2*(size(ftIn,2))
         msg = '!!! System is underdetermined for fe = %.1e. Setting Z equal to NaN(s).\n';
         logmsg(msg,fe(j));
         continue;
     end
 
-    if length(f{j}) == 2*(size(ftIn,2) + 1)
+    if length(f{j}) == 2*(size(ftIn,2))
         msg = '!!! System is exactly determined for fe = %.1e. Setting Z equal to NaN(s).\n';
         logmsg(msg,fe(j));
         continue;
     end
 
-    [Z(j,:),dZ(j,:),Info] = callregress_(ftOut,ftIn,j,fe(j),opts);
+    [Z(j,:),Info] = callregress_(ftOut,ftIn,j,fe(j),opts);
 
     if any(isinf(Z(j,:)))
         continue;
@@ -102,12 +100,6 @@ for j = 1:length(fe)
         end
         if isfield(Info,'ZCL95u')
             Parametric.ZCL95u(j,:) = Info.ZCL95u;
-        end
-        if isfield(Info,'dZCL95l')
-            Parametric.dZCL95l(j,:) = Info.dZCL95l;
-        end
-        if isfield(Info,'dZCL95u')
-            Parametric.dZCL95u(j,:) = Info.dZCL95u;
         end
     end
 
@@ -171,15 +163,24 @@ end
 
 end % function tflab_miso()
 
-function [Z,dZ,Info] = callregress_(ftOut,ftIn,j,fe,opts)
+function [Z,Info] = callregress_(ftOut,ftIn,j,fe,opts)
 
     regressargs = opts.fd.regression.functionargs;
     regressfunc = opts.fd.regression.function;
 
+    warning('off','stats:regress:NoConst'); % Suppress display of warning.
     lastwarn('');
-    [Z,dZ,Info] = regressfunc(ftOut,ftIn,regressargs{:});
 
-    if ~isempty(lastwarn)
+    [Z,Info] = regressfunc(ftOut,ftIn,regressargs{:});
+
+    % Ideally we would use the following to check if the warning was
+    % for stats:regress:NoConst, but it doesn't work. So we use a string
+    % match on lastwarn to determine if the warning was for NoConst.
+    %  warning('on','stats:regress:NoConst');
+    %  w = warning('query','last');
+    %  strcmp(w.identifier,'stats:regress:NoConst')
+
+    if ~isempty(lastwarn) && ~startsWith(lastwarn, "R-square and the F statistic are not well-defined") 
         msg = 'Above warning is for eval. freq. #%d; fe = %f; Te = %f\n';
         logmsg(msg,j,fe,1/fe);
         logmsg('ftE =');
@@ -192,8 +193,5 @@ function [Z,dZ,Info] = callregress_(ftOut,ftIn,j,fe,opts)
         msg = '!!! Z has Infs for fe = %f. Setting all elements of Z to NaN(s).\n';
         logmsg(msg,fe);
         Z = (1+1j)*nan*ones(1,size(Z,2));
-        if ~isempty(dZ)
-            dZ = (1+1j)*nan;
-        end
     end
 end % function callregress_()

@@ -1,4 +1,4 @@
-function [Z,dZ,Info] = regress_ols(ftE,ftB,algorithm,offset)
+function [Z,Info] = regress_ols(ftE,ftB,algorithm)
 %REGRESS_OLS - Ordinary least-squares regression
 %
 %   Z = REGRESS_OLS(E, B) and Z = REGRESS_OLS(E, B, 'backslash')
@@ -11,7 +11,7 @@ function [Z,dZ,Info] = regress_ols(ftE,ftB,algorithm,offset)
 %
 %   Z = REGRESS_OLS(E, B, 'regress-real') returns Z computed using
 %   regress() and real values according to
-%   
+%
 %     Zreal = regress([real(Ec) ; imag(Ec)],
 %                     [real(Bc), -imag(Bc) ; imag(Bc), real(Bc)])
 %
@@ -45,16 +45,10 @@ if strcmp(algorithm,'regress')
         [Z,dZ,Info] = regress_ols(ftE,ftB,'regress-real');
         return
     end
-    if offset
-        ftB = [ftB,ones(size(ftB,1),1)];
-    end
     [Z,ZCL95,Info.Residuals,Rint,Stats] = regress(ftE,ftB);
 end
 
 if strcmp(algorithm,'regress-analytic')
-    if offset
-        error('Offset not handled in regress-analytic.')
-    end
     [Z,Info.Residuals] = regress_ols_analytic(ftE,ftB);
 end
 
@@ -79,48 +73,22 @@ if strcmp(algorithm,'regress-real')
     %                      [dZr]
     %                      [dZi]
     %   Zc = regress(Ec,Bc) and Z = regress(E,B) are related by
-    % 
+    %
     %   Zc = Z(1:end/2,:) + sqrt(-1)*Z(end/2+1:end,:);
 
     E = [real(ftE); ...
          imag(ftE)];
-    B = [real(ftB),  ones(size(ftB,1),1), -imag(ftB), zeros(size(ftB,1),1);...
-         imag(ftB), zeros(size(ftB,1),1),  real(ftB),  ones(size(ftB,1),1)];
-    if offset == 0
-        B = [real(ftB), -imag(ftB);...
-             imag(ftB),  real(ftB)];
-    else
-        B = [real(ftB),  ones(size(ftB,1),1), -imag(ftB), zeros(size(ftB,1),1);...
-             imag(ftB), zeros(size(ftB,1),1),  real(ftB),  ones(size(ftB,1),1)];
-    end
+    B = [real(ftB), -imag(ftB);...
+         imag(ftB),  real(ftB)];
     [Z,ZCL95,Residuals,Rint,Stats] = regress(E,B);
     Z = Z(1:end/2) + sqrt(-1)*Z(end/2+1:end);
     ZCL95 = ZCL95(1:end/2,:) + sqrt(-1)*ZCL95(end/2+1:end,:);
     Info.Residuals = Residuals(1:end/2) + sqrt(-1)*Residuals(end/2+1:end);
 end
 
-if offset
-    dZ = Z(end);
-    Z = Z(1:end-1);
-else
-    dZ = [];
-end
-
-if offset
-    ftB = [ftB,ones(size(ftB,1),1)];
-end
-
 if exist('ZCL95','var')
-    if offset
-        dZCL95 = ZCL95(end,:);
-        ZCL95 = ZCL95(1:end-1,:);
-    end
     Info.ZCL95l = transpose(ZCL95(:,1));
     Info.ZCL95u = transpose(ZCL95(:,2));
-    Info.dZCL95l = transpose(dZCL95(:,1));
-    Info.dZCL95u = transpose(dZCL95(:,2));
 end
 
 Z = transpose(Z);
-
-    

@@ -2,12 +2,12 @@ clear;
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-id = 'VAQ58';
-%id = 'ORF03';
+%id = 'VAQ58';
+id = 'ORF03';
 
 if strcmp(id,'ORF03')
     start = '20070831';
-    stop = '20070903';
+    stop = '20070904';
     time_range_full = {'2007-08-31T00:00:00.000','2007-09-04T00:00:00.000'};
     time_range_zoom = {};
 end
@@ -60,9 +60,9 @@ figure();
     tsopts.print = 0;
     tsplot(TFs{1},tsopts);
 
-figure();
-    tsopts.type = 'final';
-    tsplot(TFs{1},tsopts);
+%figure();
+%    tsopts.type = 'final';
+%    tsplot(TFs{1},tsopts);
 
 if 0
     % Plot error for TF1 only
@@ -90,7 +90,7 @@ figure();
     %tsopts.time_range = time_range_full;
     tsopts.type  = 'error';
     tsopts.printname = 'ts-error-tf1-tf3';
-    tsplot({TFs{1},TFs{3}},tsopts);
+    tsplot(TFs{1},tsopts);
 
     if ~isempty(time_range_zoom)
         figure();
@@ -210,6 +210,4 @@ sidx = 1;  % segment number
 
 figure();
     qopts = copts;
-    %qqplot_({TF1,TF2,TF3},qopts,fidx,comp,sidx);
-    %qqplot_({TFs{1},TFs{3}},qopts,fidx,comp,sidx);
-    qqplot_(TFs{3},qopts,fidx,comp,sidx);
+    qqplot_(TFs{3},qopts,comp,fidx);

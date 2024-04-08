@@ -14,7 +14,14 @@ end
 
 if ~exist(mat_raw,'file')
     datadir = fullfile(rundir,'..','measurements');
-    [B,E,t] = LEMI_read(datadir,'t82',start,stop);
+    addpath(fullfile(scriptdir(),'readers'));
+    if startsWith("2012", start) && startsWith("2012", stop)
+        [B,E,t] = LEMI_read(datadir,'t82',start,stop,[50,50]);
+    elseif str2num(start(1:4)) >= 2017
+        [B,E,t] = LEMI_read(datadir,'t81',start,stop,[50,50]);
+    else
+        error('Time range not handled.')
+    end
     fprintf('Writing: %s\n',mat_cleaned);
     save(mat_raw,'B','E','t');
 else

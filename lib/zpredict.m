@@ -1,9 +1,9 @@
-function [Ep,Z] = zpredict(Z,B,dZ)
+function [Ep,Z] = zpredict(Z,B)
 %ZPREDICT Predict output given input and freq. domain transfer function
 %
-%  [E,Z] = ZPREDICT(Z,B) uses the frequency domain transfer function Z
+%  E = ZPREDICT(Z,B) uses the frequency domain transfer function Z
 %  and the time series B and returns the output time series E.
-%  
+%
 %  If the number of columns of Z is larger than that of B, E will have
 %  size(Z,2)/size(B,2) columns. The first set of size(B,2) columns in Z are
 %  used with B to form the first column of E. The second set of size(B,2)
@@ -11,48 +11,35 @@ function [Ep,Z] = zpredict(Z,B,dZ)
 %
 %  See also ZPREDICT_TEST.
 
-assert(size(B,1) == size(Z,1),'Requires: size(B,1) == size(Z,1)');
+assert(size(B,1) == size(Z,1),'Required: size(B,1) == size(Z,1)');
 
-Nout = size(Z,2)/size(B,2); % Number of output columns in E
-Nin  = size(B,2);
-
-assert(mod(size(Z,2),Nin) == 0,'size(Z,2)/size(B,2) must be an integer');
-
-offset = 0;
-if nargin > 2 && ~isempty(dZ)
-    offset = 1;
+Nout1 = size(Z,2)/size(B,2);     % Number of output columns in E if no const term
+Nout2 = size(Z,2)/(1+size(B,2)); % Number of output columns in E if const term
+if mod(Nout1,1) == 0
+    Nout = Nout1;
+    Nin  = size(B,2);
+    const_term = 0;
+elseif mod(Nout2,1) == 0
+    Nout = Nout2;
+    Nin  = 1 + size(B,2);
+    const_term = 1;
+else
+    error('size(Z,2)/size(B,2) or size(Z,2)/(1+size(B,2)) must be an integer');
 end
 
 for j = 1:Nout
-    zcols = [1:Nin] + (j-1)*Nin;
-    if offset == 1
-        Ep(:,j) = sum(ifft( fft(B).*Z(:,zcols) + dZ(:,j) ),2);
+    zcols = (1:Nin) + (j-1)*Nin;
+    if const_term == 1
+        Ep(:,j) = sum(ifft( fft(B).*Z(:,zcols(1:end-1)) + Z(:,zcols(end)) ),2);
         continue;
     else
-        xEp(:,j) = sum(ifft( fft(B).*Z(:,zcols) ),2);
+        Ep(:,j) = sum(ifft( fft(B).*Z(:,zcols) ),2);
     end
-
-    % To remove. Old method of computing. When removed, change xEp to Ep.
-    for i = 1:size(B,2)
-        c = (j-1)*size(B,2) + i;
-        if offset == 0
-            conv = ifft(fft(B(:,i)).*Z(:,c));
-        end
-        if i > 1
-            Ep(:,j) = Ep(:,j) + conv;
-        else
-            Ep(:,j) = conv;
-        end
-    end
-
-end
-if offset == 0
-    assert(all(Ep == xEp));
 end
 
 c = max(max(abs(imag(Ep))));
 if max(abs(imag(Ep))) > eps
-    warning(sprintf(...
-        'Computed impulse response H has imaginary component with max(abs(imag(H)))/eps = %.1f. Check calculation of Z.\n',c/eps));
+    msg = 'Computed impulse response H has imaginary component with max(abs(imag(H)))/eps = %.1f. Check calculation of Z.';
+    warning(msg,c/eps);
 end
 Ep = real(Ep);

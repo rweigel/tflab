@@ -18,7 +18,7 @@ addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 addpath(fullfile(scriptdir(),'readers'));
 
-infile  = fullfile(scriptdir(),'data','EarthScope',id,[id,'_raw.mat']); 
+infile  = fullfile(scriptdir(),'data','EarthScope',id,[id,'_raw.mat']);
 outfile = strrep(infile,'_raw','_clean');
 
 if exist(outfile,'file') && plot_ == 0 && print_ == 0
@@ -41,11 +41,11 @@ for c = 1:length(data)
     [datacat{c},timecat{c}] = catSegments(data{c}.segments);
 end
 
-if strcmp(id,'VAQ58')    
+if strcmp(id,'VAQ58')
     B = [datacat{1}, datacat{2}, datacat{3}];
     E = [datacat{4}, datacat{5}];
     t = timecat{1};
-    
+
     % Number of time intervals.
     Ni = 1 + round((t(end)-t(1))*86400);
     % Time interval index of measurement
@@ -60,9 +60,9 @@ if strcmp(id,'VAQ58')
     Bi = nan(Ni,3);
     Bi(tidx,:) = B;
     B = Bi;
-    
+
     Ir = (1123950:size(B,1))'; % Values to remove
-    Ik = 1:Ir(1)-1;            % Values to keep    
+    Ik = 1:Ir(1)-1;            % Values to keep
     despike_E = {300,[5,5]};   % Despike parameters
     despike_B = {100,[5,5]};   % Despike parameters
 end
@@ -72,14 +72,14 @@ if strcmp(id,'ORF03')
     E = [datacat{4}, datacat{5}];
     t = timecat{1};
 
-    %Ikeep = [86400*12+1:86400*16];
-    to = datenum('2007-08-31');
-    tf = datenum('2007-09-04');
-    Ik = find(t >= to & t <= tf);
-    B = B(Ik,:);
-    E = E(Ik,:);
-    t = t(Ik,:);
-    
+    %Ik = [86400*12+1:86400*16];
+    %to = datenum('2007-08-31');
+    %tf = datenum('2007-09-04');
+    %Ik = find(t >= to & t <= tf);
+    %B = B(Ik,:);
+    %E = E(Ik,:);
+    %t = t(Ik,:);
+
     % Number of time intervals.
     Ni = 1 + round((t(end)-t(1))*86400);
     % Time interval index of measurement
@@ -91,14 +91,14 @@ if strcmp(id,'ORF03')
     Ei(tidx,:) = E;
     E = Ei;
 
-    
+
     Bi = nan(Ni,3);
     Bi(tidx,:) = B;
     B = Bi;
     Ir = [];
     Ik = [1:size(B,1)];
     %Ir = (1123950:size(B,1))'; % Values to remove
-    %Ik = 1:Ir(1)-1;            % Values to keep    
+    %Ik = 1:Ir(1)-1;            % Values to keep
     despike_E = {300,[5,5]};   % Despike parameters
     despike_B = {100,[5,5]};   % Despike parameters
 end
@@ -111,13 +111,13 @@ if 0 && strmatch(sta,'ORF03','exact')
   D(852455,5) = NaN;
   D(852480,5) = NaN;
   D(852486,5) = NaN;
-  D(861374:861380,5) = NaN;  
+  D(861374:861380,5) = NaN;
 end
 
 unitsB = 'Counts';
 if isfield(data{1}.segments(1),'dataScaledUnits');
     % Assumes units same for all segments & B channels
-    unitsB = data{1}.segments(1).dataScaledUnits; 
+    unitsB = data{1}.segments(1).dataScaledUnits;
     if strcmp(lower(unitsB),'t')
         B = B/1e-9;
         unitsB = 'nT';
@@ -146,7 +146,7 @@ E2 = removemean(E1);
 E3 = despike(E2, despike_E{:});
 E4 = naninterp1(E3);
 
-logmsg('Cleaning B');    
+logmsg('Cleaning B');
 B1 = B;
 B1(Ir,:) = NaN;
 B2 = removemean(B1);
@@ -186,10 +186,10 @@ if plot_ || print_
         grid on;
         ylabel(unitsE);
         axis tight;
-        set(gca,'XLim',xlim);        
+        set(gca,'XLim',xlim);
         legend('$E_x$','$E_y$');
         zoominfo('E after mean subtraction');
-        
+
     subplot(4,1,3)
         plot(to,E3);
         datetick();
@@ -212,13 +212,13 @@ if plot_ || print_
         axis tight;
         set(gca,'XLim',xlim);
         legend('$E_x$','$E_y$');
-        zoominfo('E after interpolating over NaNs');        
+        zoominfo('E after interpolating over NaNs');
         xlabel(['Month/Day of ',datestr(t(1),'yyyy')])
 end
 
 if plot_
     figure(2);figprep();clf;
-    
+
     subplot(4,1,1)
         plot(to,B1(:,1:2))
         datetick();
@@ -242,7 +242,7 @@ if plot_
         set(gca,'XLim',xlim);
         legend('$B_x$','$B_y$');
         zoominfo('B after mean subtraction');
-        
+
     subplot(4,1,3)
         plot(to,B3(:,1:2));
         datetick();
@@ -258,7 +258,7 @@ if plot_
     subplot(4,1,4)
         plot(to,B4(:,1:2))
         datetick();
-        grid minor;        
+        grid minor;
         title('Interpolated');
         grid on;
         ylabel(unitsB);
@@ -275,12 +275,12 @@ if print_
     logmsg(sprintf('Writing: %s\n',relpath(fname)));
 	print(fname,'-dpng','-r300');
     logmsg(sprintf('Wrote:   %s\n',relpath(fname)));
-    
+
     figure(1);
     fname = sprintf('%s_E.png',outfile(1:end-4));
     logmsg(sprintf('Writing: %s\n',relpath(fname)));
 	print(fname,'-dpng','-r300');
-    logmsg(sprintf('Wrote:   %s\n',relpath(fname)));    
+    logmsg(sprintf('Wrote:   %s\n',relpath(fname)));
 end
 
 function [data, time] = catSegments(segments)
@@ -288,7 +288,7 @@ function [data, time] = catSegments(segments)
     % Does not check that units the same for all segments.
     data = [];
     time = [];
-    for s = 1:length(segments)    
+    for s = 1:length(segments)
         logmsg('Channel %s, segment %d: %s to %s\n',...
             segments(s).channel,...
             s,...
@@ -306,7 +306,7 @@ function [data, time] = catSegments(segments)
         stime = (0:length(segments(s).data)-1)'*(segments(s).sampleRate/86400);
 
         % Segment time as MATLAB datenum.
-        stime = segments(s).startTime + stime;    
+        stime = segments(s).startTime + stime;
         time = [time; stime];
     end
 end

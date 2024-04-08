@@ -78,7 +78,7 @@ if strcmp(popts.type,'standard')
         title(titlestr);
         xlabel('');
         set(gca,'XTickLabels','');
-        ylabel(sprintf('Re[$\\Delta %s$] Quantiles',outstr));
+        ylabel(sprintf('Re[$\\widetilde{\\Delta %s}$] Quantiles',outstr));
         if ~isempty(legendstr)
             legend(legendstr,'Location','NorthWest','box','off','color','none');
         end
@@ -89,26 +89,25 @@ if strcmp(popts.type,'standard')
         colororder_(ax2,Residuals);
         hold on;grid on;box on;
         xlabel('Standard Normal Quantiles');
-        ylabel(sprintf('Im[$\\Delta %s$] Quantiles',outstr));
+        ylabel(sprintf('Im[$\\widetilde{\\Delta %s}$] Quantiles',outstr));
         adjust_exponent()
         legend off;
 
     % Plot diagonal line
-    axes(ax1);hold on;
-        xl1 = get(ax1,'XLim');
-        yl1 = get(ax1,'YLim');
-    axes(ax2);hold on;
-        xl2 = get(ax2,'XLim');
-        yl2 = get(ax2,'YLim');
-    m = max(abs([xl1,yl1,xl2,yl2]));
+    xl1 = get(ax1,'XLim');
+    yl1 = get(ax1,'YLim');
+    xl2 = get(ax2,'XLim');
+    yl2 = get(ax2,'YLim');
+    m = ceil(max(abs([xl1,yl1,xl2,yl2])));
     axes(ax1)
         plot([-m,m],[-m,m],'k');
-        set(gca,'XLim',[-m,m],'YLim',[-m,m]);
-        set(gca,'XTick',[-m:m]);
     axes(ax2)
         plot([-m,m],[-m,m],'k');
-        set(gca,'XLim',[-m,m],'YLim',[-m,m]);
-        set(gca,'XTick',[-m:m]);
+
+    set([ax1,ax1],'XLim',[-m,m],'YLim',[-m,m]);
+    set([ax1,ax1],'YTick',[-m:m]);
+    set([ax1,ax1],'XTick',[-m:m]);
+
     ext = sprintf('%s-fidx_%d',outstr,fidx);
     figsave_(popts,ext)
 end
@@ -139,14 +138,14 @@ if strcmp(popts.type,'combined')
             semilogx(10.^xr{fidx}+1./fe{fidx},yr{fidx},'k.','MarkerSize', 10);
             hold on;
         end
-        ylabel(sprintf('Re[$\\Delta %s$] QQ parallel',outstr));
+        ylabel(sprintf('Re[$\\widetilde{\\Delta %s}$] QQ parallel',outstr));
         setx(popts,0,frequnit);
     ax2 = subplot('Position',popts.PositionBottom);
         for fidx = 1:length(fe)
             semilogx(10.^xi{fidx}+1./fe{fidx},yi{fidx},'k.','MarkerSize', 10);
             hold on;
         end
-        ylabel(sprintf('Im[$\\Delta %s$] QQ parallel',outstr));
+        ylabel(sprintf('Im[$\\widetilde{\\Delta %s}$] QQ parallel',outstr));
         setx(popts,1,frequnit);
         xl = get(gca,'XLabel');
         txt = sprintf('%s and %s',xl.String,'QQ perpendicular');

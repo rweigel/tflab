@@ -115,10 +115,11 @@ opts.fd.interpolation = struct();
 
 opts.fd.regression = struct();
     opts.fd.regression.function = @regress_ols;
-    opts.fd.regression.functionstr = 'OLS using regress() on real values and offset term';
-    opts.fd.regression.functionargs = {'regress-real', 1};
+    opts.fd.regression.functionstr = 'OLS using regress() on real values and no constant term';
+    opts.fd.regression.functionargs = {'regress-real'};
     opts.fd.regression.loglevel = 0;
 
+    opts.fd.regression.const_term = 0;
     %opts.fd.regression.functionstr = 'OLS using regress() function on complex values';
     %opts.fd.regression.functionargs = {'regress', 1};
     %opts.fd.regression.loglevel = 0;

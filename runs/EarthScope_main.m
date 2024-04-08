@@ -13,11 +13,11 @@ if 1
     % http://ds.iris.edu/spudservice/data/15014570
 end
 
-if 0
+if 1
     id = 'ORF03';
-    edifile = 'ORF03bc_G3x.xml';
-    Ikeep = [];
-    %edifile = 'USArray.ORF03.2007.xml'; % Older version
+    %edifile = 'ORF03bc_G3x.xml';
+    Ikeep = [86400*12+1:86400*16];
+    edifile = 'USArray.ORF03.2007.xml'; % Older version
     % http://ds.iris.edu/spud/emtf/14866915
     % http://ds.iris.edu/spudservice/data/14866913
 end
@@ -40,6 +40,10 @@ if ~isempty(Ikeep)
     E = E(Ikeep,:);
     t = t(Ikeep);
 end
+%[B,E] = removemean(B,E);
+
+E = bandpass_(E,[1/86400,0.5]);
+B = bandpass_(B,[1/86400,0.5]);
 
 %% Set output file base name using start/stop times of input data
 filestr = sprintf('%s-%s-%s',id,...
@@ -67,8 +71,8 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.tflab.loglevel = 1;
     opts{tfn}.td.window.width = NaN;
     opts{tfn}.td.window.shift = NaN;
-    opts{tfn}.td.detrend.function = @bandpass_;
-    opts{tfn}.td.detrend.functionstr = 'bandpass_';
+    %opts{tfn}.td.detrend.function = @bandpass_;
+    %opts{tfn}.td.detrend.functionstr = 'bandpass_';
     opts{tfn}.td.detrend.functionargs = {[1/86400,0.5]};
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
     opts{tfn}.description = desc;

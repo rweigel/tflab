@@ -42,10 +42,6 @@ if onsegments == 0
         DFT = S.DFT;
         Z = S.Z;
         fe = S.fe;
-        dZ = [];
-        if isfield(S,'dZ')
-            dZ = S.dZ;
-        end
     else
         % S.In is a cell array of intervals.
         Ni = length(S.In);
@@ -77,24 +73,17 @@ else
     In  = S.Segment.In;
     Out = S.Segment.Out;
     DFT = S.Segment.DFT;
-    dZ = [];
     if isfield(S.Segment,'Z')
         logmsg('Computing metrics on segments using segment Zs.\n');
         logmsg('Computing error estimates.\n');
         S.Metrics.ErrorEstimates = error_estimates(S,1);
         Z = S.Segment.Z;
         fe = S.Segment.fe;
-        if isfield(S.Segment,'dZ')
-            dZ = S.Segment.dZ;
-        end
     else
         % Use top-level Z to compute metrics on each segement.
         logmsg('Computing metrics on segments using top-level Z.\n');
         Z = S.Z;
         fe = S.fe;
-        if isfield(S,'dZ')
-            dZ = S.dZ;
-        end
     end
 end
 
@@ -109,24 +98,11 @@ Error = nan(size(Out));
 
 logmsg('Computing Out_.Predicted, Out_.Error, PE, MSE, CC, SE, and Coherences.\n');
 for k = 1:size(In,3) % Third dimension is segment
+
+    [Zi,~] = zinterp(fe,Z(:,:,k),size(In,1));
+    Predicted(:,:,k) = zpredict(Zi,In(:,:,k));
+
     for j = 1:size(Out,2) % Second dimension is component of Out
-
-        u = k;
-        if size(Z,3) == 1
-            u = 1;
-        end
-        [Zi,~] = zinterp(fe,Z(:,:,u),size(In,1));
-        if ~isempty(dZ)
-            [dZi,~] = zinterp(fe,dZ(:,:,u),size(In,1));
-        end
-
-        zcols = (1:size(In,2)) + (j-1)*size(In,2);
-
-        if ~isempty(dZ)
-            Predicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k),dZi);
-        else
-            Predicted(:,j,k) = zpredict(Zi(:,zcols),In(:,:,k));
-        end
 
         Metrics.PE(1,j,k)  = pe_nonflag(Out(:,j,k), Predicted(:,j,k));
         Metrics.MSE(1,j,k) = mse_nonflag(Out(:,j,k), Predicted(:,j,k));
@@ -161,7 +137,6 @@ logmsg('Computing residuals.\n');
 for k = 1:size(In,3) % Third dimension is segment
 
     Zi = Z;
-    dZi = dZ;
 
     if length(fe) ~= length(DFT.fe)
         logmsg('length(fe) ~= length(DFT.fe). Interpolating DFT onto fe\n');
@@ -175,22 +150,19 @@ for k = 1:size(In,3) % Third dimension is segment
 
     if interpolate
         Zi = zinterp(fe,Z,DFT.fe,{'linear', NaN});
-        if ~isempty(dZi)
-            dZi = zinterp(fe,dZ,DFT.fe,{'linear', NaN});
-        end
     end
 
     for j = 1:size(Out,2) % Second dimension is component
-        zcols = (1:size(In,2)) + (j-1)*size(In,2);
+        const_term = opts.fd.regression.const_term;
+        N = size(In,2) + const_term;
+        zcols = (1:N) + (j-1)*N;
         for i = 1:length(DFT.In) % First dimension is frequency
-
             ftE = DFT.Out{i}(:,j,k);
             ftB = DFT.In{i}(:,:,k);
-            Zf = Zi(i,zcols);
-            if ~isempty(dZi)
-                Zf = [Zf, dZi(i,j)];
-                ftB = [ftB, ones(size(ftB,1),1)];
+            if const_term
+                ftB = [ftB,ones(size(ftB,1),1)];
             end
+            Zf = Zi(i,zcols);
             Metrics.Residuals{i,1}(:,j,k) =  ftE - ftB*transpose(Zf);
         end
     end
