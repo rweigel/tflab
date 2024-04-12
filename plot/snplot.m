@@ -148,6 +148,7 @@ if length(S) > 1
             marker = markeropts(length(S),s);
             plot(x{s},y1{s}(:,comp),marker{:});
         end
+        titlestr(S,popts,'sn');
         for s = 1:length(y1)
             errorbar_(x{s},y1{s}(:,comp),y1{s}(:,comp)-y1cll{s}(:,comp),y1clu{s}(:,comp)-y1{s}(:,comp));
         end
@@ -200,7 +201,6 @@ if length(S) > 1
         adjust_exponent('x');
         setx(popts,1,frequnit);
 
-    keyboard
     figsave_(popts,S{1}.Metadata.outstr{comp})
 
 end

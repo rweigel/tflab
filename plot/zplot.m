@@ -211,6 +211,7 @@ if length(S) > 1
         end
 
         legend(h,ls,popts.legend{:});
+        titlestr(S,popts,'z');
 
         if popts.type < 3
             set(gca,'YScale','log');
@@ -271,7 +272,6 @@ if length(S) > 1
             yl = sprintf('Im$(%s)$ %s',Zstrs{comp},unitstr_(S{1}.Metadata));
         end
         ylabel(yl);
-        %legend(ls,popts.legend{:});
 
         if popts.type ~= 3 && ~popts.unwrap
             set(gca,'YScale','linear');

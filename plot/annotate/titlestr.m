@@ -1,27 +1,33 @@
 function h = titlestr(tf, opts, plottype)
 
-if ~isstruct(tf)
+if ~isempty(opts.title)
+    h = title(opts.title);
     return;
 end
 
-if ~isempty(opts.title) || ~isfield(tf,'Options')
+if iscell(tf)
+    for i = 1:length(tf)
+        tsc{i} = titlestr_site(tf{i}.Metadata);
+    end
+    if length(unique(tsc)) == 1
+        % Plot contains data from multiple tfs. If all titles are the same, 
+        % use that title.
+        h = title(tsc{1});
+        return
+    end
+end
+
+if ~isfield(tf,'Options')
     h = title(opts.title);
     return;
 end
 
 spacer = ' $|$ ';
 
-tfom = tf.Metadata;
-ts = '';
-if ~isempty(tfom.stationid) && isempty(tfom.chainid)
-    ts = sprintf('Site: %s',tfom.stationid);            
-end
-if ~isempty(tfom.stationid) && ~isempty(tfom.chainid)
-    ts = sprintf('%s/%s',tfom.chainid, tfom.stationid);
-end
+ts = titlestr_site(tf.Metadata);
 if ~isempty(ts)
     ts = [ts, spacer];
-end    
+end
 
 tfo = tf.Options;
 if strcmp(plottype, 'ts')
@@ -74,4 +80,16 @@ end
 h = [];
 if ~isempty(ts)
     h = title(ts);
+end
+
+end
+
+function ts = titlestr_site(Metadata)
+    ts = '';
+    if ~isempty(Metadata.stationid) && isempty(Metadata.chainid)
+        ts = sprintf('Site: %s',Metadata.stationid);
+    end
+    if ~isempty(Metadata.stationid) && ~isempty(Metadata.chainid)
+        ts = sprintf('%s/%s',Metadata.chainid, Metadata.stationid);
+    end
 end

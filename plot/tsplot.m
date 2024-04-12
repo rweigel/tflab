@@ -266,8 +266,8 @@ if iscell(S)
         % Force first line to be black so color order
         % of compared data matches later plots.
         colororder(ax(1), [0,0,0;colororder()]);
-
         grid on;grid minor;box on;hold on;
+        titlestr(S,popts,'ts');
         ylabel(sprintf('%s [%s]',...
                     popts.outstr{1},S{1}.Metadata.outunit));
         lg0 = sprintf('Observed at %s\n', S{1}.Metadata.stationid);

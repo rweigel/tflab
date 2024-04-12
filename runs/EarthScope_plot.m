@@ -78,7 +78,7 @@ figure();
     tsopts.type = 'original';
     tsplot(TFs{1},tsopts);
 
-if 1
+if 0
     for tfn = 1:3
         % Plot original time series data used for TF1 (will be same for all)
         figure();
@@ -187,7 +187,7 @@ if 1
         zplot({TFs{1},TFs{3}},zopts);
 end
 
-if 1
+if 0
     % Should match
     % VAQ58: http://ds.iris.edu/spud/emtf/15014571
     % ORF03: http://ds.iris.edu/spud/emtf/14866915
@@ -219,21 +219,4 @@ figure();
 
 
 
-fid = fopen(fullfile(copts.printOptions.printDir,'figures.html'),'w');
-fprintf(fid,'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n');
-fprintf(fid,'<html>\n');
-fprintf(fid,'<head>\n');
-fprintf(fid,'  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">\n');
-fprintf(fid,'  <title>%s</title>\n','title');
-fprintf(fid,'</head>\n');
-
-dlist = dir(copts.printOptions.printDir);
-[~,idx] = sort([dlist.datenum]);
-dlist = dlist(idx);
-for i = 1:length(dlist)
-    if dlist(i).isdir == 1 || ~endsWith(dlist(i).name,'.png')
-        continue;
-    end
-    fprintf(fid,'<img src="%s" width="500px">\n',dlist(i).name);
-end
-fclose(fid);
+figureHTML(copts.printOptions.printDir)
