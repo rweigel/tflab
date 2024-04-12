@@ -37,6 +37,8 @@ if nargin < 4
     fidxs = 1:size(S{1}.Metrics.Residuals,1);
 end
 
+logmsg('Plotting\n');
+
 if strcmp(popts.type,'standard') && length(fidxs) > 1 && length(cidxs) > 1
     first = 1;
     for cidx = cidxs
@@ -107,6 +109,9 @@ if strcmp(popts.type,'standard')
     set([ax1,ax1],'XLim',[-m,m],'YLim',[-m,m]);
     set([ax1,ax1],'YTick',[-m:m]);
     set([ax1,ax1],'XTick',[-m:m]);
+    set([ax2,ax2],'XLim',[-m,m],'YLim',[-m,m]);
+    set([ax2,ax2],'YTick',[-m:m]);
+    set([ax2,ax2],'XTick',[-m:m]);
 
     ext = sprintf('%s-fidx_%d',outstr,fidx);
     figsave_(popts,ext)
@@ -216,7 +221,7 @@ function [x,y] = qqdata_rotated(residuals,comp)
     else
         [x,y] = qqdata(imag(residuals));
     end
-    % Rotate data 45 degrees
+    % Rotate data 45 degrees ccw
     r = hypot(x,y);
     theta = atan2(y,x);
     x = -r.*sin(theta-pi/4);

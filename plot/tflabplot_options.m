@@ -4,10 +4,12 @@ if iscell(S)
     nOut = size(S{1}.Out,2);
     nIn = size(S{1}.In,2);
     filestr = S{1}.Options.filestr;
+    const_term = S{1}.Options.fd.regression.const_term;
 else
     nOut = size(S.Out,2);
     nIn = size(S.In,2);
     filestr = S.Options.filestr;
+    const_term = S.Options.fd.regression.const_term;
 end
 
 assert(isstruct(opts),'opts must be a struct.')
@@ -22,6 +24,7 @@ dopts.printOptions.printName = plotfun;
 dopts.printOptions.printDir = '';
 dopts.printOptions.printFormats = {'pdf'};
 dopts.printOptions.export_fig = {};
+dopts.Position = [0 0 600 600];
 
 % Line options passed to plot()
 dopts.line = {'marker', '.', 'markersize', 15, 'linestyle', 'none'};
@@ -82,7 +85,7 @@ if strcmp(plotfun,'qqplot')
     end
     % Determined by manually changing the figure size in the GUI and using
     % get(gcf,'Position').
-    dopts.Position = [0 0 391 625];
+    %dopts.Position = [0 0 391 625];
 end
 
 dopts.printOptions.printName = [dopts.printOptions.printName,'-',filestr];
@@ -109,6 +112,11 @@ if any(strcmp(plotfun,{'zplot','qqplot'}))
         dopts.zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
         dopts.rhostrs = {'\rho^a_{xx}','\rho^a_{xy}','\rho^a_{yx}','\rho^a_{yy}'};
         dopts.phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{yx}','\phi_{yy}'};
+        if const_term == 1
+            dopts.zstrs = {'Z_{xx}','Z_{xy}','Z_{x0}', 'Z_{yx}','Z_{yy}', 'Z_{y0}'};
+            dopts.rhostrs = {'\rho^a_{xx}','\rho^a_{xy}','\rho^a_{x0}','\rho^a_{yx}','\rho^a_{yy}','\rho^a_{y0}'};
+            dopts.phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{x0}','\phi_{yx}','\phi_{yy}','\phi_{y0}'};
+        end
     end
 end
 

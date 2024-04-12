@@ -1,15 +1,15 @@
 function figsave(filename, opts, fmt)
-%FIGSAVE Wrapper to export_fig
+%FIGSAVE Wrapper to exportgraphics
 %
-%   Sets background color of figure to white prior to calling export_fig.
+%   Sets background color of figure to white prior to calling exportgraphics.
 %
-%   FIGSAVE(filename) Calls EXPORT_FIG(filename).
+%   FIGSAVE(filename) Calls exportgraphics(filename).
 %
-%   FIGSAVE(filename, opts) calls EXPORT_FIG(filename, opts{:})
+%   FIGSAVE(filename, opts) calls exportgraphics(filename, opts{:})
 %
 %   Directories are created if they do not exist.
 %
-%   See also PRINT, EXPORT_FIG.
+%   See also PRINT, exportgraphics.
 
 
 if nargin > 2
@@ -20,8 +20,9 @@ if nargin > 2
     return
 end
 
-if endsWith(filename, '.png')
-    opts = {opts{:},'-r','300'};
+if endsWith(filename, '.pdf')
+    %opts = {opts{:},'-r','300'};
+    opts = {opts{:},'ContentType','vector'};
 end
 
 fpath = fileparts(filename);
@@ -30,8 +31,13 @@ if ~isempty(fpath) && ~exist(fpath,'dir')
     logmsg(sprintf('Created directory %s\n',fpath));
 end
 
-warning off export_fig:exportgraphics
-
 logmsg('Writing %s\n',filename);
-export_fig(filename, opts{:});
+if (strcmp(filename(end-3:end),'.pdf'))
+    exportgraphics(gcf, filename, opts{:});
+else
+    %warning off export_fig:exportgraphics
+    %export_fig(filename, opts{:});
+    print('-dpng', '-r600', filename);
+end
+%exportgraphics(gcf, filename, opts{:});
 logmsg('Wrote %s\n',filename);

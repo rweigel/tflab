@@ -2,12 +2,29 @@ clear;
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
+print_figs = 1;
+
 %id = 'VAQ58';
+%id = 'ORG03';
 id = 'ORF03';
 
-if strcmp(id,'ORF03')
+if strcmp(id,'ORG03')
     start = '20070831';
     stop = '20070904';
+    time_range_full = {'2007-08-31T00:00:00.000','2007-09-04T00:00:00.000'};
+    time_range_zoom = {};
+end
+
+if strcmp(id,'ORF03')
+    %start = '2007-08-19T01:48:36';
+    %stop = '2007-09-07T17:18:40';
+    start = '2007-08-31T01:48:36';
+    stop = '2007-09-04T01:48:35';
+    dno = datenum(start,'yyyy-mm-ddTHH:MM:SS');
+    dnf = datenum(stop,'yyyy-mm-ddTHH:MM:SS');
+    dirstr  = sprintf('tfs-%s-%s',...
+        datestr(dno,'yyyymmddTHHMMSS'),datestr(dnf,'yyyymmddTHHMMSS'));
+    rundir = fullfile(scriptdir(),'data','EarthScope',id,dirstr);
     time_range_full = {'2007-08-31T00:00:00.000','2007-09-04T00:00:00.000'};
     time_range_zoom = {};
 end
@@ -36,52 +53,39 @@ if strcmp(id,'VAQ58')
     end
 end
 
-outdir = fullfile(scriptdir(),'data','EarthScope',id);
 
 %% Set common print options
-copts.print    = 0; % Set to 1 to print
-copts.printdir = fullfile(outdir,'figures');
-copts.printfmt = {'pdf','png'};
+copts.print = print_figs; % Set to 1 to print pdf of each figure created.
+copts.printOptions.printDir = fullfile(rundir,'figures');
+copts.printOptions.printFormats = {'png'};
 
 for tfn = 1:3
-    fname = fullfile(outdir, sprintf('%s-%s-%s-tf%d.mat',id,start,stop,tfn));
-    TFs{tfn} = loadtf(fname,'',1,1);
+    fname = fullfile(rundir, sprintf('%s-tf%d.mat',id,tfn));
+    TFs{tfn} = loadtf(fname);
 end
 
-dock on;figure(1);close all;
+if print_figs
+    dock off;close all;
+else
+    dock on;figure(1);close all;
+end
 
 %% Time series plots
 
-% Plot original time series data used for TF1 (will be same as that for TF2)
+% Plot original time series data used for TF1 (will be same for all)
 figure();
     tsopts = copts;
     tsopts.type = 'original';
-    tsopts.printname = 'ts-tf1';
-    tsopts.print = 0;
     tsplot(TFs{1},tsopts);
 
-%figure();
-%    tsopts.type = 'final';
-%    tsplot(TFs{1},tsopts);
-
-if 0
-    % Plot error for TF1 only
-    figure();
-        tsopts = copts;
-        tsopts.type = 'error';
-        tsplot(TFs{1},tsopts);
-
-    % Plot error for TF2 only
-    figure();
-        tsopts = copts;
-        tsopts.type = 'error';
-        tsplot(TFs{2},tsopts);
-
-    % Plot error for TF3 only
-    figure();
-        tsopts = copts;
-        tsopts.type = 'error';
-        tsplot(TFs{3},tsopts);
+if 1
+    for tfn = 1:3
+        % Plot original time series data used for TF1 (will be same for all)
+        figure();
+            tsopts = copts;
+            tsopts.type = 'error';
+            tsplot(TFs{tfn},tsopts);
+    end
 end
 
 %% Compare errors
@@ -89,8 +93,8 @@ figure();
     tsopts = copts;
     %tsopts.time_range = time_range_full;
     tsopts.type  = 'error';
-    tsopts.printname = 'ts-error-tf1-tf3';
-    tsplot(TFs{1},tsopts);
+    tsopts.printOptions.printName = 'ts-error-tf1-tf3';
+    tsplot({TFs{1},TFs{3}},tsopts);
 
     if ~isempty(time_range_zoom)
         figure();
@@ -104,16 +108,10 @@ figure();
 %% DFTs
 % Plot DFTs for TF1 only (will be same for both)
 if 0
-    figure();
-        dftopts = copts;
-        dftopts.type = 'original-averaged';
-        dftplot(TFs{1},dftopts);
-
-
-    figure();
-        dftopts = copts;
-        dftopts.type = 'error-averaged-magphase';
-        dftplot(TFs{2},dftopts);
+figure();
+    dftopts = copts;
+    dftopts.type = 'error-averaged';
+    dftplot({TFs{1}, TFs{3}},dftopts);
 end
 
 %% Histograms
@@ -161,8 +159,7 @@ figure();
     snopts = copts;
     snopts.period_range = [7,6*3600];
     snopts.printname = 'sn-tf1-tf3';
-    snopts.print = 0;
-    snplot(TFs,snopts);
+    snplot({TFs{1},TFs{3}},snopts);
 
 %% Z plots
 if 0
@@ -186,17 +183,22 @@ if 1
         zopts.period_range = [7,6*3600];
         zopts.unwrap = 0;
         zopts.type = 1;
-        zplot(TFs,zopts);
-        %zplot({TFs{1},TFs{2},TFs{3}},zopts);
+        %zplot(TFs,zopts);
+        zplot({TFs{1},TFs{3}},zopts);
 end
 
-if 0
-    % Should match http://ds.iris.edu/spud/emtf/15014571
+if 1
+    % Should match
+    % VAQ58: http://ds.iris.edu/spud/emtf/15014571
+    % ORF03: http://ds.iris.edu/spud/emtf/14866915
+    % When adding 180 degrees
+    % But ... if phase is negative, they plot as postive ... or not at all
+    % https://ds.iris.edu/spudservice/data/15014347
     zopts.type = 2;
     figure();
-        zplot(TFs,zopts,2);
+        zplot(TFs{3},zopts,2);
     figure();
-        zplot(TFs,zopts,3);
+        zplot(TFs{3},zopts,3);
 end
 
 %% Regression plots
@@ -211,3 +213,27 @@ sidx = 1;  % segment number
 figure();
     qopts = copts;
     qqplot_(TFs{3},qopts,comp,fidx);
+figure();
+    qopts = copts;
+    qqplot_(TFs{1},qopts,comp,fidx);
+
+
+
+fid = fopen(fullfile(copts.printOptions.printDir,'figures.html'),'w');
+fprintf(fid,'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n');
+fprintf(fid,'<html>\n');
+fprintf(fid,'<head>\n');
+fprintf(fid,'  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">\n');
+fprintf(fid,'  <title>%s</title>\n','title');
+fprintf(fid,'</head>\n');
+
+dlist = dir(copts.printOptions.printDir);
+[~,idx] = sort([dlist.datenum]);
+dlist = dlist(idx);
+for i = 1:length(dlist)
+    if dlist(i).isdir == 1 || ~endsWith(dlist(i).name,'.png')
+        continue;
+    end
+    fprintf(fid,'<img src="%s" width="500px">\n',dlist(i).name);
+end
+fclose(fid);

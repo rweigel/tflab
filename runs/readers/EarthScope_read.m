@@ -1,7 +1,7 @@
 function [data,outfile,infiles] = EarthScope_read(id)
 
 % List of sites where data are available at baseurl.
-prepared = {'VAQ58','ORF03'};
+prepared = {'VAQ58','ORF03','ORG03'};
 
 if all(strcmp(id,prepared) == 0)
     error('Data for %s is not available',id);
@@ -25,21 +25,30 @@ if ~exist(outdir,'dir')
 end
 
 if strcmp(id,'VAQ58')
-    % TODO: Get this from a JSON file posted at 
+    % TODO: Get this from a JSON file posted at
     % http://mag.gmu.edu/git-data/IRIS-EM-download
     % (need to create JSON file with list of sites where data has been
     % downloaded along with their start/stop and channels).
     suffix = '2016-06-10_through_2016-06-25.mat';
-    channels = {'LFE','LFN','LFZ','LQE','LQN'};    
+    channels = {'LFE','LFN','LFZ','LQE','LQN'};
 end
 
 if strcmp(id,'ORF03')
-    % TODO: Get this from a JSON file posted at 
+    % TODO: Get this from a JSON file posted at
     % http://mag.gmu.edu/git-data/IRIS-EM-download
     % (need to create JSON file with list of sites where data has been
     % downloaded along with their start/stop and channels).
     suffix = '2007-08-19_through_2007-09-07.mat';
-    channels = {'LFE','LFN','LFZ','LQE','LQN'};    
+    channels = {'LFE','LFN','LFZ','LQE','LQN'};
+end
+
+if strcmp(id,'ORG03')
+    % TODO: Get this from a JSON file posted at
+    % http://mag.gmu.edu/git-data/IRIS-EM-download
+    % (need to create JSON file with list of sites where data has been
+    % downloaded along with their start/stop and channels).
+    suffix = '2007-08-17_through_2007-09-07.mat';
+    channels = {'LFE','LFN','LFZ','LQE','LQN'};
 end
 
 [data,infiles] = readFiles(id, channels, suffix);

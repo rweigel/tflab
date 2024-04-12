@@ -54,7 +54,7 @@ if strcmp(pos, 'upper') || strcmp(pos, 'both')
     else
         if (ylim(1) == -ylim(end)) && ~strcmp(pos, 'both')
             % If limits were symmetric, adjust lower to keep symmetry.
-            ylim(1) = ylim(1) - (ytick(end)-ytick(end-1));
+            %ylim(1) = ylim(1) - (ytick(end)-ytick(end-1));
         end
         ylim(end) = ylim(end) + (ytick(end)-ytick(end-1));
     end
@@ -71,7 +71,7 @@ if strcmp(pos,'lower') || strcmp(pos, 'both')
     else
         if (ylim(1) == -ylim(end)) && ~strcmp(pos, 'both')
             % If limits were symmetric, adjust upper to keep symmetry.
-            ylim(end) = ylim(end) - (ytick(2)-ytick(1));
+            %ylim(end) = ylim(end) - (ytick(2)-ytick(1));
         end
         ylim(1) = ylim(1) - (ytick(2)-ytick(1));
     end

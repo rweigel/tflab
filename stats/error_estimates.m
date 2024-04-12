@@ -1,6 +1,7 @@
 function ErrorEstimates = error_estimates(S,onsegments)
 
 if onsegments
+    logmsg('Computing parametric error estimates on segment Zs.\n')
     Z = S.Segment.Z;
     fe = S.Segment.fe;
     t = tinv(0.975,size(Z,3)-1);

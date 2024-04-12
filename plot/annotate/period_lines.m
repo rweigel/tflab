@@ -29,7 +29,7 @@ for i = 1:length(at)
     end
     plot([at(i),at(i)],yl,'--','Color',[0.5,0.5,0.5]);
     if show_labels == 1
-        text(at(i),yl(1),ls{i},'VerticalAlignment','bottom');
+        text(at(i),yl(1),ls{i},'VerticalAlignment','bottom', 'FontSize', 12);
     end
 end
 

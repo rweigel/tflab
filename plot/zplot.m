@@ -133,9 +133,13 @@ if length(S) == 1
             set(gca,'XScale','log');
         end
 
-        if ~popts.unwrap && popts.type ~= 3
+        if popts.type ~= 3 && ~popts.unwrap
             set(gca,'YScale','linear');
+            set(gca,'YLim',[-180,180]);
             set(gca,'YTick',-180:45:180);
+        end
+        if popts.type == 1
+            adjust_ylim('both');
         end
 
         % Must be called after scale type is set.
@@ -146,7 +150,7 @@ if length(S) == 1
             plot_errorbars_(h2,x2,y2,dyl2,dyu2,2);
         end
 
-        adjust_yticks(1e-4);
+        %adjust_yticks(1e-4);
         adjust_exponent();
         setx(popts,1,frequnit);
 
@@ -164,9 +168,9 @@ if length(S) == 1
         ext = '';
         for i = 1:length(comps)
             if ~isempty(exts)
-                ext = [ext,exts{comps(i)},'-'];
+                ext = [ext,exts{comps(i)}];
             else
-                ext = [ext,num2str(comps(i)),'-'];
+                ext = [ext,num2str(comps(i))];
             end
         end
         figsave_(popts,ext);
@@ -231,8 +235,8 @@ if length(S) > 1
 
         if length(x) == 2
             % Must be called after scale type is set.
-            plot_errorbars_(h(1),0.97*x{1},y{1},dyl{1},dyu{1},1);
-            plot_errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},1);
+            plot_errorbars_(h(1),x{1},y{1},dyl{1},dyu{1},1);
+            plot_errorbars_(h(2),x{2},y{2},dyl{2},dyu{2},1);
         end
 
         adjust_yticks(1e-4);
@@ -273,9 +277,9 @@ if length(S) > 1
             set(gca,'YScale','linear');
             set(gca,'YLim',[-180,180]);
             set(gca,'YTick',-180:45:180);
-            adjust_ylim();
-        else
-            adjust_ylim('upper');
+        end
+        if popts.type == 1
+            adjust_ylim('both');
         end
 
         if length(x) == 2

@@ -138,9 +138,10 @@ for j = 1:length(fe)
         if size(Zb,1) >= opts.fd.bootstrap.nmin
             Bootstrap(j) = error_estimates_bootstrap(fe(j),Zb,Z(j,:));
         else
-            msg1 = '!!! Due to sample skipping, # of bootstrap samples < opts.fd.bootstrap.nmin.\n';
-            msg2 = '!!! Cannot compute boostrap error estimates.\n';
-            msg = sprintf("%s\n%s", msg1, msg2);
+            msg1 = '!!! Due to sample skipping, Cannot compute boostrap error estimates b/c ';
+            msg2 = sprintf('# of bootstrap samples (%d) < opts.fd.bootstrap.nmin (%d).\n',...
+                           size(Zb,1),opts.fd.bootstrap.nmin);
+            msg = sprintf("%s %s for %.1e.\n", msg1, msg2, fe(j));
             logmsg(msg);
         end
     end

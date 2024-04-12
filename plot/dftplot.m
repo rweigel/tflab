@@ -68,7 +68,7 @@ for s = 1:length(S)
         end
     else
         % {original,detrended,windowed,whitened,zeropadded,final}-{raw,averaged}-{magnitudes,phases}
-        if ~isfield_(S,'DFT')
+        if ~isfield_(S{s},'DFT')
             logmsg('DFT not found. Computing.\n');
             S{s} = tflab_preprocess(S{s});
         end
@@ -89,9 +89,8 @@ for s = 1:length(S)
             f = S{s}.DFT.f;
             fe{s} = S{s}.DFT.fe;
         end
-
         if strcmp(tparts{2},'averaged')
-            [wIn,wOut] = dftweights(f, segsOut, segsIn, opts);
+            [wIn,wOut] = dftweights(f, segsIn, segsOut, opts);
             DFTIn{s}  = dftaverage(segsIn, wIn);
             DFTOut{s} = dftaverage(segsOut, wOut);
         else
@@ -186,7 +185,7 @@ if strcmp(tparts{1},'error')
             set(gca,'YScale','linear');
             set(gca,'YTick',-180:45:180);
         end
-        adjust_ylim();
+        adjust_ylim('both');
         adjust_exponent('y');
         setx(popts,1,frequnit);
 end
@@ -221,18 +220,17 @@ if ~strcmp(tparts{1},'error')
             legend(lg2,popts.legend{:});
         end
         ylabel(yl2);
-        adjust_ylim('upper');
+        adjust_ylim('both');
         adjust_yticks(1e-4);
         adjust_exponent();
         setx(popts,1,frequnit);
 end
 
-compstr = '';
 if length(S) > 1 && size(S{1}.In,2) > 1
-    compstr = sprintf('-%s-',comp);
+    popts.printOptions.printName = sprintf('%s-%d',popts.printOptions.printName, comp);
 end
 
-figsave_(popts,compstr);
+figsave_(popts);
 
 if strcmp(tparts{1},'error')
     if comp < size(S{1}.In,2)
@@ -381,6 +379,7 @@ function s = labelstr_(labelstr, prefix, ltype)
     end
     if startsWith(ltype,'angle')
         s = ['$\angle$ of $',s,'$'];
+        %s = ['$',s,'$'];
     end
     if startsWith(ltype,'real')
         s = ['Re of $',s,'$'];

@@ -15,39 +15,43 @@ end
 
 if 1
     id = 'ORF03';
-    %edifile = 'ORF03bc_G3x.xml';
-    Ikeep = [86400*12+1:86400*16];
-    edifile = 'USArray.ORF03.2007.xml'; % Older version
+    %edifile = 'ORF03bc_G3x.xml'; % Older version
+    %start = '2007-08-19T01:48:36';
+    %stop = '2007-09-07T17:18:40';
+    start = '2007-08-31T01:48:36';
+    stop = '2007-09-04T01:48:35';
+    edifile = 'USArray.ORF03.2007.xml'; % Name in XML linked to below.
+    ediurl  = 'http://ds.iris.edu/spudservice/data/21636090';
     % http://ds.iris.edu/spud/emtf/14866915
-    % http://ds.iris.edu/spudservice/data/14866913
 end
 
-outdir = fullfile(scriptdir(),'data','EarthScope',id);
+if 0
+    id = 'ORG03';
+    start = '2007-08-31T01:48:36';
+    stop = '2007-09-04T01:48:35';
+    edifile = 'USArray.ORG03.2007.xml'; % Name in XML linked to below.
+    ediurl = 'http://ds.iris.edu/spudservice/data/21636974';
+    % http://ds.iris.edu/spud/emtf/14867137
+end
+
+dno = datenum(start,'yyyy-mm-ddTHH:MM:SS');
+dnf = datenum(stop,'yyyy-mm-ddTHH:MM:SS');
+dirstr  = sprintf('tfs-%s-%s',...
+            datestr(dno,'yyyymmddTHHMMSS'),datestr(dnf,'yyyymmddTHHMMSS'));
+rundir = fullfile(scriptdir(),'data','EarthScope',id,dirstr);
 
 % Get input/output data
 [B,E,t,infile,outfile] = EarthScope_clean(id);
 
-%% Make length an integer number of segments.
-pps = 86400;                % Points per segment
-Ns  = floor(size(B,1)/pps); % Number of segments
-I = pps*Ns;
-B = B(1:I,:);
-E = E(1:I,:);
-t = t(1:I);
+Ik = t >= dno & t <= dnf;
+B = B(Ik,:);
+E = E(Ik,:);
+t = t(Ik);
 
-if ~isempty(Ikeep)
-    B = B(Ikeep,:);
-    E = E(Ikeep,:);
-    t = t(Ikeep);
-end
-%[B,E] = removemean(B,E);
+[B,E] = removemean(B,E);
 
 E = bandpass_(E,[1/86400,0.5]);
 B = bandpass_(B,[1/86400,0.5]);
-
-%% Set output file base name using start/stop times of input data
-filestr = sprintf('%s-%s-%s',id,...
-                    datestr(t(1),'yyyymmdd'),datestr(t(end),'yyyymmdd'));
 
 %% Set metadata used for plots
 meta = struct();
@@ -60,8 +64,11 @@ meta = struct();
     meta.frequnit  = 'Hz';
     meta.freqsf    = 1;
     meta.timestart = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');
+    meta.timestop  = datestr(t(end),'yyyy-mm-ddTHH:MM:SS.FFF');
     meta.chainid   = 'EarthScope';
     meta.stationid = id;
+
+const_term = 0;
 
 %% First TF
 tfn = 1;
@@ -71,10 +78,11 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.tflab.loglevel = 1;
     opts{tfn}.td.window.width = NaN;
     opts{tfn}.td.window.shift = NaN;
+    opts{tfn}.fd.regression.const_term = const_term;
     %opts{tfn}.td.detrend.function = @bandpass_;
     %opts{tfn}.td.detrend.functionstr = 'bandpass_';
     opts{tfn}.td.detrend.functionargs = {[1/86400,0.5]};
-    opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
+    opts{tfn}.filestr = sprintf('%s-tf%d',id,tfn);
     opts{tfn}.description = desc;
     if short_run
         opts{tfn}.fd.bootstrap.N = NaN;
@@ -84,25 +92,25 @@ TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
 
 TFs{tfn}.Metadata = meta; % Attach metadata used in plots
 
-savetf(TFs{tfn}, fullfile(outdir, opts{tfn}.filestr));
+savetf(TFs{tfn}, fullfile(rundir, opts{tfn}.filestr));
 
 %% Second TF
 tfn = tfn + 1;
 pps = 86400;
-desc = sprintf('OLS; %d %d-day segment%s',size(B,1)/pps,pps/86400,plural(Ns));
+desc = sprintf('OLS; %d %d-day segment%s',size(B,1)/pps,pps/86400,plural(pps/86400));
 opts{tfn} = tflab_options(1);
     opts{tfn}.tflab.loglevel = 1;
     opts{tfn}.td.window.width = pps;
     opts{tfn}.td.window.shift = pps;
-    opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
+    opts{tfn}.fd.regression.const_term = const_term;
+    opts{tfn}.filestr = sprintf('%s-tf%d',id,tfn);
     opts{tfn}.description = desc;
     if short_run
         opts{tfn}.fd.bootstrap.N = NaN;
     end
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
-
 TFs{tfn}.Metadata = meta; % Attach metadata used in plots
-savetf(TFs{tfn}, fullfile(outdir, opts{tfn}.filestr));
+savetf(TFs{tfn}, fullfile(rundir, opts{tfn}.filestr));
 
 if 1
     tfn = tfn + 1;
@@ -123,7 +131,15 @@ if 1
     end
     addpath(zread_dir);
 
-    edifilefull = fullfile(scriptdir(),'data','EarthScope',id,'edi',edifile);
+    edifile = fullfile('data','EarthScope',id,'edi',edifile);
+    edifilefull = fullfile(scriptdir(),edifile);
+    if ~exist(edifilefull,'file')
+        if ~exist(fileparts(edifilefull),'dir')
+            mkdir(fileparts(edifilefull));
+        end
+        fprintf('Downloading %s to %s\n',ediurl,edifilefull);
+        websave(edifilefull, ediurl);
+    end
     EDI = read_edixml(edifilefull);
 
     % Set options and data needed for metrics and plotting
@@ -131,7 +147,7 @@ if 1
     TFs{tfn}.Metadata.EDI = EDI;
     TFs{tfn}.Metadata.timestart = TFs{1}.Metadata.timestart;
     %TF3.Metadata.timestart = [TF3.Metadata.EDI.Start,'.000'];
-    TFs{tfn}.Options.filestr = sprintf('%s-tf%d',filestr,tfn);
+    TFs{tfn}.Options.filestr = sprintf('%s-tf%d',id,tfn);
 
     % EMTF is listed as software at http://ds.iris.edu/spud/emtf/15014571
     TFs{tfn}.Options.description = 'EMTF';
@@ -143,9 +159,14 @@ if 1
     TFs{tfn}.In  = TFs{1}.In(:,1:2);
     TFs{tfn}.Out = TFs{1}.Out;
 
+    if const_term
+        tmp = nan(size(TFs{tfn}.Z,1),1);
+        TFs{tfn}.Z = [TFs{tfn}.Z(:,1:2),tmp,TFs{tfn}.Z(:,3:4),tmp];
+    end
+
     TFs{tfn} = tflab_preprocess(TFs{tfn});
     TFs{tfn} = tflab_metrics(TFs{tfn});
 
-    fname = fullfile(outdir,[TFs{tfn}.Options.filestr,'.mat']);
+    fname = fullfile(rundir,[TFs{tfn}.Options.filestr,'.mat']);
     savetf(TFs{tfn},fname);
 end

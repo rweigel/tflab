@@ -1,14 +1,14 @@
 function ax = tsplot(S,popts)
-%TSPLOT - Plot timeseries in output of TRANSFERFNFD.
+%TSPLOT  Plot timeseries in output of TRANSFERFNFD.
 %
-%  TSPLOT(S), where S is the output of TRANSFERFNFD or a cell array of such
-%  outputs.
+%  TSPLOT(S), where S is the output of TRANSFERFNFD or a cell array of
+%  such outputs.
 %
 %  TSPLOT(S, opts) creates a plot using options in structure opts. Use
 %  tflabplot_options(S, struct(), 'tsplot') to determine defaults.
 %
-%  opts.type can be 'original', 'error', 'final', or the name of one of the
-%  fields in S.In_ and S.Out_.
+%  opts.type can be 'original', 'error', 'final', or the name of one of 
+%  the fields in S.In_ and S.Out_.
 
 if ischar(S)
     S = loadtf(S);
@@ -36,7 +36,8 @@ if isfield(popts,'time_range')
         popts.mldatenum_range(1) = datenum(popts.time_range{1},fmt);
         popts.mldatenum_range(2) = datenum(popts.time_range{2},fmt);
     catch
-        warning(['Could not parse one or more elements in popts.time_range. Format must be ',fmt]);
+        msg = 'Could not parse one or more elements in popts.time_range.';
+        warning('%s Format must be %s',msg,fmt);
     end
 end
 
@@ -46,14 +47,28 @@ S = tflab_metadata(S);
 % Apply default plot options for fields in popts not specified.
 popts = tflabplot_options(S, popts, 'tsplot');
 
+tparts = split(popts.type,'-');
+
+final = 0;
+if length(tparts) > 1 && strcmp(tparts{2},'final')
+    final = 1;
+    if ~isfield_(S,'Out_.Final')
+        error('Out_.Final (Out data after preprocess) not found .');
+    end
+    logmsg('Plotting final data.\n');
+end
+
 if iscell(S) && length(S) == 1
     S = S{1};
 end
 
+figprep();
+
 if iscell(S)
+    if ~strcmp(tparts{1},'error')
+        error('opts.type for cell array input must be ''error''');
+    end
     info = S{1}.Metadata;
-    timeunit  = S{1}.Metadata.timeunit;
-    timedelta = S{1}.Metadata.timedelta;
 
     t = index2mldn_(S{1}, size(S{1}.In,1));
     trange = [t(1),t(end)];
@@ -74,13 +89,15 @@ if iscell(S)
     end
 else
     info = S.Metadata;
-    timeunit  = S.Metadata.timeunit;
-    timedelta = S.Metadata.timedelta;
-    if strcmp(popts.type,'error')
-        logmsg('Plotting output and predicted for single transfer function.\n')
-        y1{1} = S.Out;
+    if strcmp(tparts{1},'error')
+        logmsg('Plotting output and predicted for single transfer function.\n');
+        if final == 0
+            y1{1} = S.Out;
+        else
+            y1{1} = S.Out_.Final;
+        end
         if ~isfield_(S,'Out_.Predicted')
-            logmsg('Out_.Predicted and Out_.Error not found. Computing.\n')
+            logmsg('Out_.Predicted and Out_.Error not found. Computing.\n');
             S = tflab_preprocess(S);
             S = tflab_metrics(S);
         end
@@ -88,7 +105,11 @@ else
 
         t1 = index2mldn_(S, size(y1{1},1));
 
-        y2 = S.Out_.Error;
+        if final == 0
+            y2 = S.Out_.Error;
+        else
+            y2 = S.Out_.ErrorFinal;
+        end
         t2 = index2mldn_(S, size(y2,1));
 
         trange = [t1(1),t1(end)];
@@ -103,7 +124,9 @@ else
                 S = tflab_tdpreprocess(S);
             end
             if ~isfield(S,'In_') || isfield(S.In,'Final')
-                error('Final data is the same as original b/c no filtering applied. Request plot for original instead.');
+                msg1 = 'Final data is the same as original b/c no filtering';
+                msg2 = ' applied. Request plot for type=original instead.';
+                error('%s%s',msg1,msg2);
             end
             y1 = S.In_.Final;
             y2 = S.Out_.Final;
@@ -127,13 +150,7 @@ else
     end
 end
 
-if isfield(popts,'mldatenum_range')
-    trange = popts.mldatenum_range;
-end
-
-figprep();
-
-if ~iscell(S) && ~strcmp(popts.type,'error')
+if ~iscell(S) && ~strcmp(tparts{1},'error')
 
     ax(1) = subplot('Position',popts.PositionTop);
         plot(t1,y1);
@@ -148,7 +165,7 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
             [~, lo] = legend(lg1,popts.legend{:});
             adjust_legend_lines(lo);
         end
-        adjust_ylim();
+        adjust_ylim('upper');
         adjust_exponent('y');
         setx_(0,info,trange);
 
@@ -168,7 +185,7 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
             %hold on;
             %plot(t,S.OutNoise);
         end
-        %adjust_ylim();
+        adjust_ylim('upper');
         adjust_exponent('y');
         setx_(1,info,trange);
 
@@ -176,7 +193,7 @@ if ~iscell(S) && ~strcmp(popts.type,'error')
 end
 
 
-if ~iscell(S) && strcmp(popts.type,'error')
+if ~iscell(S) && strcmp(tparts{1},'error')
 
     for j = 1:size(S.Out,2)
         if j > 1
@@ -198,10 +215,15 @@ if ~iscell(S) && strcmp(popts.type,'error')
                 outstrerr = sprintf('%s(:,%d)',outstr,j);
             end
         end
+        if final == 0
+            Metrics = S.Metrics;
+        else
+            Metrics = S.MetricsFinal;
+        end
         metrics = sprintf('PE/CC/MSE = %.3f/%.3f/%.3f',...
-                        S.Metrics.PE(j),...
-                        S.Metrics.CC(j),...
-                        S.Metrics.MSE(j));
+                        Metrics.PE(j),...
+                        Metrics.CC(j),...
+                        Metrics.MSE(j));
 
         lg2 = sprintf('%s Error; %s',outstrerr,metrics);
 
@@ -225,27 +247,26 @@ if ~iscell(S) && strcmp(popts.type,'error')
             [~, lo] = legend(lg2,popts.legend{:});
             adjust_legend_lines(lo);
             setx_(1,info,trange);
+
+        figsave_(popts,popts.instr{j});
     end
 
-    figsave_(popts);
 end
 
 % Compare
 if iscell(S)
-    if ~strcmp(popts.type,'error')
-        error('tsplot for cell array input must be ''error''');
-    end
     if isfield(popts,'mldatenum_range')
         trange = popts.mldatenum_range;
         tidx = find(t >= trange(1) & t <= trange(2));
     else
-        tidx = [1:length(t)];
+        tidx = 1:length(t);
     end
     ax(1) = subplot('Position',popts.PositionTop);
         plot(t(tidx),S{1}.Out(tidx,1));
         % Force first line to be black so color order
         % of compared data matches later plots.
         colororder(ax(1), [0,0,0;colororder()]);
+
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     popts.outstr{1},S{1}.Metadata.outunit));
@@ -289,14 +310,8 @@ if iscell(S)
         adjust_exponent('y');
         setx_(1,info,trange);
 
-    % Force "Observed" line to be black.
-    % Other lines follow default color order.
-    %co = [0,0,0;colororder()];
-    %colororder(gcf,co);
-
     if popts.print == 1
-        pfname = fullfile(popts.printOptions.printDir,popts.printOptions.printName);
-        figsave(pfname,popts.printOptions.export_fig,popts.printOptions.printFormats);
+        figsave_(popts);
     end
 end
 

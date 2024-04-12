@@ -1,4 +1,4 @@
-function S = tflab_metrics(S,onsegments)
+function S = tflab_metrics(S,onsegments,onfinal)
 %TFLAB_METRICS Compute metrics using TFLab structure
 %
 %   S = TFLAB_METRICS(S) adds metrics calculations to TFlab structure.
@@ -21,6 +21,9 @@ function S = tflab_metrics(S,onsegments)
 if nargin < 2
     onsegments = 0;
 end
+if nargin < 3
+    onfinal = 0;
+end
 
 opts = S.Options;
 if onsegments == 0
@@ -38,7 +41,13 @@ if onsegments == 0
     if ~iscell(S.In)
         logmsg('Computing metrics on full unsegmented data using top-level Z.\n');
         In  = S.In;
-        Out = S.Out;
+        if isfield_(S,'Out_.Final') && onfinal == 1
+            Out = S.Out_.Final;
+            logmsg('Computing metrics using output = Out_.Final.\n');
+        else
+            Out = S.Out;
+            logmsg('Computing metrics using output = Out.\n');
+        end
         DFT = S.DFT;
         Z = S.Z;
         fe = S.fe;
@@ -48,7 +57,13 @@ if onsegments == 0
         msg = sprintf('Computing metrics on %d intervals using top-level Z.\n',Ni);
         logmsg(msg);
         In_intervals = S.In;
-        Out_intervals = S.Out;
+        if isfield_(S,'Out_.Final') && onfinal == 1
+            Out_intervals = S.Out_.Final;
+            logmsg('Computing metrics using output = Out_.Final.\n');
+        else
+            Out_intervals = S.Out;
+            logmsg('Computing metrics using output = Out.\n');
+        end
         DFT_intervals = S.DFT;
         for i = 1:Ni
             logmsg('Computing metrics on interval %d.\n',i);
@@ -71,9 +86,13 @@ if onsegments == 0
 else
     assert(isfield(S,'Segment'), 'S must have a Segment field')
     In  = S.Segment.In;
-    Out = S.Segment.Out;
+    if isfield(S,'Segment.Out_.Final') && onfinal == 1 
+        Out = S.Segment.Out_.Final;
+    else
+        Out = S.Segment.Out;
+    end
     DFT = S.Segment.DFT;
-    if isfield(S.Segment,'Z')
+    if isfield_(S,'Segment.Z')
         logmsg('Computing metrics on segments using segment Zs.\n');
         logmsg('Computing error estimates.\n');
         S.Metrics.ErrorEstimates = error_estimates(S,1);
@@ -89,35 +108,43 @@ end
 
 if size(Out,2)*size(In,2) ~= size(Z,2)
     cond = size(Out,2)*size(In,2) == size(Z,2);
-    cond = cond || size(Out,2)*size(In,2) == size(Z,2) - 1;
+    cond = cond || size(Out,2)*size(In,2) == size(Z,2) - size(Out,2);
     assert(cond, 'size(Out,2) must equal size(Z,2)/size(In,2)');
 end
 
 Predicted = nan(size(Out));
 Error = nan(size(Out));
 
-logmsg('Computing Out_.Predicted, Out_.Error, PE, MSE, CC, SE, and Coherences.\n');
+if onfinal == 0
+    logmsg('Computing Out_.Predicted, Out_.Error, PE, MSE, CC, SE, and Coherences.\n');
+else
+    logmsg('Computing Out_.Predicted, Out_.ErrorFinal, PE, MSE, CC, SE, and Coherences.\n');
+end
 for k = 1:size(In,3) % Third dimension is segment
 
-    [Zi,~] = zinterp(fe,Z(:,:,k),size(In,1));
+    if length(size(Z)) > 2
+        [Zi,~] = zinterp(fe,Z(:,:,k),size(In,1));
+    else
+        [Zi,~] = zinterp(fe,Z,size(In,1));
+    end
+
     Predicted(:,:,k) = zpredict(Zi,In(:,:,k));
 
-    for j = 1:size(Out,2) % Second dimension is component of Out
+    for j = 1:size(Out,2) % Second dimension is component
 
         Metrics.PE(1,j,k)  = pe_nonflag(Out(:,j,k), Predicted(:,j,k));
         Metrics.MSE(1,j,k) = mse_nonflag(Out(:,j,k), Predicted(:,j,k));
         Metrics.CC(1,j,k)  = cc_nonflag(Out(:,j,k), Predicted(:,j,k));
-
-        [Metrics.PredictionCoherence(:,j,k), Metrics.fe] = ...
-            coherence(Out(:,j,k), Predicted(:,j,k), 1, opts);
 
         Error(:,j,k) = Predicted(:,j,k)-Out(:,j,k);
 
         [Metrics.SN(:,j,k),~,Metrics.SNCLl(:,j,k),Metrics.SNCLu(:,j,k)] = ...
             signaltoerror(Out(:,j,k), Error(:,j,k), 1, opts);
 
+        [Metrics.PredictionCoherence(:,j,k), Metrics.fe] = ...
+            coherence(Out(:,j,k), Predicted(:,j,k), 1, opts);
         for i = 1:size(In,2)
-            % If In and out both have two components, columns are
+            % If In and Out both have two components, columns are
             %   <Outx,Inx>, <Outx,Iny>, <Outy,Iny>, <Outy,Iny>
             u = i + (j-1)*size(Out,2);
             Metrics.CrossCoherence(:,u,k) = ...
@@ -156,6 +183,14 @@ for k = 1:size(In,3) % Third dimension is segment
         const_term = opts.fd.regression.const_term;
         N = size(In,2) + const_term;
         zcols = (1:N) + (j-1)*N;
+        if zcols(end) > size(Zi,2)
+            if const_term
+                msg = 'size(Z,2) is not correct. Check that opts.fd.regression.const_term is correct.';
+            else
+                msg = 'size(In,2)/size(Z,2) must be integer.';
+            end
+            assert(zcols(end) <= size(Zi,2),msg);
+        end
         for i = 1:length(DFT.In) % First dimension is frequency
             ftE = DFT.Out{i}(:,j,k);
             ftB = DFT.In{i}(:,:,k);
@@ -167,7 +202,7 @@ for k = 1:size(In,3) % Third dimension is segment
         end
     end
 
-    if isfield(S,'Regression') && isfield(S.Regression,'Residuals')
+    if isfield_(S,'Regression.Residuals')
         if size(S.Regression.Residuals,1) == size(Metrics.Residuals{i},1)
             logmsg('Checking residuals calculation.')
             for i = 1:length(S.Regression.Residuals)
@@ -180,20 +215,33 @@ for k = 1:size(In,3) % Third dimension is segment
     end
 end
 
+MetricsName = 'Metrics';
+ErrorName = 'Error';
+if onfinal == 1
+    MetricsName = 'MetricsFinal';
+    ErrorName = 'ErrorFinal';
+end
+
 if onsegments
-    S.Segment.Metrics = Metrics;
-    S.Segment.Out_.Error = Error;
+    S.Segment.(MetricsName) = Metrics;
+    S.Segment.Out_.(ErrorName) = Error;
     S.Segment.Out_.Predicted = Predicted;
-    S.Segment.DFT.Out_.Error = DFTError;
+    S.Segment.DFT.Out_.(ErrorName) = DFTError;
     S.Segment.DFT.Out_.Predicted = DFTPredicted;
 else
-    S.Metrics = Metrics;
-    S.Out_.Error = Error;
+    S.(MetricsName) = Metrics;
+    S.Out_.(ErrorName) = Error;
     S.Out_.Predicted = Predicted;
-    S.DFT.Out_.Error = DFTError;
+    S.DFT.Out_.(ErrorName) = DFTError;
     S.DFT.Out_.Predicted = DFTPredicted;
 end
 
 if onsegments == 0 && isfield(S,'Segment')
+    logmsg('Computing metrics on segments.\n')
     S = tflab_metrics(S,1);
+end
+
+if onfinal == 0 && isfield_(S, 'Out_.Final')
+    logmsg('Computing metrics using Out_.Final.\n')
+    S = tflab_metrics(S,onsegments,1);
 end

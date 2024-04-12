@@ -1,9 +1,11 @@
-clear
-
+clear;
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-short_run = 1;
+% Set common print options
+
+short_run = 0;
+print_figs = 0;
 
 if short_run
     start = '20120712';
@@ -12,8 +14,6 @@ else
     start = '20120712';
     stop = '20121107';
 end
-start = '20170101';
-stop = '20170130';
 
 dirstr  = sprintf('tfs-%s-%s',start,stop);
 rundir = fullfile(scriptdir(),'data','Middelpos',dirstr);
@@ -21,13 +21,12 @@ rundir = fullfile(scriptdir(),'data','Middelpos',dirstr);
 for tfn = 1:4
     fname{tfn} = fullfile(rundir, sprintf('Middelpos-tf%d.mat',tfn));
     TFs{tfn} = loadtf(fname{tfn});
-    TFs{tfn} = tflab_preprocess(TFs{tfn});
-    TFs{tfn} = tflab_metrics(TFs{tfn});
+    %TFs{tfn} = tflab_preprocess(TFs{tfn});
+    %TFs{tfn} = tflab_metrics(TFs{tfn});
 end
 
-%% Set common print options
 copts = struct();
-    copts.print = 0; % Set to 1 to print pdf of each figure created.
+    copts.print = print_figs; % Set to 1 to print pdf of each figure created.
     copts.printOptions.printDir = fullfile(rundir,'figures');
     copts.printOptions.printFormats = {'pdf'};
 
@@ -35,30 +34,37 @@ dock on;figure(1);close all;
 
 %% Time series plots
 tsopts = copts;
-tsopts.printOptions.printFormats = {'png'};
+tsopts.printOptions.printFormats = {'pdf'};
 
-if (0)
-figure();
-    tsopts.type = 'original';
-    tsplot(TFs{1},tsopts);
-figure();
-    tsopts.type = 'final';
-    tsplot(TFs{3},tsopts);
+if (1)
+    figure();
+        tsopts.type = 'original';
+        tsplot(TFs{1},tsopts);
+    figure();
+        tsopts.type = 'final';
+        tsplot(TFs{3},tsopts);
 end
 
-tsopts.type = 'error';
-figure();
-    tsplot(TFs{1},tsopts);
-figure();
-    tsplot(TFs{3},tsopts);
+if (1)
+    tsopts.type = 'error';
+    figure();
+        tsplot(TFs{1},tsopts);
+    figure();
+        tsplot(TFs{3},tsopts);
+end
 
 %% DFT plots
-if 0
-    figure();
-        dftopts = copts;
-        dftopts.type = 'original-averaged';
-        dftplot(TFs{1},dftopts);
+figure();
+    dftopts = copts;
+    dftopts.type = 'original-averaged';
+    dftplot(TFs{1},dftopts);
 
+figure();
+    dftopts = copts;
+    dftopts.type = 'original-averaged-phases';
+    dftplot(TFs{1},dftopts);
+
+if 0
     figure();
         dftopts = copts;
         dftopts.type = 'original-averaged-reals';
@@ -93,7 +99,6 @@ figure();
     zopts.type = 1;
     %zopts.period_range = [1, 86400];
     zplot(TFs,zopts);
-
 
 figure();
     qqopts = copts;

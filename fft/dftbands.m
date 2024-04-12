@@ -14,7 +14,7 @@ function [bands, f, fe] = dftbands(x, Ic, Ne)
 %
 %   [bands, f, fc] = DFTBANDS(x, opts) uses opts.fd.evalfreq.function with
 %   arguments opts.fd.evalfreq.functionargs to compute Ic and Ne.
-%    
+%
 %   See also evalfreq.
 
 if nargin == 2

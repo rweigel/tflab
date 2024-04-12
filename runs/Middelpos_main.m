@@ -1,21 +1,19 @@
-clear
+clear;
 close all % To reduce memory.
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 short_run = 0;
-Nboot = NaN;
 
 if short_run
+    Nboot = NaN;
     start = '20120712';
     stop = '20120716';
 else
+    Nboot = 100;
     start = '20120712';
     stop = '20121107';
 end
-
-start = '20170101';
-stop = '20170131';
 
 %% Set output file base name using start/stop times of input data
 filestr = 'Middelpos';
@@ -25,8 +23,7 @@ rundir = fullfile(scriptdir(),'data',filestr,dirstr);
 % Read input/output data
 [B,E,t] = Middelpos_clean(start,stop,rundir);
 
-keyboard
-%% Make length an integer number of segments.
+% Make length an integer number of segments.
 pps = 86400;
 I = pps*floor(size(B,1)/pps);
 B = B(1:I,:);

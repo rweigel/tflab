@@ -52,7 +52,7 @@ if strcmp(plottype, 'dft')
     if strcmp(tparts{1},'zeropadded')
         ts = sprintf('%sPadded with %d zeros',ts,tf.Options.td.zeropad);
     else
-        if isfield(tfo.td, ftype) && ~isempty(tfo.td.(ftype).function)
+        if isfield(tfo, 'td') && isfield(tfo.td, ftype) && ~isempty(tfo.td.(ftype).function)
             fdesc = tf.Options.td.(ftype).functionstr;
             if isempty(fdesc)
                 ts = sprintf('%s%sed',ts,ftype);

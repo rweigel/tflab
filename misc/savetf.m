@@ -22,7 +22,6 @@ fnamefull = fname;
 if ~endsWith(fnamefull,'.mat')
     fnamefull = append(fnamefull,'.mat');
 end
-logmsg('Saving: %s\n',fnamefull);
 
 if isfield(tf,'Segment')
     keeps = {'Z','fe','Metrics'};
@@ -34,6 +33,11 @@ if isfield(tf,'Segment')
     end
 end
 
+logmsg('Saving: %s\n',fnamefull);
+save(fname,'-v7.3','-struct','tf');
+logmsg('Saved:  %s\n',fnamefull);
+return
+
 keeps = {'In','Out','Z','dZ','ZVAR','fe','Metrics','Options','Metadata','Segment'};
 for i = 1:length(keeps)
     if ~isfield(tf,keeps{i})
@@ -42,6 +46,5 @@ for i = 1:length(keeps)
 end
 
 save(fname,'-v7.3','-struct','tf','In','Out',keeps{:});
-
 logmsg('Saved:  %s\n',fnamefull);
 

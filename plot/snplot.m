@@ -2,8 +2,8 @@ function [ax1,ax2] = snplot(S,popts,comps)
 %SNPLOT
 %
 %   SNPLOT(S)
-%   SNPLOT(S, opts)
-%   SNPLOT(S, opts, component)
+%   SNPLOT(S,opts)
+%   SNPLOT(S,opts,component)
 
 msg = 'S must be a tflab struct or cell array of tflab structs';
 assert(isstruct(S) || iscell(S), msg);
@@ -41,6 +41,8 @@ popts = tflabplot_options(S,popts,'snplot');
 
 frequnit = S{1}.Metadata.frequnit;
 
+onfinal = 0;
+
 if length(S) == 1
 
     % Single transfer function
@@ -51,7 +53,7 @@ if length(S) == 1
         lg = lg{comp};
     end
 
-    [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts);
+    [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts,onfinal);
     if nargin > 2
         y1 = y1(:,comp);
         y1cll = y1cll(:,comp);
@@ -127,8 +129,8 @@ if length(S) > 1
     % Multiple TFs
     figprep();
 
-    lg = legend_(S,popts,comp);
-    [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts);
+    lg = legend_(S,popts);
+    [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts,onfinal);
 
     if iscell(popts.outstr)
         outstr = popts.outstr{comp};
@@ -172,7 +174,10 @@ if length(S) > 1
             plot(x{s},y2{s}(:,comp),marker{:});
         end
         if show_xcoh == 1
-            lg = legend_(S,popts,comp);
+            lg = legend_(S,popts);
+            for i = 1:length(lg)
+                lg{i} = sprintf('%s %s',popts.outstr{comp},lg{i});
+            end
             plot(x{s},y3{s}(:,comp),'ko');
             ylabel(sprintf('Coherence with %s',outstr));
             if length(popts.instr) == 2
@@ -195,21 +200,28 @@ if length(S) > 1
         adjust_exponent('x');
         setx(popts,1,frequnit);
 
+    keyboard
     figsave_(popts,S{1}.Metadata.outstr{comp})
 
 end
 
 end % function
 
-function [x,y1,y2,y3,y1cll,y1clu] = xyvals_(S,popts)
+function [x,y1,y2,y3,y1cll,y1clu] = xyvals_(S,popts,onfinal)
+
+    if onfinal == 0
+        MetricsName = 'Metrics';
+    else
+        MetricsName = 'MetricsFinal';
+    end
 
     for s = 1:length(S)
-        fe{s} = S{s}.Metrics.fe;
-        y1{s} = S{s}.Metrics.SN;
-        y2{s} = S{s}.Metrics.PredictionCoherence;
-        y1clu{s} = S{s}.Metrics.SNCLu;
-        y1cll{s} = S{s}.Metrics.SNCLl;
-        y3{s} = sqrt(S{s}.Metrics.CrossCoherence);
+        fe{s} = S{s}.(MetricsName).fe;
+        y1{s} = S{s}.(MetricsName).SN;
+        y2{s} = S{s}.(MetricsName).PredictionCoherence;
+        y1clu{s} = S{s}.(MetricsName).SNCLu;
+        y1cll{s} = S{s}.(MetricsName).SNCLl;
+        y3{s} = sqrt(S{s}.(MetricsName).CrossCoherence);
         if popts.vs_period
             x{s} = 1./(fe{s}*S{s}.Metadata.freqsf);
         else
@@ -237,7 +249,7 @@ function [x,y1,y2,y3,y1cll,y1clu] = xyvals_(S,popts)
     end
 end
 
-function lg = legend_(S,popts,comp)
+function lg = legend_(S,popts)
 
     if iscell(S)
         for s = 1:length(S)

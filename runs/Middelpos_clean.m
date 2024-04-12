@@ -8,14 +8,17 @@ if ~exist(rundir,'dir')
 end
 if exist(mat_cleaned,'file')
     fprintf('Reading: %s\n',mat_cleaned);
-    load(mat_cleaned)
+    load(mat_cleaned);
     return
 end
 
 if ~exist(mat_raw,'file')
     datadir = fullfile(rundir,'..','measurements');
+    if ~exist(datadir,'dir')
+        error('Data directory not found: %s',datadir)
+    end
     addpath(fullfile(scriptdir(),'readers'));
-    if startsWith("2012", start) && startsWith("2012", stop)
+    if startsWith(start, "2012") && startsWith(stop, "2012")
         [B,E,t] = LEMI_read(datadir,'t82',start,stop,[50,50]);
     elseif str2num(start(1:4)) >= 2017
         [B,E,t] = LEMI_read(datadir,'t81',start,stop,[50,50]);

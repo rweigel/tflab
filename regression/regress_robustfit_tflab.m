@@ -4,7 +4,7 @@ function [Z,dZ,Info] = regress_robustfit_tflab(ftE,ftB,varargin)
 %   REGRESS_ROBUSTFIT_TFLAB(ftE,ftB) uses robust regression with a Huber
 %   weight function, a maximum number of steps of 50, zeps = sqrt(eps)
 %   a hard cut-off of 2.8, and a SN stop value of 1000.
-%   
+%
 %   This algorithm downweights both the real and imaginary parts of ftB
 %   and ftE when there is a large complex residual. For example, for
 %   size(ftB,2) = 1, the system of 2*N equations being solved for in ftE =
@@ -13,12 +13,12 @@ function [Z,dZ,Info] = regress_robustfit_tflab(ftE,ftB,varargin)
 %     ftEr(1) = Zr*ftBr(1) - Zi*ftBi(1)
 %     ...
 %     ftEr(N) = Zr*ftBr(N) - Zi*ftBi(N)
-%     ftEi(1) = Zr*ftBi(1) + Zi*ftBr(1) 
+%     ftEi(1) = Zr*ftBi(1) + Zi*ftBr(1)
 %     ...
-%     ftEi(N) = Zr*ftBi(N) + Zi*ftBr(N) 
+%     ftEi(N) = Zr*ftBi(N) + Zi*ftBr(N)
 %
 %     where N = size(ftE,1), r = real, i = imaginary.
-% 
+%
 %   In robust regression, one typically downweights each row individually
 %   and there are 2N weights. However, N weights are computed based on
 %   the residual of abs(ftE - ftE_regression).
@@ -27,7 +27,7 @@ function [Z,dZ,Info] = regress_robustfit_tflab(ftE,ftB,varargin)
 %   which has defaults of
 %
 %      opts = struct();
-%      opts.weightfn = 'huber';  % or 'bisquare' 
+%      opts.weightfn = 'huber';  % or 'bisquare'
 %      opts.stepmax  = 50;
 %      opts.zeps     = sqrt(eps);
 %      opts.hardcut  = 2.8;
@@ -42,7 +42,7 @@ function [Z,dZ,Info] = regress_robustfit_tflab(ftE,ftB,varargin)
 %   * Huber 1981, "Robust statistics"
 %   * Street et al., 1988, "A Note on Computing Robust Regression Estimates
 %     via Iteratively Reweighted Least Squares"
-%   * DuMouchel and O'Brien 1989, "Integrating a Robust Option Into a 
+%   * DuMouchel and O'Brien 1989, "Integrating a Robust Option Into a
 %     Multiple Regression Environment.
 %   * Fox and Weisberg 2013, "Robust Regression", Accessed 02/01/2019
 %     http://users.stat.umn.edu/~sandy/courses/8053/handouts/robust.pdf
@@ -51,7 +51,7 @@ function [Z,dZ,Info] = regress_robustfit_tflab(ftE,ftB,varargin)
 %
 %   * https://wis.kuleuven.be/stat/robust/Programs/LIBRA/contents-20160628.pdf
 %   * https://www.mathworks.com/help/stats/robustfit.html
-%   * https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression    
+%   * https://www.gnu.org/software/gsl/doc/html/lls.html#robust-linear-regression
 %     (GSL code and notation very similar to MATLAB's)
 
 optsd = struct();
@@ -74,7 +74,7 @@ else
         end
     else
         opts = optsd;
-    end        
+    end
 end
 
 stats = struct();
@@ -87,10 +87,10 @@ H  = ftB*inv(ftB'*ftB)*ftB'; % Hat matrix
 h  = diag(H);                % leverage value (0 <= h <= 1)
 stats.Leverage = abs(h);
 
-hf = sqrt(1-abs(h));     
+hf = sqrt(1-abs(h));
 % hf is the leverage factor from Huber 1981. Use abs() to account for
 % complex h (roundoff makes it small but non-zero). Equation 9.10 of
-% Huber 1981 is 
+% Huber 1981 is
 %    s*hf_i*psi(r_i/(s*hf_i))
 % and using
 %    w(x) = psi(x)/x (Equation 8.32)
@@ -126,7 +126,7 @@ while 1
     s = median(Rsrt(p:end))/0.6745;
     %s = median(abs(R-median(R)))/0.6745; % More modern method?
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     if so/s > opts.snstop && laststep == 0
         if opts.verbose
             fprintf('Stopping at step %d because std(abs(ftE))/mad(abs(residuals)) > 1000\n',step);
@@ -148,7 +148,7 @@ while 1
         % W = 0 otherwise.
         const = 4.685;    % 95% efficiency when the errors are gaussian
         Rs = R/(s*const); % Normalize residuals by MAD then scale by const
-        Rs = Rs./hf;      % As per Equation 9.10 of Huber 1981; see note above. 
+        Rs = Rs./hf;      % As per Equation 9.10 of Huber 1981; see note above.
         W = zeros(size(R));
         W = (abs(Rs) < 1).*(1 - Rs.^2).^2; % Bi-square weights
         if laststep
@@ -176,18 +176,18 @@ while 1
     if all(W == 0)
         warning('All weights are zero');
     end
-    
+
     Z(step,:) = regress_ols(ftE.*sqrt(W),ftB.*repmat(sqrt(W),1,p));
 
     if laststep
         if opts.verbose
             fprintf('Step %d: Hard cut-off last-step zeroed %d values (%.2f%%)\n',step,sum(Iz),100*sum(Iz)/length(R));
-        end                
+        end
         break;
     end
 
     if step > 2
-        ratio = abs(Z(step,:)-Z(step-1,:))./abs(Z(step-1,:)); 
+        ratio = abs(Z(step,:)-Z(step-1,:))./abs(Z(step-1,:));
         if opts.verbose
             fprintf('Step %d: ratio = abs(Z(step,:)-Z(step-1,:))./abs(Z(step-1,:)) = %.2g\n',step,ratio);
         end
@@ -206,7 +206,7 @@ while 1
         end
     end
     stats.W(step,:) = W;
-    
+
     step = step + 1;
 
 end
