@@ -270,7 +270,7 @@ if iscell(S)
         titlestr(S,popts,'ts');
         ylabel(sprintf('%s [%s]',...
                     popts.outstr{1},S{1}.Metadata.outunit));
-        lg0 = sprintf('Observed at %s\n', S{1}.Metadata.stationid);
+        lg0 = sprintf('Measured');
 
         for j = 1:length(S)
             plot(t(tidx),S{j}.Out_.Predicted(tidx,1));
@@ -295,7 +295,7 @@ if iscell(S)
         grid on;grid minor;box on;hold on;
         ylabel(sprintf('%s [%s]',...
                     popts.outstr{2},S{1}.Metadata.outunit));
-        lg0 = sprintf('Observed at %s\n', S{1}.Metadata.stationid);
+        lg0 = sprintf('Measured');
 
         for j = 1:length(S)
             plot(t(tidx),S{j}.Out_.Predicted(tidx,2));

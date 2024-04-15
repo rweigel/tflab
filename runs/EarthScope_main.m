@@ -1,9 +1,10 @@
+clear
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 short_run = 1;
 
-if 1
+if 0
     id = 'VAQ58';
     edifile = 'VAQ58bc_FRDcoh.xml';
     Ikeep = [];
@@ -13,19 +14,17 @@ if 1
     % http://ds.iris.edu/spudservice/data/15014570
 end
 
-if 1
+if 0
     id = 'ORF03';
-    %edifile = 'ORF03bc_G3x.xml'; % Older version
-    %start = '2007-08-19T01:48:36';
-    %stop = '2007-09-07T17:18:40';
     start = '2007-08-31T01:48:36';
     stop = '2007-09-04T01:48:35';
+    %edifile = 'ORF03bc_G3x.xml'; % Older version
     edifile = 'USArray.ORF03.2007.xml'; % Name in XML linked to below.
     ediurl  = 'http://ds.iris.edu/spudservice/data/21636090';
     % http://ds.iris.edu/spud/emtf/14866915
 end
 
-if 0
+if 1
     id = 'ORG03';
     start = '2007-08-31T01:48:36';
     stop = '2007-09-04T01:48:35';
@@ -36,14 +35,17 @@ end
 
 dno = datenum(start,'yyyy-mm-ddTHH:MM:SS');
 dnf = datenum(stop,'yyyy-mm-ddTHH:MM:SS');
-dirstr  = sprintf('tfs-%s-%s',...
-            datestr(dno,'yyyymmddTHHMMSS'),datestr(dnf,'yyyymmddTHHMMSS'));
+dso = datestr(dno,'yyyymmddTHHMMSS');
+dsf = datestr(dnf,'yyyymmddTHHMMSS');
+dirstr  = sprintf('tfs-%s-%s',dso,dsf);
 rundir = fullfile(scriptdir(),'data','EarthScope',id,dirstr);
 
 % Get input/output data
 [B,E,t,infile,outfile] = EarthScope_clean(id);
 
-Ik = t >= dno & t <= dnf;
+tidxo = round( (dno - t(1))*86400 );
+tidxf = round( (dnf - t(1))*86400 );
+Ik = tidxo:tidxf;
 B = B(Ik,:);
 E = E(Ik,:);
 t = t(Ik);
@@ -137,11 +139,12 @@ if 1
         if ~exist(fileparts(edifilefull),'dir')
             mkdir(fileparts(edifilefull));
         end
-        fprintf('Downloading %s to %s\n',ediurl,edifilefull);
+        logmsg('Downloading %s to %s\n',ediurl,edifilefull);
         websave(edifilefull, ediurl);
     end
     EDI = read_edixml(edifilefull);
 
+    TFs{tfn} = struct();
     % Set options and data needed for metrics and plotting
     TFs{tfn}.Metadata = meta;
     TFs{tfn}.Metadata.EDI = EDI;
@@ -164,6 +167,7 @@ if 1
         TFs{tfn}.Z = [TFs{tfn}.Z(:,1:2),tmp,TFs{tfn}.Z(:,3:4),tmp];
     end
 
+    TFo = TFs{tfn};
     TFs{tfn} = tflab_preprocess(TFs{tfn});
     TFs{tfn} = tflab_metrics(TFs{tfn});
 

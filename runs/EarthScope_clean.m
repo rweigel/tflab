@@ -41,26 +41,29 @@ for c = 1:length(data)
     [datacat{c},timecat{c}] = catSegments(data{c}.segments);
 end
 
+B = [datacat{1}, datacat{2}, datacat{3}];
+E = [datacat{4}, datacat{5}];
+t = timecat{1};
+
+% Number of possible time values.
+Ni = 1 + round( (t(end) - t(1))*86400);
+logmsg('Number of seconds from t(1) through t(end):      %d\n',Ni);
+logmsg('Number of measurements from t(1) through t(end): %d\n',length(t));
+% Time value index of measurement
+tidx = 1 + round( (t - t(1))*86400 );
+t = t(1) + (0:Ni-1)'/86400;
+logmsg('Largest gap in seconds:                          %d\n',round(max(diff(tidx))));
+
+% Fill gaps with NaNs.
+Ei = nan(Ni,2);
+Ei(tidx,:) = E;
+E = Ei;
+
+Bi = nan(Ni,3);
+Bi(tidx,:) = B;
+B = Bi;
+
 if strcmp(id,'VAQ58')
-    B = [datacat{1}, datacat{2}, datacat{3}];
-    E = [datacat{4}, datacat{5}];
-    t = timecat{1};
-
-    % Number of time intervals.
-    Ni = 1 + round((t(end)-t(1))*86400);
-    % Time interval index of measurement
-    tidx = 1 + round( (t-t(1))*86400 );
-    t = t(1) + (0:Ni-1)'/86400;
-
-    % Fill gaps with NaNs.
-    Ei = nan(Ni,2);
-    Ei(tidx,:) = E;
-    E = Ei;
-
-    Bi = nan(Ni,3);
-    Bi(tidx,:) = B;
-    B = Bi;
-
     Ir = (1123950:size(B,1))'; % Values to remove
     Ik = 1:Ir(1)-1;            % Values to keep
     despike_E = {300,[5,5]};   % Despike parameters
@@ -68,79 +71,31 @@ if strcmp(id,'VAQ58')
 end
 
 if strcmp(id,'ORF03')
-    B = [datacat{1}, datacat{2}, datacat{3}];
-    E = [datacat{4}, datacat{5}];
-    t = timecat{1};
-
-    %Ik = [86400*12+1:86400*16];
-    %to = datenum('2007-08-31');
-    %tf = datenum('2007-09-04');
-    %Ik = find(t >= to & t <= tf);
-    %B = B(Ik,:);
-    %E = E(Ik,:);
-    %t = t(Ik,:);
-
-    % Number of time intervals.
-    Ni = 1 + round((t(end)-t(1))*86400);
-    % Time interval index of measurement
-    tidx = 1 + round( (t-t(1))*86400 );
-    t = t(1) + (0:Ni-1)'/86400;
-
-    % Fill gaps with NaNs.
-    Ei = nan(Ni,2);
-    Ei(tidx,:) = E;
-    E = Ei;
-
-
-    Bi = nan(Ni,3);
-    Bi(tidx,:) = B;
-    B = Bi;
     Ir = [];
     Ik = [1:size(B,1)];
     %Ir = (1123950:size(B,1))'; % Values to remove
     %Ik = 1:Ir(1)-1;            % Values to keep
     despike_E = {300,[5,5]};   % Despike parameters
     despike_B = {100,[5,5]};   % Despike parameters
-end
 
+    if 0
+        delta1 = nanmean(D(850000:end,3))-nanmean(D(11000:848000,3));
+        D(848000:end,3) = D(848000:end,3)-delta1;
+        D(1:10400,3) = NaN;
+        D(852455,5) = NaN;
+        D(852480,5) = NaN;
+        D(852486,5) = NaN;
+        D(861374:861380,5) = NaN;
+      end
+end
 
 if strcmp(id,'ORG03')
-    B = [datacat{1}, datacat{2}, datacat{3}];
-    E = [datacat{4}, datacat{5}];
-    t = timecat{1};
-
-    % Number of time intervals.
-    Ni = 1 + round((t(end)-t(1))*86400);
-    % Time interval index of measurement
-    tidx = 1 + round( (t-t(1))*86400 );
-    t = t(1) + (0:Ni-1)'/86400;
-
-    % Fill gaps with NaNs.
-    Ei = nan(Ni,2);
-    Ei(tidx,:) = E;
-    E = Ei;
-
-
-    Bi = nan(Ni,3);
-    Bi(tidx,:) = B;
-    B = Bi;
     Ir = [];
     Ik = [1:size(B,1)];
     %Ir = (1123950:size(B,1))'; % Values to remove
     %Ik = 1:Ir(1)-1;            % Values to keep
     despike_E = {300,[5,5]};   % Despike parameters
     despike_B = {100,[5,5]};   % Despike parameters
-end
-
-if 0 && strmatch(sta,'ORF03','exact')
-  t = [1:size(D,1)]/1000;
-  delta1 = nanmean(D(850000:end,3))-nanmean(D(11000:848000,3));
-  D(848000:end,3) = D(848000:end,3)-delta1;
-  D(1:10400,3) = NaN;
-  D(852455,5) = NaN;
-  D(852480,5) = NaN;
-  D(852486,5) = NaN;
-  D(861374:861380,5) = NaN;
 end
 
 unitsB = 'Counts';

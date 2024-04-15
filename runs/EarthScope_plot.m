@@ -5,25 +5,19 @@ tflab_setpaths();
 print_figs = 1;
 
 %id = 'VAQ58';
-%id = 'ORG03';
-id = 'ORF03';
+%id = 'ORF03';
+id = 'ORG03';
 
-if strcmp(id,'ORG03')
-    start = '20070831';
-    stop = '20070904';
-    time_range_full = {'2007-08-31T00:00:00.000','2007-09-04T00:00:00.000'};
-    time_range_zoom = {};
-end
-
-if strcmp(id,'ORF03')
+if strcmp(id,'ORF03') || strcmp(id,'ORG03')
     %start = '2007-08-19T01:48:36';
     %stop = '2007-09-07T17:18:40';
     start = '2007-08-31T01:48:36';
     stop = '2007-09-04T01:48:35';
     dno = datenum(start,'yyyy-mm-ddTHH:MM:SS');
     dnf = datenum(stop,'yyyy-mm-ddTHH:MM:SS');
-    dirstr  = sprintf('tfs-%s-%s',...
-        datestr(dno,'yyyymmddTHHMMSS'),datestr(dnf,'yyyymmddTHHMMSS'));
+    dso = datestr(dno,'yyyymmddTHHMMSS');
+    dsf = datestr(dnf,'yyyymmddTHHMMSS');
+    dirstr  = sprintf('tfs-%s-%s',dso,dsf);
     rundir = fullfile(scriptdir(),'data','EarthScope',id,dirstr);
     time_range_full = {'2007-08-31T00:00:00.000','2007-09-04T00:00:00.000'};
     time_range_zoom = {};
@@ -201,14 +195,9 @@ if 0
         zplot(TFs{3},zopts,3);
 end
 
-%% Regression plots
-% Plot regression errors for a component of S1's Z at a single frequency
-% for one of the segments. (For S2, there is only one segment that was
-% used to compute Z.)
-
-fidx = 10; % frequency number
+fidx = 10; % frequency index
 comp = 1;  % component (Zxx=1, Zxy=2, Zyx=3, Zyy=4).
-sidx = 1;  % segment number
+sidx = 1;  % segment index
 
 figure();
     qopts = copts;
@@ -217,6 +206,6 @@ figure();
     qopts = copts;
     qqplot_(TFs{1},qopts,comp,fidx);
 
-
-
-figureHTML(copts.printOptions.printDir)
+if print_figs == 1
+    figHTML(copts.printOptions.printDir)
+end
