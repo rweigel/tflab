@@ -1,4 +1,5 @@
-clear
+function EarthScope_main(id)
+
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
@@ -9,18 +10,16 @@ else
     Nboot = 100;
 end
 
-if 0
-    id = 'VAQ58';
-    edifile = 'VAQ58bc_FRDcoh.xml';
+if strcmp(id,'VAQ58')
     start = '2016-06-10T18:19:12';
     stop = '2016-06-14T18:19:11';
+    %edifile = 'VAQ58bc_FRDcoh.xml';
     edifile = 'USArray.VAQ58.2016';
     ediurl = 'http://ds.iris.edu/spudservice/data/15014570';
     % http://ds.iris.edu/spud/emtf/15014571
 end
 
-if 1
-    id = 'ORF03';
+if strcmp(id,'ORF03')
     start = '2007-08-31T01:48:36';
     stop = '2007-09-04T01:48:35';
     %edifile = 'ORF03bc_G3x.xml'; % Older version
@@ -29,8 +28,7 @@ if 1
     % http://ds.iris.edu/spud/emtf/14866915
 end
 
-if 0
-    id = 'ORG03';
+if strcmp(id,'ORG03')
     start = '2007-08-31T01:48:36';
     stop = '2007-09-04T01:48:35';
     edifile = 'USArray.ORG03.2007.xml'; % Name in XML linked to below.
@@ -57,8 +55,8 @@ t = t(Ik);
 
 [B,E] = removemean(B,E);
 
-E = bandpass_(E,[1/86400,0.5]);
-B = bandpass_(B,[1/86400,0.5]);
+%E = bandpass_(E,[1/86400,0.5]);
+%B = bandpass_(B,[1/86400,0.5]);
 
 %% Set metadata used for plots
 meta = struct();

@@ -133,6 +133,12 @@ for s = 1:length(S)
     else
         x{s} = fe{s}*S{s}.Metadata.freqsf;
     end
+    if popts.vs_period && ~isempty(popts.period_range)
+        idx = x{s} >= popts.period_range(1) & x{s} <= popts.period_range(2);
+        x{s} = x{s}(idx);
+        y1{s} = y1{s}(idx,:);
+        y2{s} = y2{s}(idx,:);
+    end
     if length(S) == 1
         x = x{1};
         y1 = y1{1};
@@ -220,7 +226,7 @@ if ~strcmp(tparts{1},'error')
             legend(lg2,popts.legend{:});
         end
         ylabel(yl2);
-        adjust_ylim('both');
+        adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
         setx(popts,1,frequnit);

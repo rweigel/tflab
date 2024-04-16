@@ -1,12 +1,11 @@
-clear;
+function EarthScope_plot(id, print_figs)
+
+if nargin < 2
+    print_figs = 0;
+end
+
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
-
-print_figs = 1;
-
-id = 'VAQ58';
-%id = 'ORF03';
-%id = 'ORG03';
 
 if strcmp(id,'VAQ58')
     start = '2016-06-10T18:19:12';
@@ -90,14 +89,14 @@ end
 figure();
     tsopts = copts;
     tsopts.type  = 'error';
-    tsopts.printOptions.printName = 'ts-error-tf1-tf3';
+    tsopts.printOptions.printName = 'tsplot-error-tf1-tf3';
     tsplot({TFs{1},TFs{3}},tsopts);
     if ~isempty(time_range_zoom)
         figure();
             tsopts = copts;
             tsopts.time_range = time_range_zoom;
             tsopts.type  = 'error';
-            tsopts.printname = 'ts-error-zoom-tf1-tf3';
+            tsopts.printname = 'tsplot-error-zoom-tf1-tf3';
             tsplot({TFs{1},TFs{3}},tsopts);
     end
 
@@ -108,6 +107,19 @@ figure();
     dftopts = copts;
     dftopts.type = 'error-averaged';
     dftplot({TFs{1}, TFs{3}},dftopts);
+end
+
+if 1
+dftopts = copts;
+dftopts.period_range = [7,24*3600];
+figure();
+    dftopts.type = 'original-averaged';
+    dftplot(TFs{1},dftopts);
+
+figure();
+    dftopts = copts;
+    dftopts.type = 'original-averaged-phases';
+    dftplot(TFs{1},dftopts);
 end
 
 %% Histograms
@@ -158,16 +170,16 @@ figure();
     snplot({TFs{1},TFs{3}},snopts);
 
 %% Z plots
-if 0
+if 1
     figure();
         zopts = copts;
-        zopts.type = 2;
+        zopts.type = 1;
         zplot(TFs{1},zopts);
 
     figure();
         zopts = copts;
-        zopts.type = 2;
-        zplot(TFs{2},zopts);
+        zopts.type = 1;
+        zplot(TFs{3},zopts);
 end
 
 if 1
@@ -211,3 +223,5 @@ figure();
 if print_figs == 1
     figHTML(copts.printOptions.printDir)
 end
+
+
