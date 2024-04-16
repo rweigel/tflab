@@ -37,7 +37,7 @@ if (strcmp(filename(end-3:end),'.pdf'))
 else
     %warning off export_fig:exportgraphics
     %export_fig(filename, opts{:});
-    print('-dpng', '-r600', filename);
+    print('-dpng', '-r300', filename);
 end
 %exportgraphics(gcf, filename, opts{:});
 logmsg('Wrote %s\n',filename);

@@ -3,18 +3,23 @@ addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 short_run = 1;
+if short_run
+    Nboot = NaN;
+else
+    Nboot = 100;
+end
 
 if 0
     id = 'VAQ58';
     edifile = 'VAQ58bc_FRDcoh.xml';
-    Ikeep = [];
-    %Ikeep = 1:4*86400;
-    Ikeep = 1:6*86400;
+    start = '2016-06-10T18:19:12';
+    stop = '2016-06-14T18:19:11';
+    edifile = 'USArray.VAQ58.2016';
+    ediurl = 'http://ds.iris.edu/spudservice/data/15014570';
     % http://ds.iris.edu/spud/emtf/15014571
-    % http://ds.iris.edu/spudservice/data/15014570
 end
 
-if 0
+if 1
     id = 'ORF03';
     start = '2007-08-31T01:48:36';
     stop = '2007-09-04T01:48:35';
@@ -24,7 +29,7 @@ if 0
     % http://ds.iris.edu/spud/emtf/14866915
 end
 
-if 1
+if 0
     id = 'ORG03';
     start = '2007-08-31T01:48:36';
     stop = '2007-09-04T01:48:35';
@@ -43,8 +48,8 @@ rundir = fullfile(scriptdir(),'data','EarthScope',id,dirstr);
 % Get input/output data
 [B,E,t,infile,outfile] = EarthScope_clean(id);
 
-tidxo = round( (dno - t(1))*86400 );
-tidxf = round( (dnf - t(1))*86400 );
+tidxo = 1 + round( (dno - t(1))*86400 );
+tidxf = 1 + round( (dnf - t(1))*86400 );
 Ik = tidxo:tidxf;
 B = B(Ik,:);
 E = E(Ik,:);
@@ -74,6 +79,7 @@ const_term = 0;
 
 %% First TF
 tfn = 1;
+logmsg('-- Computing TF%d --\n',tfn);
 pps = size(B,1);
 desc = sprintf('OLS; 1 %d-day segment',pps/86400);
 opts{tfn} = tflab_options(1);
@@ -86,9 +92,7 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.td.detrend.functionargs = {[1/86400,0.5]};
     opts{tfn}.filestr = sprintf('%s-tf%d',id,tfn);
     opts{tfn}.description = desc;
-    if short_run
-        opts{tfn}.fd.bootstrap.N = NaN;
-    end
+    opts{tfn}.fd.bootstrap.N = Nboot;
 
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
 
@@ -98,6 +102,7 @@ savetf(TFs{tfn}, fullfile(rundir, opts{tfn}.filestr));
 
 %% Second TF
 tfn = tfn + 1;
+logmsg('-- Computing TF%d --\n',tfn);
 pps = 86400;
 desc = sprintf('OLS; %d %d-day segment%s',size(B,1)/pps,pps/86400,plural(pps/86400));
 opts{tfn} = tflab_options(1);
@@ -107,15 +112,15 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.fd.regression.const_term = const_term;
     opts{tfn}.filestr = sprintf('%s-tf%d',id,tfn);
     opts{tfn}.description = desc;
-    if short_run
-        opts{tfn}.fd.bootstrap.N = NaN;
-    end
+    opts{tfn}.fd.bootstrap.N = Nboot;
+
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
 TFs{tfn}.Metadata = meta; % Attach metadata used in plots
 savetf(TFs{tfn}, fullfile(rundir, opts{tfn}.filestr));
 
 if 1
     tfn = tfn + 1;
+    logmsg('-- Computing TF%d --\n',tfn);
     %% TF computed using EMTF
     zread_dir = fullfile(scriptdir(),'zread');
     if ~exist(zread_dir,'dir')

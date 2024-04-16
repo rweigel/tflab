@@ -151,13 +151,9 @@ else
 end
 
 if ~iscell(S) && ~strcmp(tparts{1},'error')
-
     ax(1) = subplot('Position',popts.PositionTop);
         plot(t1,y1);
-        if size(y1,2) == 1
-            % If single line, make black
-            colororder(ax(1), {'k'})
-        end
+        colororder_(ax(1), y1)
         grid on;grid minor;box on;
         titlestr(S,popts,'ts');
         ylabel(yl1);
@@ -171,10 +167,7 @@ if ~iscell(S) && ~strcmp(tparts{1},'error')
 
     ax(2) = subplot('Position',popts.PositionBottom);
         plot(t1,y2);
-        if size(y2,2) == 1
-            % If single line, make black
-            colororder(ax(1), {'k'})
-        end
+        colororder_(ax(1), y1)
         grid on;grid minor;box on;
         ylabel(yl2);
         if ~isempty(lg2)

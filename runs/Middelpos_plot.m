@@ -4,8 +4,8 @@ tflab_setpaths();
 
 % Set common print options
 
-short_run = 0;
-print_figs = 0;
+short_run = 1;
+print_figs = 1;
 
 if short_run
     start = '20120712';
@@ -28,14 +28,16 @@ end
 copts = struct();
     copts.print = print_figs; % Set to 1 to print pdf of each figure created.
     copts.printOptions.printDir = fullfile(rundir,'figures');
-    copts.printOptions.printFormats = {'pdf'};
+    copts.printOptions.printFormats = {'png'};
 
-dock on;figure(1);close all;
+if print_figs
+    dock off;close all;
+else
+    dock on;figure(1);close all;
+end
 
 %% Time series plots
 tsopts = copts;
-tsopts.printOptions.printFormats = {'pdf'};
-
 if (1)
     figure();
         tsopts.type = 'original';
@@ -102,13 +104,17 @@ figure();
 
 figure();
     qqopts = copts;
-    qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
+    %qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
     fidx = 20; % frequency number
     comp = 2;  % component (x = 1, y = 2)
     qqplot_(TFs{1},qqopts,comp,fidx);
 
 figure();
         qqopts = copts;
-        qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
+        %qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
         qqopts.type = 'combined';
         qqplot_(TFs{1},qqopts);
+
+if print_figs == 1
+    figHTML(copts.printOptions.printDir)
+end

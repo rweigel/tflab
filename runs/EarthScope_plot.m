@@ -4,34 +4,23 @@ tflab_setpaths();
 
 print_figs = 1;
 
-%id = 'VAQ58';
+id = 'VAQ58';
 %id = 'ORF03';
-id = 'ORG03';
-
-if strcmp(id,'ORF03') || strcmp(id,'ORG03')
-    %start = '2007-08-19T01:48:36';
-    %stop = '2007-09-07T17:18:40';
-    start = '2007-08-31T01:48:36';
-    stop = '2007-09-04T01:48:35';
-    dno = datenum(start,'yyyy-mm-ddTHH:MM:SS');
-    dnf = datenum(stop,'yyyy-mm-ddTHH:MM:SS');
-    dso = datestr(dno,'yyyymmddTHHMMSS');
-    dsf = datestr(dnf,'yyyymmddTHHMMSS');
-    dirstr  = sprintf('tfs-%s-%s',dso,dsf);
-    rundir = fullfile(scriptdir(),'data','EarthScope',id,dirstr);
-    time_range_full = {'2007-08-31T00:00:00.000','2007-09-04T00:00:00.000'};
-    time_range_zoom = {};
-end
+%id = 'ORG03';
 
 if strcmp(id,'VAQ58')
+    start = '2016-06-10T18:19:12';
+    stop = '2016-06-14T18:19:11';
+    time_range_full = {start, stop};
+    time_range_zoom = {};
     if 0
         start = '20160610';
         stop = '20160614';
-        time_range_full = {'2016-06-11T00:00:00.000','2016-06-15T00:00:00.000'};
+        time_range_full = {start, stop};
         time_range_zoom = {};
     end
 
-    if 1
+    if 0
         start = '20160610';
         stop = '20160616';
         time_range_full = {'2016-06-11T00:00:00.000','2016-06-16T12:00:00.000'};
@@ -47,6 +36,21 @@ if strcmp(id,'VAQ58')
     end
 end
 
+if strcmp(id,'ORF03') || strcmp(id,'ORG03')
+    %start = '2007-08-19T01:48:36';
+    %stop = '2007-09-07T17:18:40';
+    start = '2007-08-31T01:48:36';
+    stop = '2007-09-04T01:48:35';
+    time_range_full = {start, stop};
+    time_range_zoom = {};
+end
+
+dno = datenum(start,'yyyy-mm-ddTHH:MM:SS');
+dnf = datenum(stop,'yyyy-mm-ddTHH:MM:SS');
+dso = datestr(dno,'yyyymmddTHHMMSS');
+dsf = datestr(dnf,'yyyymmddTHHMMSS');
+dirstr  = sprintf('tfs-%s-%s',dso,dsf);
+rundir = fullfile(scriptdir(),'data','EarthScope',id,dirstr);
 
 %% Set common print options
 copts.print = print_figs; % Set to 1 to print pdf of each figure created.
@@ -85,11 +89,9 @@ end
 %% Compare errors
 figure();
     tsopts = copts;
-    %tsopts.time_range = time_range_full;
     tsopts.type  = 'error';
     tsopts.printOptions.printName = 'ts-error-tf1-tf3';
     tsplot({TFs{1},TFs{3}},tsopts);
-
     if ~isempty(time_range_zoom)
         figure();
             tsopts = copts;

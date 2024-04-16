@@ -67,9 +67,9 @@ function [data,infiles] = readFiles(id, channels, suffix)
         end
         url = sprintf('%s/%s/%s',baseurl,id,fname);
         if ~exist(infile,'file')
-            logmsg(sprintf('Requesting: %s\n',url));
+            logmsg('Requesting: %s\n',url);
             websave(infile,url);
-            logmsg(sprintf('Wrote: %s\n',relpath(infile)));
+            logmsg('Wrote: %s\n',relpath(infile));
         end
         logmsg('Reading: %s\n',relpath(infile));
         data{c} = load(infile);

@@ -181,7 +181,8 @@ function [Z,Info] = callregress_(ftOut,ftIn,j,fe,opts)
     %  w = warning('query','last');
     %  strcmp(w.identifier,'stats:regress:NoConst')
 
-    if ~isempty(lastwarn) && ~startsWith(lastwarn, "R-square and the F statistic are not well-defined") 
+    msg = 'R-square and the F statistic are not well-defined';
+    if ~isempty(lastwarn) && ~startsWith(lastwarn, msg)
         msg = 'Above warning is for eval. freq. #%d; fe = %f; Te = %f\n';
         logmsg(msg,j,fe,1/fe);
         logmsg('ftE =');

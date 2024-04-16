@@ -3,7 +3,7 @@ close all % To reduce memory.
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-short_run = 0;
+short_run = 1;
 
 if short_run
     Nboot = NaN;
@@ -104,7 +104,6 @@ opts{tfn} = tflab_options(1);
 
 TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
 TFs{tfn}.Metadata = meta;
-
 savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
 TFs{tfn} = [];
 
