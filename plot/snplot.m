@@ -32,7 +32,6 @@ if length(comps) > 1
     return
 end
 
-
 show_xcoh = 1;
 
 % Apply default metadata for fields not specified in S.Metadata.
@@ -90,23 +89,40 @@ if length(S) == 1
         semilogx(x,y2,popts.line{:});
         colororder_(ax2, y2);
         grid on;box on;hold on;
-        if show_xcoh && nargin > 2
-            %set(gca,'ColorOrderIndex',1);
-            h = semilogx(x,y3(:,1),'rs');
-            set(h, 'MarkerFaceColor', get(h,'Color'));
-            h = semilogx(x,y3(:,2),'b^');
-            set(h, 'MarkerFaceColor', get(h,'Color'));
-            if comp == 1
-                lg = {...
-                        '$(E_x,E^{\mathrm{pred}}_x)$',...
-                        '$(E_x,B_x)$','$(E_x,B_y)$'...
-                      };
+
+        if show_xcoh
+            if size(y3,2) == 1
+                h = semilogx(x,y3(:,1),'rs');
+                set(h, 'MarkerFaceColor', get(h,'Color'));
+                instr = replace(popts.instr{1},'$','');
+                outstr = replace(popts.outstr{1},'$','');
+                a = sprintf('$(%s,%s^{\\mathrm{pred}})$',outstr,outstr);
+                b = sprintf('$(%s,%s)$',outstr,instr);
+                lg = {a, b};
             end
-            if comp == 2
-                lg = {...
-                        '$(E_y,E^{\mathrm{pred}}_y)$',...
-                        '$(E_y,B_x)$','$(E_y,B_y)$'...
-                      };
+            if size(y3,2) == 4 && nargin > 2
+                % Plotting a single component
+                %set(gca,'ColorOrderIndex',1);
+                if comp == 1
+                    idx = 1:2;
+                    lg = {...
+                            '$(E_x,E^{\mathrm{pred}}_x)$',...
+                            '$(E_x,B_x)$',...
+                            '$(E_x,B_y)$'...
+                        };
+                end
+                if comp == 2
+                    idx = 3:4;
+                    lg = {...
+                            '$(E_y,E^{\mathrm{pred}}_y)$',...
+                            '$(E_y,B_x)$',...
+                            '$(E_y,B_y)$'...
+                        };
+                end
+                h = semilogx(x,y3(:,idx(1)),'rs');
+                set(h, 'MarkerFaceColor', get(h,'Color'));
+                h = semilogx(x,y3(:,idx(2)),'b^');
+                set(h, 'MarkerFaceColor', get(h,'Color'));
             end
             legend(lg,popts.legend{:});
             ylabel('Coherence');
@@ -179,15 +195,16 @@ if length(S) > 1
             for i = 1:length(lg)
                 lg{i} = sprintf('%s %s',popts.outstr{comp},lg{i});
             end
-            plot(x{s},y3{s}(:,comp),'ko');
-            ylabel(sprintf('Coherence with %s',outstr));
             if length(popts.instr) == 2
                 if comp == 1
+                    plot(x{1},y3{1}(:,2),'ko');
                     lg{end+1} = popts.instr{2};
                 else
+                    plot(x{1},y3{1}(:,4),'ko');
                     lg{end+1} = popts.instr{1};
                 end
             end
+            ylabel(sprintf('Coherence with %s',outstr));
         else
             tmp = '%s Meas. to %s Pred. Coherence';
             ylabel(sprintf(tmp,outstr,outstr));
@@ -218,7 +235,7 @@ function [x,y1,y2,y3,y1cll,y1clu] = xyvals_(S,popts,onfinal)
     for s = 1:length(S)
         fe{s} = S{s}.(MetricsName).fe;
         y1{s} = S{s}.(MetricsName).SN;
-        y2{s} = S{s}.(MetricsName).PredictionCoherence;
+        y2{s} = sqrt(S{s}.(MetricsName).PredictionCoherence);
         y1clu{s} = S{s}.(MetricsName).SNCLu;
         y1cll{s} = S{s}.(MetricsName).SNCLl;
         y3{s} = sqrt(S{s}.(MetricsName).CrossCoherence);

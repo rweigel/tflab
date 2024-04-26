@@ -100,10 +100,10 @@ if length(S) == 1
 
         % Must be called after scale type is set.
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
-            plot_errorbars_(h1,0.97*x1,y1,dyl1,dyu1,1);
-            plot_errorbars_(h1,x1*1.03,y1,dyl1b,dyu1b,1);
+            errorbars_(h1,0.97*x1,y1,dyl1,dyu1,1);
+            errorbars_(h1,x1*1.03,y1,dyl1b,dyu1b,1);
         else
-            plot_errorbars_(h1,x1,y1,dyl1,dyu1,2);
+            errorbars_(h1,x1,y1,dyl1,dyu1,2);
         end
 
         adjust_yticks(1e-4);
@@ -144,10 +144,10 @@ if length(S) == 1
 
         % Must be called after scale type is set.
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
-            plot_errorbars_(h2,0.97*x2,y2,dyl2,dyu2,1);
-            plot_errorbars_(h2,x2*1.03,y2,dyl2b,dyu2b,1);
+            errorbars_(h2,0.97*x2,y2,dyl2,dyu2,1);
+            errorbars_(h2,x2*1.03,y2,dyl2b,dyu2b,1);
         else
-            plot_errorbars_(h2,x2,y2,dyl2,dyu2,2);
+            errorbars_(h2,x2,y2,dyl2,dyu2,2);
         end
 
         %adjust_yticks(1e-4);
@@ -236,8 +236,8 @@ if length(S) > 1
 
         if length(x) == 2
             % Must be called after scale type is set.
-            plot_errorbars_(h(1),x{1},y{1},dyl{1},dyu{1},1);
-            plot_errorbars_(h(2),x{2},y{2},dyl{2},dyu{2},1);
+            errorbars_(h(1),x{1},y{1},dyl{1},dyu{1},1);
+            errorbars_(h(2),x{2},y{2},dyl{2},dyu{2},1);
         end
 
         adjust_yticks(1e-4);
@@ -284,8 +284,8 @@ if length(S) > 1
 
         if length(x) == 2
             % Must be called after scale type is set.
-            plot_errorbars_(h(1),0.97*x{1},y{1},dyl{1},dyu{1},1);
-            plot_errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},1);
+            errorbars_(h(1),0.97*x{1},y{1},dyl{1},dyu{1},1);
+            errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},1);
         end
 
         adjust_yticks(1e-4);
@@ -297,18 +297,6 @@ if length(S) > 1
 end % if iscell(S)
 
 end % function zplot()
-
-function plot_errorbars_(h,x,y,dyl,dyu,lw)
-    if isempty(dyl),return,end
-    colors = get(h,'Color');
-    if ~iscell(colors)
-        colors = {colors};
-    end
-    for comp = 1:size(y,2)
-        args = {'y','Color',colors{comp},'LineWidth',lw};
-        errorbar_(x,y(:,comp),dyl(:,comp),dyu(:,comp),args{:});
-    end
-end
 
 function [x,y,dyu,dyl] = xyvals_(S,popts,comp,panel,errorbar_method)
 

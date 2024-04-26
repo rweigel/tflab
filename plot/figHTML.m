@@ -1,4 +1,4 @@
-function figureHTML(imgDir)
+function figHTML(imgDir)
 
 %title = 'Figures';
 fid = fopen(fullfile(imgDir,'figures.html'),'w');

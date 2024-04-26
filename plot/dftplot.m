@@ -1,5 +1,5 @@
 function ax = dftplot(S,popts,comp)
-%DFTPLOT   Plot DFT derived quantities
+%DFTPLOT  Plot DFT derived quantities
 %
 %   DFTPLOT(S)
 %   DFTPLOT(S, popts)
@@ -10,7 +10,7 @@ function ax = dftplot(S,popts,comp)
 %
 %   a is one of: original, final, detrended, windowed, whitened, zeropadded
 %   b is one of: raw, averaged
-%   c is one of: magnitudes,phases,reals,imaginaries
+%   c is one of: magnitudes, phases, reals, imaginaries
 %
 %   For prediction error related plots, popts.type has the form
 %   'error-b-c', where
@@ -91,8 +91,8 @@ for s = 1:length(S)
         end
         if strcmp(tparts{2},'averaged')
             [wIn,wOut] = dftweights(f, segsIn, segsOut, opts);
-            DFTIn{s}  = dftaverage(segsIn, wIn);
-            DFTOut{s} = dftaverage(segsOut, wOut);
+            [DFTIn{s},dDFTIn{s}]  = dftaverage(segsIn, wIn);
+            [DFTOut{s},dDFTOut{s}] = dftaverage(segsOut, wOut);
         else
             tmp = cat(1,f{:});
             fe{s,1} = tmp(:);
@@ -109,19 +109,36 @@ for s = 1:length(S)
         if strcmp(tparts{3},'phases')
             y1{s} = (180/pi)*angle(DFTIn{s});
             y2{s} = (180/pi)*angle(DFTOut{s});
+
+            if strcmp(tparts{2},'averaged')
+                dy1{s} = error_estimates_derived(fe{s},DFTIn{s},DFTIn{s}-dDFTIn{s},DFTIn{s}+dDFTIn{s},'angle');
+                dy2{s} = error_estimates_derived(fe{s},DFTOut{s},DFTOut{s}-dDFTOut{s},DFTOut{s}+dDFTOut{s},'angle');
+            end
         end
         if strcmp(tparts{3},'reals')
             y1{s} = real(DFTIn{s});
             y2{s} = real(DFTOut{s});
+            if strcmp(tparts{2},'averaged')
+                dy1{s} = real(dDFTIn{s});
+                dy2{s} = real(dDFTOut{s});
+            end
         end
         if strcmp(tparts{3},'imaginaries')
             y1{s} = imag(DFTIn{s});
             y2{s} = imag(DFTOut{s});
+            if strcmp(tparts{2},'averaged')
+                dy1{s} = real(dDFTIn{s});
+                dy2{s} = real(dDFTOut{s});
+            end
         end
         if strcmp(tparts{3},'magnitudes')
             sf = (size(S{s}.In,1)-1)/2;
             y1{s} = abs(DFTIn{s})/sf;
             y2{s} = abs(DFTOut{s})/sf;
+            if strcmp(tparts{2},'averaged')
+                dy1{s} = (1/sf)*error_estimates_derived(fe{s},DFTIn{s},DFTIn{s}-dDFTIn{s},DFTIn{s}+dDFTIn{s},'magnitude');
+                dy2{s} = (1/sf)*error_estimates_derived(fe{s},DFTOut{s},DFTOut{s}-dDFTOut{s},DFTOut{s}+dDFTOut{s},'magnitude');
+            end
             if fe{s}(end) == 0.5
                 y1{s}(end) = y1{s}(end)/2;
                 y2{s}(end) = y2{s}(end)/2;
@@ -138,11 +155,19 @@ for s = 1:length(S)
         x{s} = x{s}(idx);
         y1{s} = y1{s}(idx,:);
         y2{s} = y2{s}(idx,:);
+        if exist('dy1','var')
+            dy1{s} = dy1{s}(idx,:);
+            dy2{s} = dy2{s}(idx,:);
+        end
     end
     if length(S) == 1
         x = x{1};
         y1 = y1{1};
         y2 = y2{1};
+        if exist('dy1','var')
+            dy1 = dy1{1};
+            dy2 = dy2{1};
+        end
     end
 end
 
@@ -202,14 +227,18 @@ if ~strcmp(tparts{1},'error')
     [yl1, yl2] = ylabel_(S,tparts{3},popts,comp);
 
     ax(1) = subplot('Position',popts.PositionTop);
-        plot_(x,y1,popts);
+        h1 = plot_(x,y1,popts);
         colororder_(ax(1),y1);
-        grid on;box on;
+        hold on;grid on;box on;
         setscales_(tparts{3},popts.vs_period)
         if ~isempty(lg1)
             legend(lg1,popts.legend{:});
         else
             titlestr(S{1},popts,'dft');
+        end
+        if exist('dy1','var')
+            % Must be called after scales are set if logy used.
+            errorbars_(h1,x,y1,dy1/2,dy1/2,1);
         end
         ylabel(yl1);
         adjust_ylim('upper');
@@ -220,10 +249,14 @@ if ~strcmp(tparts{1},'error')
     ax(2) = subplot('Position',popts.PositionBottom);
         plot_(x,y2,popts);
         colororder_(ax(2),y2);
-        grid on;box on;
+        hold on;grid on;box on;
         setscales_(tparts{3},popts.vs_period)
         if ~isempty(lg2)
             legend(lg2,popts.legend{:});
+        end
+        if exist('dy2','var')
+            % Must be called after scales are set if log used.
+            errorbars_(h1,x,y2,dy2/2,dy2/2,1);
         end
         ylabel(yl2);
         adjust_ylim('upper');
@@ -252,15 +285,15 @@ end
 
 end % function
 
-function plot_(x,y,popts)
+function h = plot_(x,y,popts)
     if iscell(x) && iscell(y)
         hold on;
         for s = 1:length(x)
-        	plot(x{s},y{s},popts.line{:});
+        	h = plot(x{s},y{s},popts.line{:});
         end
         hold off;
     else
-        plot(x,y,popts.line{:});
+        h = plot(x,y,popts.line{:});
     end
 end
 
@@ -298,12 +331,14 @@ function [lg1, lg2] = legend_(S,what,popts)
         if size(S{1}.In) > 1
             % One legend entry per per component.
             for j = 1:length(popts.instr)
-                lg1{j} = labelstr_(popts.instr{j},'',what);
+                s = replace(popts.instr{j},'$','');
+                lg1{j} = ['$\tilde{',s,'}$'];
             end
         end
         if size(S{1}.Out) > 1
             for j = 1:length(popts.outstr)
-                lg2{j} = labelstr_(popts.outstr{j},'',what);
+                s = replace(popts.outstr{j},'$','');
+                lg2{j} = ['$\widetilde{',s,'}$'];
             end
         end
     end

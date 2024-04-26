@@ -37,7 +37,7 @@ if nargin < 4
     fidxs = 1:size(S{1}.Metrics.Residuals,1);
 end
 
-logmsg('Plotting\n');
+logmsg('Plotting type = %s\n',popts.type);
 
 if strcmp(popts.type,'standard') && length(fidxs) > 1 && length(cidxs) > 1
     first = 1;
@@ -142,19 +142,27 @@ if strcmp(popts.type,'combined')
         for fidx = 1:length(fe)
             semilogx(10.^xr{fidx}+1./fe{fidx},yr{fidx},'k.','MarkerSize', 10);
             hold on;
+            if all(isnan(yr{fidx}))
+                continue
+            end
+            xline(1./fe{fidx})
         end
+        yline(0)
         ylabel(sprintf('Re[$\\widetilde{\\Delta %s}$] QQ parallel',outstr));
         setx(popts,0,frequnit);
     ax2 = subplot('Position',popts.PositionBottom);
         for fidx = 1:length(fe)
             semilogx(10.^xi{fidx}+1./fe{fidx},yi{fidx},'k.','MarkerSize', 10);
             hold on;
+            if all(isnan(yr{fidx}))
+                continue
+            end
+            xline(1./fe{fidx})
         end
-        ylabel(sprintf('Im[$\\widetilde{\\Delta %s}$] QQ parallel',outstr));
+        yline(0)
         setx(popts,1,frequnit);
-        xl = get(gca,'XLabel');
-        txt = sprintf('%s and %s',xl.String,'QQ perpendicular');
-        ax2.XLabel.String = txt;
+        ylabel(sprintf('Im[$\\widetilde{\\Delta %s}$] QQ parallel',outstr));
+        xlabel(sprintf('$T$ [s] and Im[$\\widetilde{\\Delta %s}$] QQ perpendicular + $T$',outstr));
     ext = sprintf('%s-combined',outstr);
     figsave_(popts,ext)
 end

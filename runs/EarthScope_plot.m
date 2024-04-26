@@ -1,6 +1,6 @@
 function EarthScope_plot(id, print_figs)
 
-if nargin < 2
+if ~exist('print_figs','var') || print_figs ~= 1
     print_figs = 0;
 end
 
@@ -75,17 +75,7 @@ figure();
     tsopts.type = 'original';
     tsplot(TFs{1},tsopts);
 
-if 0
-    for tfn = 1:3
-        % Plot original time series data used for TF1 (will be same for all)
-        figure();
-            tsopts = copts;
-            tsopts.type = 'error';
-            tsplot(TFs{tfn},tsopts);
-    end
-end
-
-%% Compare errors
+% Compare errors
 figure();
     tsopts = copts;
     tsopts.type  = 'error';
@@ -100,26 +90,57 @@ figure();
             tsplot({TFs{1},TFs{3}},tsopts);
     end
 
-%% DFTs
-% Plot DFTs for TF1 only (will be same for both)
-if 0
-figure();
-    dftopts = copts;
-    dftopts.type = 'error-averaged';
-    dftplot({TFs{1}, TFs{3}},dftopts);
+%% Z plots
+if 1
+    figure();
+        zopts = copts;
+        zopts.type = 1;
+        zplot(TFs{1},zopts);
+
+    figure();
+        zopts = copts;
+        zopts.type = 1;
+        zplot(TFs{3},zopts);
 end
 
 if 1
-dftopts = copts;
-dftopts.period_range = [7,24*3600];
-figure();
-    dftopts.type = 'original-averaged';
-    dftplot(TFs{1},dftopts);
+    % Compare
+    figure();
+        zopts = copts;
+        %zopts.print = 1;
+        zopts.printname = 'z-tf1-tf3';
+        zopts.period_range = [7,6*3600];
+        zopts.unwrap = 0;
+        zopts.type = 1;
+        %zplot(TFs,zopts);
+        zplot({TFs{1},TFs{3}},zopts);
+end
 
+%% SN plots
+% Compare all
 figure();
+    snopts = copts;
+    snopts.period_range = [7,6*3600];
+    snopts.printname = 'sn-tf1-tf3';
+    snplot({TFs{1},TFs{3}},snopts);
+
+
+%% DFTs
+if 1
     dftopts = copts;
-    dftopts.type = 'original-averaged-phases';
-    dftplot(TFs{1},dftopts);
+    dftopts.period_range = [7,24*3600];
+    figure();
+        dftopts.type = 'original-averaged';
+        dftplot(TFs{1},dftopts);
+
+    figure();
+        dftopts = copts;
+        dftopts.type = 'original-averaged-phases';
+        dftplot(TFs{1},dftopts);
+
+    figure();
+        dftopts.type = 'error-averaged-magphase';
+        dftplot(TFs{1},dftopts);
 end
 
 %% Histograms
@@ -159,40 +180,6 @@ if 0
     if copts.print == 1
         figsave(fullfile(copts.printdir, 'pdf-tf1-tf3.png'));
     end
-end
-
-%% SN plots
-% Compare all
-figure();
-    snopts = copts;
-    snopts.period_range = [7,6*3600];
-    snopts.printname = 'sn-tf1-tf3';
-    snplot({TFs{1},TFs{3}},snopts);
-
-%% Z plots
-if 1
-    figure();
-        zopts = copts;
-        zopts.type = 1;
-        zplot(TFs{1},zopts);
-
-    figure();
-        zopts = copts;
-        zopts.type = 1;
-        zplot(TFs{3},zopts);
-end
-
-if 1
-    % Compare
-    figure();
-        zopts = copts;
-        %zopts.print = 1;
-        zopts.printname = 'z-tf1-tf3';
-        zopts.period_range = [7,6*3600];
-        zopts.unwrap = 0;
-        zopts.type = 1;
-        %zplot(TFs,zopts);
-        zplot({TFs{1},TFs{3}},zopts);
 end
 
 if 0

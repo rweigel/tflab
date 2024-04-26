@@ -37,5 +37,4 @@ for s = 1:length(f)
             clu(s,comp) = u';
         end
     end
-    
 end

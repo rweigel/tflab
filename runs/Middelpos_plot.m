@@ -4,7 +4,7 @@ tflab_setpaths();
 
 % Set common print options
 
-short_run = 1;
+short_run = 0;
 print_figs = 1;
 
 if short_run
@@ -14,10 +14,11 @@ else
     start = '20120712';
     stop = '20121107';
 end
+start = '20120712';
+stop = '20120811';
 
 dirstr  = sprintf('tfs-%s-%s',start,stop);
 rundir = fullfile(scriptdir(),'data','Middelpos',dirstr);
-
 for tfn = 1:4
     fname{tfn} = fullfile(rundir, sprintf('Middelpos-tf%d.mat',tfn));
     TFs{tfn} = loadtf(fname{tfn});
@@ -32,6 +33,8 @@ copts = struct();
 
 if print_figs
     dock off;close all;
+    rmdir(copts.printOptions.printDir,'s');
+    mkdir(copts.printOptions.printDir);
 else
     dock on;figure(1);close all;
 end
@@ -43,7 +46,7 @@ if (1)
         tsopts.type = 'original';
         tsplot(TFs{1},tsopts);
     figure();
-        tsopts.type = 'final';
+        tsopts.type = 'detrended';
         tsplot(TFs{3},tsopts);
 end
 
@@ -66,29 +69,9 @@ figure();
     dftopts.type = 'original-averaged-phases';
     dftplot(TFs{1},dftopts);
 
-if 0
-    figure();
-        dftopts = copts;
-        dftopts.type = 'original-averaged-reals';
-        dftplot(TFs{1},dftopts);
-
-    figure();
-        dftopts = copts;
-        dftopts.type = 'original-averaged-imaginaries';
-        dftplot(TFs{1},dftopts);
-
-    % Plot Fourier phases for In/Out of TF1 (will be the same for both)
-    figure();
-        dftopts = copts;
-        dftopts.type = 'original-averaged-phases';
-        dftplot(TFs{1},dftopts);
-
-        % Compare TF1 and TF2
-        figure();
-            dftopts = copts;
-            dftopts.type = 'error-averaged-realimag';
-            dftplot(TFs{1},dftopts);
-end
+figure();
+    dftopts.type = 'error-averaged-magphase';
+    dftplot(TFs{1},dftopts);
 
 %% SN plots
 figure();
@@ -110,10 +93,9 @@ figure();
     qqplot_(TFs{1},qqopts,comp,fidx);
 
 figure();
-        qqopts = copts;
-        %qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
-        qqopts.type = 'combined';
-        qqplot_(TFs{1},qqopts);
+    qqopts = copts;
+    qqopts.type = 'combined';
+    qqplot_(TFs{1},qqopts);
 
 if print_figs == 1
     figHTML(copts.printOptions.printDir)

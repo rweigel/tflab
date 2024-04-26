@@ -187,6 +187,8 @@ function namestrs = namestrs_(namestrs, nc)
             end
         end
     else
-        namestrs = {namestrs};
+        if ~iscell(namestrs)
+            namestrs = {namestrs};
+        end
     end
 end

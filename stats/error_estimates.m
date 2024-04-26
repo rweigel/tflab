@@ -4,11 +4,13 @@ if onsegments
     logmsg('Computing parametric error estimates on segment Zs.\n')
     Z = S.Segment.Z;
     fe = S.Segment.fe;
+    % See page 288 of Devore 8th ed.
+    % https://drive.google.com/file/d/11Ggp-RNoknu7ARu95s54hvOsQMv0AgR-/%E2%98%85%E2%98%85%E2%98%85%E2%98%85remove%E2%98%85%E2%98%85%E2%98%85%E2%98%85
     t = tinv(0.975,size(Z,3)-1);
     for comp = 1:size(Z,2) % Second dimension is component
         Zc = squeeze(Z(:,comp,:)); % Columns of Zc are segment Zs
-        STDr = std(real(Zc),1,2);
-        STDi = std(imag(Zc),1,2);
+        STDr = std(real(Zc),0,2);
+        STDi = std(imag(Zc),0,2);
         delta = t*(STDr + 1j*STDi)/sqrt(size(Z,3));
         Zave(:,comp) = mean(Zc,2);
         ZCL95l(:,comp) = Zave(:,comp) - delta;

@@ -3,7 +3,8 @@ close all % To reduce memory.
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-short_run = 1;
+short_run = 0;
+const_term = 1;
 
 if short_run
     Nboot = NaN;
@@ -14,6 +15,10 @@ else
     start = '20120712';
     stop = '20121107';
 end
+
+%Nboot = NaN;
+%start = '20120712';
+%stop = '20120811';
 
 %% Set output file base name using start/stop times of input data
 filestr = 'Middelpos';
@@ -30,12 +35,6 @@ B = B(1:I,:);
 E = E(1:I,:);
 t = t(1:I);
 
-if short_run
-    B = B(1:pps*5,:);
-    E = E(1:pps*5,:);
-    t = t(1:pps*5);
-end
-
 %% Set common metadata
 meta = struct();
     meta.instr     = {'$B_x$','$B_y$'};
@@ -47,6 +46,7 @@ meta = struct();
     meta.frequnit  = 'Hz';
     meta.freqsf    = 1;
     meta.timestart = datestr(t(1),'yyyy-mm-ddTHH:MM:SS.FFF');
+    meta.timestop  = datestr(t(end),'yyyy-mm-ddTHH:MM:SS.FFF');
     meta.chainid   = 'SANSA';
     meta.stationid = 'Middelpos';
 
@@ -57,6 +57,7 @@ pps = 86400;
 desc = sprintf('OLS; One %d-day segment',size(B,1)/pps);
 opts{tfn} = tflab_options(1);
     opts{tfn}.tflab.loglevel = 1;
+    opts{tfn}.fd.regression.const_term = const_term;
     opts{tfn}.description = desc;
     opts{tfn}.fd.bootstrap.N = Nboot;
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
@@ -75,6 +76,7 @@ desc = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
 opts{tfn} = tflab_options(1);
     opts{tfn}.td.window.width = pps;
     opts{tfn}.td.window.shift = pps;
+    opts{tfn}.fd.regression.const_term = const_term;
     opts{tfn}.description = desc;
     opts{tfn}.fd.bootstrap.N = Nboot;
     opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
@@ -98,6 +100,7 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.td.detrend.function = @bandpass_;
     opts{tfn}.td.detrend.functionstr = 'bandpass_';
     opts{tfn}.td.detrend.functionargs = {band};
+    opts{tfn}.fd.regression.const_term = const_term;
     opts{tfn}.description = desc;
     opts{tfn}.fd.bootstrap.N = Nboot;
     opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
@@ -122,6 +125,7 @@ opts{tfn} = tflab_options(1);
     opts{tfn}.td.detrend.function = @bandpass_;
     opts{tfn}.td.detrend.functionstr = 'bandpass_';
     opts{tfn}.td.detrend.functionargs = {band};
+    opts{tfn}.fd.regression.const_term = const_term;
     opts{tfn}.description = desc;
     opts{tfn}.fd.bootstrap.N = Nboot;
     opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
@@ -132,3 +136,27 @@ TFs{tfn}.Metadata = meta;
 
 savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
 TFs{tfn} = [];
+
+if 0
+%% TF5
+tfn = 5;
+logmsg('-- Computing TF%d --\n',tfn);
+meta.instr     = {'$B_x$'};
+meta.outstr    = {'$E_y$'};
+pps = 86400;
+desc = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
+opts{tfn} = tflab_options(1);
+    opts{tfn}.td.window.width = pps;
+    opts{tfn}.td.window.shift = pps;
+    opts{tfn}.fd.regression.const_term = const_term;
+    opts{tfn}.description = desc;
+    opts{tfn}.fd.bootstrap.N = Nboot;
+    opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
+    opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
+
+TFs{tfn} = tflab(B(:,1),E(:,2),opts{tfn});
+TFs{tfn}.Metadata = meta;
+
+savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
+TFs{tfn} = [];
+end

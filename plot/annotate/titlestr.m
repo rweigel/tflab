@@ -37,13 +37,17 @@ if strcmp(plottype, 'ts')
     if strcmp(opts.type,'zeropadded')
         ts = sprintf('%sPadded with %d zeros',ts,tf.Options.td.zeropad);
     else
-        ftype = opts.type(1:end-2); % Remove "ed"
-        if isfield(tfo,'td') && isfield(tfo.td, ftype) && ~isempty(tfo.td.(ftype).function)
-            fdesc = tfo.td.(ftype).functionstr;
-            if isempty(fdesc)
-                ts = sprintf('%s%sed',ts,ftype);
-            else
-                ts = sprintf('%s%s %sed',ts,fdesc,ftype);
+        if strcmp(opts.type,'final')
+            ts = sprintf('%sAfter preprocessing',ts);
+        else
+            ftype = opts.type(1:end-2); % Remove "ed"
+            if isfield(tfo,'td') && isfield(tfo.td, ftype) && ~isempty(tfo.td.(ftype).function)
+                fdesc = replace(tfo.td.(ftype).functionstr,'_','\_');
+                if isempty(fdesc)
+                    ts = sprintf('%s%sed',ts,ftype);
+                else
+                    ts = sprintf('%s$\\texttt{%s()}$ %sed',ts,fdesc,ftype);
+                end
             end
         end
     end

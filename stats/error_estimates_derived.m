@@ -1,4 +1,4 @@
-function Parametric = error_estimates_derived(fe,Z,ZCL95l,ZCL95u)
+function Parametric = error_estimates_derived(fe,Z,ZCL95l,ZCL95u,return_)
 
 for comp = 1:size(Z,2)
     delta_Zr_95 = real(ZCL95u(:,comp) - ZCL95l(:,comp));
@@ -28,12 +28,12 @@ for comp = 1:size(Z,2)
     ZMAGCL95u(:,comp) = Zmag + delta_Zmag_95/2;
 
     % delta_ZMAG_95 is 2σ, so σ = delta_ZMAG_95/2.
-    % TODO: See note 2.; this is (probably) technically not ZVAR as
-    %       used in EDI files.
+    % TODO: See note 2. in error_estimates.m; this is (probably) technically
+    %       not ZVAR as used in EDI files.
     ZVAR(:,comp) = (delta_Zmag_95/2).^2;
 
     % φ = (180/pi) * atan(Zi/Zr) =>
-    % Δφ = (180/pi) * (1/|Z|^2) sqrt( (ZiΔZr)^2 + (ZrΔZri)^2 )
+    % Δφ = (180/pi) * (1/|Z|^2) sqrt( (ZiΔZr)^2 + (ZrΔZi)^2 )
     PHI = (180/pi) * atan2(imag(Z(:,comp)),real(Z(:,comp)));
     tmp = sqrt( (Zi.*delta_Zr_95).^2 + (Zr.*delta_Zi_95).^2);
     delta_PHI_95 = (180/pi)*(1./Zmag.^2).*tmp;
@@ -45,6 +45,15 @@ for comp = 1:size(Z,2)
     RHO = (abs(Z(:,comp)).^2)./(5*fe);
     RHOCL95l(:,comp) = RHO - delta_RHO_95/2;
     RHOCL95u(:,comp) = RHO + delta_RHO_95/2;
+end
+
+if nargin > 4 && strcmp(return_,'angle')
+    Parametric = PHICL95u - PHICL95l;
+    return
+end
+if nargin > 4 && strcmp(return_,'magnitude')
+    Parametric = ZMAGCL95u - ZMAGCL95l;
+    return
 end
 
 Parametric.ZVAR = ZVAR;
