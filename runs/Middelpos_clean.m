@@ -1,12 +1,18 @@
-function [B,E,t,infile,outfile] = Middelpos_clean(start,stop,rundir)
+function [B,E,t,infile,outfile] = Middelpos_clean(start,stop,rundir,usecache)
+
+if nargin < 4
+    usecache = 1;
+end
 
 mat_raw = fullfile(rundir,'measurements-raw.mat');
 mat_cleaned = fullfile(rundir,'measurements-cleaned.mat');
 
+logfile = fopen(fullfile(rundir,'Middelpos-cleaned.log'),'w');
+
 if ~exist(rundir,'dir')
     mkdir(rundir);
 end
-if exist(mat_cleaned,'file')
+if exist(mat_cleaned,'file') && usecache
     fprintf('Reading: %s\n',mat_cleaned);
     load(mat_cleaned);
     return
@@ -32,7 +38,10 @@ else
     load(mat_raw);
 end
 
-E = despike(E,3,[-1,5]);
+msg = 'Despiking E\n';
+logmsg(msg);
+fprintf(logfile,msg);
+E = despike(E,0.1,[1,5],logfile);
 
 % TODO: Report on largest gap
 ti = [1:size(B,1)]';
@@ -50,14 +59,15 @@ for i = 1:size(E,2)
     if ~isempty(I)
         msg = 'Set %d leading or trailing NaNs in column %d of E to zero\n';
         logmsg(msg,length(I),i);
+        fprintf(logfile, '%s', msg);
         E(I,:) = 0;
     end
 end
 
-%% Remove mean, interpolate over NaNs, pad E if NaNs at start or end
 [B,E] = removemean(B,E);
 
 infile = mat_raw;
 outfile = mat_cleaned;
-fprintf('Writing: %s\n',mat_cleaned);
+logmsg('Writing: %s\n',mat_cleaned);
 save(mat_cleaned,'B','E','t','infile','outfile')
+fclose(logfile);

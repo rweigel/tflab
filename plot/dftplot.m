@@ -1,5 +1,5 @@
 function ax = dftplot(S,popts,comp)
-%DFTPLOT  Plot DFT derived quantities
+%DFTPLOT  Plot DFT-derived quantities
 %
 %   DFTPLOT(S)
 %   DFTPLOT(S, popts)
@@ -18,12 +18,12 @@ function ax = dftplot(S,popts,comp)
 %   b is one of: raw, averaged
 %   c is one of: magphase, realimag
 
-assert(isstruct(S) || iscell(S), ...
-    'S must be a tflab struct or cell array of tflab structs');
+msg = 'S must be a tflab struct or cell array of tflab structs';
+assert(isstruct(S) || iscell(S), msg);
 
 if nargin < 2
     popts = struct();
-    comp = 1; % Used if iscell(S);
+    comp = 1; % Used if iscell(S)
 end
 if nargin < 3
     comp = 1;
@@ -193,7 +193,7 @@ if strcmp(tparts{1},'error')
         if ~isempty(lg)
             legend(lg,popts.legend{:});
         else
-            titlestr(S{1},popts,'dft');
+            title_(S{1},popts,'dft');
         end
         ylabel(yl1);
         adjust_ylim('upper');
@@ -234,7 +234,7 @@ if ~strcmp(tparts{1},'error')
         if ~isempty(lg1)
             legend(lg1,popts.legend{:});
         else
-            titlestr(S{1},popts,'dft');
+            title_(S{1},popts,'dft');
         end
         if exist('dy1','var')
             % Must be called after scales are set if logy used.
@@ -319,12 +319,6 @@ function [lg1, lg2] = legend_(S,what,popts)
             lg2{s} = lg1{s};
         end
     else
-        if strcmp(what,'magnitudes')
-            what = 'magnitude';
-        end
-        if strcmp(what,'phases')
-            what = 'angle';
-        end
         % Single tf. All components on same plot.
         lg1 = '';
         lg2 = '';
@@ -332,13 +326,22 @@ function [lg1, lg2] = legend_(S,what,popts)
             % One legend entry per per component.
             for j = 1:length(popts.instr)
                 s = replace(popts.instr{j},'$','');
-                lg1{j} = ['$\tilde{',s,'}$'];
+                if strcmp(what,'magnitudes')
+                    lg1{j} = ['$|\widetilde{',s,'}|$'];
+                else
+                    lg1{j} = ['$\widetilde{',s,'}$'];
+                end
             end
         end
         if size(S{1}.Out) > 1
+            % One legend entry per per component.
             for j = 1:length(popts.outstr)
                 s = replace(popts.outstr{j},'$','');
-                lg2{j} = ['$\widetilde{',s,'}$'];
+                if strcmp(what,'magnitudes')
+                    lg2{j} = ['$|\widetilde{',s,'}|$'];
+                else
+                    lg2{j} = ['$\widetilde{',s,'}$'];
+                end
             end
         end
     end

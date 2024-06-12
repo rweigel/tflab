@@ -1,32 +1,10 @@
-clear;
-close all % To reduce memory.
-addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
-tflab_setpaths();
+function Middelpos_main(rundir, filestr, start, stop)
 
-short_run = 0;
 const_term = 1;
-
-if short_run
-    Nboot = NaN;
-    start = '20120712';
-    stop = '20120716';
-else
-    Nboot = 100;
-    start = '20120712';
-    stop = '20121107';
-end
-
-%Nboot = NaN;
-%start = '20120712';
-%stop = '20120811';
-
-%% Set output file base name using start/stop times of input data
-filestr = 'Middelpos';
-dirstr  = sprintf('tfs-%s-%s',start,stop);
-rundir = fullfile(scriptdir(),'data',filestr,dirstr);
+Nboot = 100;
 
 % Read input/output data
-[B,E,t] = Middelpos_clean(start,stop,rundir);
+[B,E,t] = Middelpos_clean(start,stop,rundir,0);
 
 % Make length an integer number of segments.
 pps = 86400;
@@ -54,7 +32,7 @@ meta = struct();
 tfn = 1;
 logmsg('-- Computing TF%d --\n',tfn);
 pps = 86400;
-desc = sprintf('OLS; One %d-day segment',size(B,1)/pps);
+desc = sprintf('1 %d-day segment',size(B,1)/pps);
 opts{tfn} = tflab_options(1);
     opts{tfn}.tflab.loglevel = 1;
     opts{tfn}.fd.regression.const_term = const_term;
@@ -72,7 +50,7 @@ TFs{tfn} = [];
 tfn = 2;
 logmsg('-- Computing TF%d --\n',tfn);
 pps = 86400;
-desc = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
+desc = sprintf('%d %d-day segments',size(B,1)/pps,pps/86400);
 opts{tfn} = tflab_options(1);
     opts{tfn}.td.window.width = pps;
     opts{tfn}.td.window.shift = pps;
@@ -93,7 +71,7 @@ tfn = 3;
 logmsg('-- Computing TF%d --\n',tfn);
 Tm = 1*86400;
 band = [1/Tm,0.5];
-desc = 'OLS; One %d-day segment; %d-day bandpass;';
+desc = '1 %d-day seg.; %d-day bandpass;';
 desc = sprintf(desc,size(B,1)/pps,Tm/86400);
 
 opts{tfn} = tflab_options(1);
@@ -116,7 +94,7 @@ logmsg('-- Computing TF%d --\n',tfn);
 pps = 86400;
 Tm = 1*86400;
 band = [1/Tm,0.5];
-desc = 'OLS; %d %d-day segments; %d-day bandpass';
+desc = '%d %d-day segments; %d-day bandpass';
 desc = sprintf(desc,size(B,1)/pps,pps/86400,Tm/86400);
 
 opts{tfn} = tflab_options(1);
@@ -144,7 +122,7 @@ logmsg('-- Computing TF%d --\n',tfn);
 meta.instr     = {'$B_x$'};
 meta.outstr    = {'$E_y$'};
 pps = 86400;
-desc = sprintf('OLS; %d %d-day segments',size(B,1)/pps,pps/86400);
+desc = sprintf('%d %d-day segments',size(B,1)/pps,pps/86400);
 opts{tfn} = tflab_options(1);
     opts{tfn}.td.window.width = pps;
     opts{tfn}.td.window.shift = pps;

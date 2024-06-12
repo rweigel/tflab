@@ -19,7 +19,7 @@ function [Z,dZ,Info] = regress_robustfit_tflab(ftE,ftB,varargin)
 %
 %     where N = size(ftE,1), r = real, i = imaginary.
 %
-%   In robust regression, one typically downweights each row individually
+%   In robust regression, one typically down-weights each row individually
 %   and there are 2N weights. However, N weights are computed based on
 %   the residual of abs(ftE - ftE_regression).
 %
@@ -81,12 +81,11 @@ stats = struct();
 
 p = size(ftB,2); % Number of input variables.
 
-% Leverage
-hf = 1;                      % leverage factor
 H  = ftB*inv(ftB'*ftB)*ftB'; % Hat matrix
 h  = diag(H);                % leverage value (0 <= h <= 1)
 stats.Leverage = abs(h);
 
+% Leverage
 hf = sqrt(1-abs(h));
 % hf is the leverage factor from Huber 1981. Use abs() to account for
 % complex h (roundoff makes it small but non-zero). Equation 9.10 of
@@ -149,7 +148,6 @@ while 1
         const = 4.685;    % 95% efficiency when the errors are gaussian
         Rs = R/(s*const); % Normalize residuals by MAD then scale by const
         Rs = Rs./hf;      % As per Equation 9.10 of Huber 1981; see note above.
-        W = zeros(size(R));
         W = (abs(Rs) < 1).*(1 - Rs.^2).^2; % Bi-square weights
         if laststep
             % Hard cut-off for adjfactor*|residual|/MAD > opts.hardcut

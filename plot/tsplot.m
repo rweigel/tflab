@@ -46,7 +46,6 @@ S = tflab_metadata(S);
 
 % Apply default plot options for fields in popts not specified.
 popts = tflabplot_options(S, popts, 'tsplot');
-
 tparts = split(popts.type,'-');
 
 final = 0;
@@ -155,7 +154,7 @@ if ~iscell(S) && ~strcmp(tparts{1},'error')
         plot(t1,y1);
         colororder_(ax(1), y1)
         grid on;grid minor;box on;
-        titlestr(S,popts,'ts');
+        title_(S,popts,'ts');
         ylabel(yl1);
         if ~isempty(lg1)
             [~, lo] = legend(lg1,popts.legend{:});
@@ -230,7 +229,7 @@ if ~iscell(S) && strcmp(tparts{1},'error')
             adjust_ylim();
             adjust_exponent('y');
             setx_(0,info,trange);
-            titlestr(S,popts,'ts');
+            title_(S,popts,'ts');
         ax(2,j) = subplot('Position',popts.PositionBottom);
             plot(t2,y2(:,j));
             grid on;grid minor;box on;
@@ -260,7 +259,7 @@ if iscell(S)
         % of compared data matches later plots.
         colororder(ax(1), [0,0,0;colororder()]);
         grid on;grid minor;box on;hold on;
-        titlestr(S,popts,'ts');
+        title_(S,popts,'ts');
         ylabel(sprintf('%s [%s]',...
                     popts.outstr{1},S{1}.Metadata.outunit));
         lg0 = sprintf('Measured');

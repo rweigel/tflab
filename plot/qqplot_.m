@@ -20,7 +20,6 @@ assert(isstruct(S) || iscell(S), msg);
 if nargin < 2
     popts = struct();
 end
-popts = tflabplot_options(S, popts, 'qqplot');
 
 if ~iscell(S)
     S = {S};
@@ -37,9 +36,12 @@ if nargin < 4
     fidxs = 1:size(S{1}.Metrics.Residuals,1);
 end
 
-logmsg('Plotting type = %s\n',popts.type);
+ptype = 'standard';
+if isfield(popts,'type')
+    ptype = popts.type;
+end
 
-if strcmp(popts.type,'standard') && length(fidxs) > 1 && length(cidxs) > 1
+if strcmp(ptype,'standard') && length(fidxs) > 1 && length(cidxs) > 1
     first = 1;
     for cidx = cidxs
         for fidx = fidxs
@@ -56,10 +58,14 @@ end
 frequnit = S{1}.Metadata.frequnit;
 timeunit = S{1}.Metadata.timeunit;
 
-if strcmp(popts.type,'standard')
+figprep()
+
+if strcmp(ptype,'standard')
     fidx = fidxs(1);
     cidx = cidxs(1);
+    popts = tflabplot_options(S, popts, 'qqplot');
     outstr = replace(popts.outstr{cidx},'$','');
+    logmsg('Plotting type = %s\n',popts.type);
 
     legendstr = {};
     for i = 1:length(S)
@@ -68,8 +74,8 @@ if strcmp(popts.type,'standard')
         legendstr{i} = S{i}.Options.description;
     end
     % TODO: Check that all fes are the same.
-    titlestr = sprintf('$f=$ %g [%s]; $T=$ %.3f [%s]',...
-                        fe{1},frequnit,1/fe{1},timeunit);
+    titlestring = sprintf('$f=$ %g [%s]; $T=$ %.3f [%s]',...
+                           fe{1},frequnit,1/fe{1},timeunit);
 
     figprep();
     ax1 = subplot('Position',popts.PositionTop);
@@ -77,7 +83,7 @@ if strcmp(popts.type,'standard')
         plotqq(Residuals,'real');
         colororder_(ax1,Residuals);
         hold on;grid on;box on;
-        title(titlestr);
+        title(titlestring);
         xlabel('');
         set(gca,'XTickLabels','');
         ylabel(sprintf('Re[$\\widetilde{\\Delta %s}$] Quantiles',outstr));
@@ -117,18 +123,30 @@ if strcmp(popts.type,'standard')
     figsave_(popts,ext)
 end
 
-if strcmp(popts.type,'combined')
+if strcmp(ptype,'combined')
+    if length(S) > 1 && strcmp(popts.type,'combined')
+        for s = 1:length(S)
+            if s > 1
+                figure();figprep();
+            end
+            logmsg('Plotting type = combined for TF # %d\n',s);
+            qqplot_(S{s},popts,cidxs);
+        end
+        return
+    end
     if length(cidxs) > 1
         for cidx = cidxs
             if cidx > 1
                 figure();figprep();
             end
+            logmsg('Plotting type = combined, component # %d\n',cidx);
             qqplot_(S,popts,cidx);
         end
         return
     else
         cidx = cidxs(1);
     end
+    popts = tflabplot_options(S, popts, 'qqplot');
     outstr = replace(popts.outstr{cidx},'$','');
     for fidx = 1:size(S{1}.Metrics.Residuals,1) % frequencies
         Residuals = S{1}.Metrics.Residuals{fidx}(:,cidx);
@@ -147,6 +165,7 @@ if strcmp(popts.type,'combined')
             end
             xline(1./fe{fidx})
         end
+        title_(S{1},popts,'qq');
         yline(0)
         ylabel(sprintf('Re[$\\widetilde{\\Delta %s}$] QQ parallel',outstr));
         setx(popts,0,frequnit);
@@ -166,17 +185,6 @@ if strcmp(popts.type,'combined')
     ext = sprintf('%s-combined',outstr);
     figsave_(popts,ext)
 end
-
-
-if 0 && ~isfield(S,'Regression') && sidx ~= -1
-    norm = std(S.Segment.Regression.Residuals{fidx,cidx,sidx});
-    titlestr = sprintf('%s\nSeg. = %d/%d; SN = %.1f; Coh = %.2f; $\\sigma_{\\Delta %s}$ = %.1e',...
-        titlestr,sidx,size(S.Segment.Regression.Residuals,3),...
-        S.Segment.Metrics.SN(fidx,cidx,sidx),...
-        S.Segment.Metrics.Coherence(fidx,cidx,sidx),...
-        Zstrs{cidx},norm);
-end
-
 end
 
 function plotqq(Residuals,comp)

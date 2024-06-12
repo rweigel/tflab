@@ -22,7 +22,6 @@ if ~endsWith(fnamefull,'.mat')
     fnamefull = append(fnamefull,'.mat');
 end
 
-logmsg('Reading: %s\n',fnamefull);
 if exist('variable','var') && ~isempty(variable)
     tf = load(fname,variable);
     tf = tf.(variable);

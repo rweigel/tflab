@@ -34,7 +34,13 @@ if strcmp(scalex,'log') && strcmp(scaley,'log')
             ylow = y(i) - dyl(i);
         else
             add_head = 1;
-            ylow = ymin;
+            if isempty(Ip)
+                % No ymin is above zero. Place head one decade below
+                % lowest y.
+                ylow = min(y)/10;
+            else
+                ylow = ymin;
+            end
         end
         loglog([x(i),x(i)],[y(i)+dyu(i),ylow],linestyle{:});
         if add_head

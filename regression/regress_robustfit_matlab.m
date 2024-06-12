@@ -13,7 +13,7 @@ if nr <= nc
     W = [];
 else
     % Note robustfit() uses robustfit(input, output)
-    % and regress() uses regress(output, input)
+    % and regress() uses regress(output, input) (order of arguments differs)
     [Z,stats] = robustfit(ftB,ftE,varargin{:});
     W = stats.w;
     % Unweighted residuals

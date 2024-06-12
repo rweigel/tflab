@@ -1,26 +1,8 @@
-clear;
-addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
-tflab_setpaths();
+%function Middelpos_plot(rundir, filestr, print_figs)
 
-% Set common print options
-
-short_run = 0;
-print_figs = 1;
-
-if short_run
-    start = '20120712';
-    stop = '20120716';
-else
-    start = '20120712';
-    stop = '20121107';
-end
-start = '20120712';
-stop = '20120811';
-
-dirstr  = sprintf('tfs-%s-%s',start,stop);
-rundir = fullfile(scriptdir(),'data','Middelpos',dirstr);
+logmsg('\n');
 for tfn = 1:4
-    fname{tfn} = fullfile(rundir, sprintf('Middelpos-tf%d.mat',tfn));
+    fname{tfn} = fullfile(rundir, sprintf('%s-tf%d.mat',filestr,tfn));
     TFs{tfn} = loadtf(fname{tfn});
     %TFs{tfn} = tflab_preprocess(TFs{tfn});
     %TFs{tfn} = tflab_metrics(TFs{tfn});
@@ -29,7 +11,8 @@ end
 copts = struct();
     copts.print = print_figs; % Set to 1 to print pdf of each figure created.
     copts.printOptions.printDir = fullfile(rundir,'figures');
-    copts.printOptions.printFormats = {'png'};
+    copts.printOptions.printFormats = {'pdf','png'};
+    copts.title = '';
 
 if print_figs
     dock off;close all;
@@ -51,6 +34,7 @@ if (1)
 end
 
 if (1)
+    tsopts = copts;
     tsopts.type = 'error';
     figure();
         tsplot(TFs{1},tsopts);
@@ -76,14 +60,14 @@ figure();
 %% SN plots
 figure();
     snopts = copts;
-    snplot(TFs(:),snopts);
+    snplot(TFs(1:2),snopts);
 
 %% Z plots
 figure();
     zopts = copts;
     zopts.type = 1;
     %zopts.period_range = [1, 86400];
-    zplot(TFs,zopts);
+    zplot(TFs(1:2),zopts);
 
 figure();
     qqopts = copts;
@@ -95,8 +79,13 @@ figure();
 figure();
     qqopts = copts;
     qqopts.type = 'combined';
-    qqplot_(TFs{1},qqopts);
+    qqplot_(TFs(1:2),qqopts);
 
 if print_figs == 1
     figHTML(copts.printOptions.printDir)
+end
+
+function rmtitle(axs)
+    set(gcf, 'CurrentAxes', axs(1));
+    title('');
 end

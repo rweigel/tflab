@@ -80,7 +80,7 @@ if length(S) == 1
 
         h1 = plot(x1, y1, popts.line{:});
         hold on;grid on;box on;
-        titlestr(S{1},popts,'z');
+        title_(S{1},popts,'z');
         colororder_(ax1,y1);
 
         if length(ls1) > 1
@@ -180,16 +180,16 @@ end % if isstruct(S)
 
 % Multiple transfer functions
 if length(S) > 1
-    logmsg('Plotting multiple transfer functions.\n')
 
     if length(comps) == 1
+        logmsg('Plotting component %d for %d transfer functions.\n',comps,length(S));
         comp = comps;
     else
         for c = 1:length(comps)
             if c > 1
                 figure;
             end
-            logmsg('Plotting component %d.\n',comps(c))
+            logmsg('Plotting component %d for %d transfer functions.\n',comps(c),length(S))
             [ax1(c),ax2(c)] = zplot(S,popts,comps(c));
         end
         return
@@ -211,7 +211,7 @@ if length(S) > 1
         end
 
         legend(h,ls,popts.legend{:});
-        titlestr(S,popts,'z');
+        title_(S,popts,'z');
 
         if popts.type < 3
             set(gca,'YScale','log');
@@ -234,10 +234,12 @@ if length(S) > 1
         end
         ylabel(yl);
 
-        if length(x) == 2
+        if length(x) <= 2
             % Must be called after scale type is set.
-            errorbars_(h(1),x{1},y{1},dyl{1},dyu{1},1);
-            errorbars_(h(2),x{2},y{2},dyl{2},dyu{2},1);
+            errorbars_(h(1),0.97*x{1},y{1},dyl{1},dyu{1},1);
+            errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},1);
+        else
+            logmsg('Not plotting error bars b/c comparing more than 2 TFs.\n')
         end
 
         adjust_yticks(1e-4);
@@ -282,7 +284,7 @@ if length(S) > 1
             adjust_ylim('both');
         end
 
-        if length(x) == 2
+        if length(x) <= 2
             % Must be called after scale type is set.
             errorbars_(h(1),0.97*x{1},y{1},dyl{1},dyu{1},1);
             errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},1);
@@ -343,7 +345,7 @@ function [x,y,dyu,dyl] = xyvals_(S,popts,comp,panel,errorbar_method)
                     y{s} = (180/pi)*ang;
                 end
                 dyl{s} = y{s} - ErrorEstimates.PHICL95l(:,comp);
-                dyu{s} = ErrorEstimates.PHICL95u(:,comp)- y{s};
+                dyu{s} = ErrorEstimates.PHICL95u(:,comp) - y{s};
             end
         end
 
