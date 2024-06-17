@@ -19,7 +19,7 @@ for s = 1:length(f)
         % avoids cxy = NaN when either dftsegsx{s} or dftsegsy{s} are
         % identically zero.
         cxy(s,:) = 1;
-        continue;
+        continue
     end
     sxx = abs(sum(dftsegsx{s}.*conj(dftsegsx{s}),1));
     syy = abs(sum(dftsegsy{s}.*conj(dftsegsy{s}),1));

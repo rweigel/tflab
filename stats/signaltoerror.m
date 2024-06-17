@@ -21,20 +21,16 @@ for s = 1:length(f)
 
     n = size(dftsig{s},1);
     if n > 10
+        % MATLAB stats toolbox is required for bootstrp function, not used here.
         Nb = 100;
         V = nan(Nb,1);
         for comp = 1:size(dftsig{s},2)
             for b = 1:Nb
-                I = randsample(n,round(0.63*n),1);
+                I = randsample(n,n,1);
                 V(b,1) = sum(dftsig{s}(I,comp).*conj(dftsig{s}(I,comp)),1)./sum(dfterr{s}(I,1).*conj(dfterr{s}(I,1)),1);
             end
-            nl = round((1-0.68)*Nb);
-            nh = round(0.68*Nb);
-            V = sort(V,1);  % Sort each column
-            l = V(nl,:);    % Select the nth lowest value
-            u = V(nh,:);    % Select the nth highest value
-            cll(s,comp) = l';
-            clu(s,comp) = u';
+            cll(s,comp) = prctile(V,2.5);
+            clu(s,comp) = prctile(V,97.5);
         end
     end
 end
