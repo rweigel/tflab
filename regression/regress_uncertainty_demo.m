@@ -29,7 +29,14 @@ bintt = [bo(1) - sb*t,bo(1) + sb*t;...
 % Theoretical variances in estimates (Bulmer, Principles of Statistics, p214)
 Vb = sigma^2/sum((x-mean(x)).^2);
 Va = sigma^2*(1/Np + mean(x)^2/sum((x-mean(x)).^2));
-d = norminv(p,0,1); % 1.96 for p = 1-0.05/2.
+
+% From Bulmer, Ch 12 appendix, if
+% b = beta + sum(err.*(x-xbar))/sum((x-mean(x)).^2)
+% then b is a normally distributed r.v. if err is. As a result, we use
+% norminv below. If, however, Vb is based on the sample std (sb above),
+% then ((b-beta)/sb)*sqrt( sum((x-mean(x)).^2) ) = (b-beta)/s2 is t distributed with Np-2
+% dofs (stated without proof on pg 214 of Bulmer).
+d = norminv(p,0,1); % 1.96 for p = 1-0.05/2. 
 binto = [bo(1) - d*sqrt(Vb),bo(1) + d*sqrt(Vb);...
          ao(1) - d*sqrt(Va),ao(1) + d*sqrt(Va)];
 
@@ -37,13 +44,13 @@ fprintf('regress: slope = %.5f [%.5f,%.5f]; intercept = %.5f [%.5f,%.5f]\n',...
     b(1),bint(1,:),b(2),bint(2,:));
 fprintf('manual:  slope = %.5f [%.5f,%.5f]; intercept = %.5f [%.5f,%.5f]\n',...
     bo(1),bintt(1,:),bo(2),bintt(2,:));
-fprintf('exact conf. intervals    [%.5f,%.5f];                     [%.5f,%.5f]\n',...
+fprintf('theor. conf. intervals    [%.5f,%.5f];                     [%.5f,%.5f]\n',...
     binto(1,:),binto(2,:));
 
 % Sample output:
 % regress: slope = 0.97611 [0.91069,1.04153]; intercept = 0.01730 [-0.02075,0.05535]
 % manual:  slope = 0.97611 [0.91069,1.04153]; intercept = 0.01730 [-0.02075,0.05535]
-% exact conf. intervals    [0.90821,1.04401];                     [-0.02220,0.05679]
+% theor. conf. intervals    [0.90821,1.04401];                     [-0.02220,0.05679]
 
 clf;
 grid on;hold on;

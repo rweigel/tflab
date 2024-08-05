@@ -119,7 +119,7 @@ for j = 1:length(fe)
         fraction = opts.fd.bootstrap.fraction;
         m = round(fraction*n);
         if boot_note == 1
-            msg = 'Computing confidence limits using %d bootstrap samples and m/n = %.2f\n';
+            msg = 'Computing Z confidence limits using %d bootstrap samples and m/n = %.2f\n';
             logmsg(msg,Nb,fraction);
             boot_note = 0;
         end
@@ -138,11 +138,10 @@ for j = 1:length(fe)
         if size(Zb,1) >= opts.fd.bootstrap.nmin
             Bootstrap(j) = error_estimates_bootstrap(fe(j),Zb,Z(j,:));
         else
-            msg1 = '!!! Due to sample skipping, Cannot compute boostrap error estimates b/c ';
-            msg2 = sprintf('# of bootstrap samples (%d) < opts.fd.bootstrap.nmin (%d).\n',...
+            msg1 = 'cannot compute boostrap error estimates b/c ';
+            msg2 = sprintf('# of bootstrap samples (%d) < opts.fd.bootstrap.nmin (%d)',...
                            size(Zb,1),opts.fd.bootstrap.nmin);
-            msg = sprintf("%s %s for %.1e.\n", msg1, msg2, fe(j));
-            logmsg(msg);
+            logmsg("!!! For f = %.1e, %s%s due to sample skipping.\n", fe(j), msg1, msg2);
         end
     end
 end

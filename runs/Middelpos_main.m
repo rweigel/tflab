@@ -1,7 +1,6 @@
-function Middelpos_main(rundir, filestr, start, stop)
+function Middelpos_main(rundir, filestr, start, stop, Nboot)
 
 const_term = 1;
-Nboot = 100;
 
 % Read input/output data
 [B,E,t] = Middelpos_clean(start,stop,rundir,0);

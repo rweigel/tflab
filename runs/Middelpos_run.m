@@ -4,8 +4,9 @@ addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 print_figs = 0;
+Nboot = 100;
 
-run_num = 2;
+run_num = 1;
 switch run_num
     case 0
         start = '20120712';
@@ -22,6 +23,5 @@ filestr = 'Middelpos';
 dirstr  = sprintf('tfs-%s-%s',start,stop);
 rundir  = fullfile(scriptdir(),'data',filestr,dirstr);
 
-
-%Middelpos_main(rundir, filestr, start, stop);
+Middelpos_main(rundir, filestr, start, stop, Nboot);
 Middelpos_plot(rundir, filestr, print_figs);
