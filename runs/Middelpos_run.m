@@ -3,10 +3,11 @@ close all % To reduce memory.
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-print_figs = 0;
-Nboot = 100;
+print_figs = 1;
+Nboot = 0;
+const_term = 1;
+run_num = 2;
 
-run_num = 1;
 switch run_num
     case 0
         start = '20120712';
@@ -20,8 +21,9 @@ switch run_num
 end
 
 filestr = 'Middelpos';
-dirstr  = sprintf('tfs-%s-%s',start,stop);
+dirstr  = sprintf('tfs-%s-%s-const_term-%d',start,stop,const_term);
+%dirstr  = sprintf('tfs-%s-%s',start,stop);
 rundir  = fullfile(scriptdir(),'data',filestr,dirstr);
 
-Middelpos_main(rundir, filestr, start, stop, Nboot);
+Middelpos_main(rundir, filestr, start, stop, const_term, Nboot);
 Middelpos_plot(rundir, filestr, print_figs);

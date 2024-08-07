@@ -7,11 +7,13 @@ end
 mat_raw = fullfile(rundir,'measurements-raw.mat');
 mat_cleaned = fullfile(rundir,'measurements-cleaned.mat');
 
-logfile = fopen(fullfile(rundir,'Middelpos-cleaned.log'),'w');
 
 if ~exist(rundir,'dir')
     mkdir(rundir);
 end
+
+logfile = fopen(fullfile(rundir,'Middelpos-cleaned.log'),'w');
+
 if exist(mat_cleaned,'file') && usecache
     fprintf('Reading: %s\n',mat_cleaned);
     load(mat_cleaned);

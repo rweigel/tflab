@@ -1,4 +1,4 @@
-function [cxy,f] = coherence(x, y, averaged, opts)
+function [cxy,f,cll,clu] = coherence(x, y, averaged, opts)
 
 if ~exist('averaged', 'var')
     averaged = 0;
@@ -8,6 +8,9 @@ if nargin < 3 || averaged == 0
     [cxy,f] = mscohere(x,y);
     return
 end
+
+x = x.*window(@parzenwin, size(x,1));
+y = y.*window(@parzenwin, size(y,1));
 
 [dftsegsx,f,fe] = dftbands(x, opts);
 dftsegsy = dftbands(y, opts);
@@ -30,8 +33,8 @@ for s = 1:length(f)
     end
     cxy(s,1) = coh(dftsegsx{s}, dftsegsy{s});
     n = size(dftsegsx{s},1);
-    if n > 10
-        % MATLAB stats toolbox is required for bootstrp function, not used here.
+    if opts.fd.bootstrap.N > 0 && ~isnan(opts.fd.bootstrap.N) && n >= opts.fd.bootstrap.nmin
+        % MATLAB stats toolbox is required for bootstrp function, so not used here.
         Nb = 100;
         V = nan(Nb,1);
         for b = 1:Nb
@@ -46,9 +49,14 @@ f = fe;
 end
 
 function cxy = coh(x, y)
+    % coh^2 = |sxy|^2/(sxx*syy)
+    % coh = |sxy|/sqrt(sxx*syy)
     sxx = abs(sum(x.*conj(x)));
+    if ~isreal(x.*conj(x))
+        keyboard
+    end
     syy = abs(sum(y.*conj(y)));
     sxy = abs(sum(conj(x).*y));
-    cxy = sqrt(sxy/sqrt(sxx*syy));
+    cxy = sxy/sqrt(sxx*syy);
 end
 

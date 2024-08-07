@@ -5,6 +5,14 @@ if iscell(S)
     nIn = size(S{1}.In,2);
     filestr = S{1}.Options.filestr;
     const_term = S{1}.Options.fd.regression.const_term;
+    for i = 2:length(S)
+        filestr = [filestr,';',S{i}.Options.filestr];
+        if S{i}.Options.fd.regression.const_term ~= const_term
+            % Would need to modify returned strings for labels for this to
+            % be handled.
+            error('Case where not all tfs have same const_term setting not handled.')
+        end
+    end
 else
     nOut = size(S.Out,2);
     nIn = size(S.In,2);

@@ -11,6 +11,9 @@ if nargin < 3 || averaged == 0
     return
 end
 
+sig = sig.*window(@parzenwin, size(sig,1));
+err = err.*window(@parzenwin, size(err,1));
+
 [dftsig,f] = dftbands(sig, opts);
 dfterr = dftbands(err, opts);
 
@@ -24,7 +27,7 @@ p = 100*[p, 1-p];
 for s = 1:length(f)
     se(s,1) = sig2err(dftsig{s}, dfterr{s});
     n = size(dftsig{s},1);
-    if n > 10
+    if opts.fd.bootstrap.N > 0 && ~isnan(opts.fd.bootstrap.N) && n >= opts.fd.bootstrap.nmin
         % MATLAB stats toolbox is required for bootstrp function, not used here.
         Nb = 100;
         V = nan(Nb,1);

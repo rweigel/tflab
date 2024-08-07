@@ -55,7 +55,7 @@ for j = 1:length(fe)
         logmsg(msg,fe(j),length(f),min(f),max(f));
     end
 
-    if 0 && size(ftIn,2) == 1 && length(f) == 1
+    if length(f) == 1 && size(ftIn,2) == 1
         % One input component
         z = ftOut./ftIn;
         if isinf(z)
@@ -64,19 +64,32 @@ for j = 1:length(fe)
         Z(j,1) = z;
         continue;
     end
+    
+    % For each frequency, we have two equations.
+    
+    % For 1-D input, 
+    %  Re( Er + i*Ei = (Zr + i*Zi)*(Br + i*Bi) )
+    %  Im( Er + i*Ei = (Zr + i*Zi)*(Br + i*Bi) )
+    %
+    % For 2-D input,
+    % Re( Er + i*Ei = (Zxr + i*Zxi)*(Bxr + i*Bxi) ) + (Zyr + i*Zyi)*(Byr + i*Byi) )
+    % Im( Er + i*Ei = (Zxr + i*Zxi)*(Bxr + i*Bxi) ) + (Zyr + i*Zyi)*(Byr + i*Byi) )    
+    
+    % So to be exactly determined, length(f) == size(ftIn,2). For 1-D, we
+    % need one frequency. For 2-D, we need two frequencies.
 
-    if length(f{j}) < 2*(size(ftIn,2))
+    if length(f{j}) < size(ftIn,2) + opts.fd.regression.const_term
         msg = '!!! System is underdetermined for fe = %.1e. Setting Z equal to NaN(s).\n';
         logmsg(msg,fe(j));
         continue;
     end
-
-    if length(f{j}) == 2*(size(ftIn,2))
-        msg = '!!! System is exactly determined for fe = %.1e. Setting Z equal to NaN(s).\n';
-        logmsg(msg,fe(j));
-        continue;
+    
+    if length(f{j}) == size(ftIn,2) + opts.fd.regression.const_term
+        %msg = '!!! System is exactly determined for fe = %.1e.\n';
+        %logmsg(msg,fe(j));
+        %continue;
     end
-
+    
     [Z(j,:),Info] = callregress_(ftOut,ftIn,j,fe(j),opts);
 
     if any(isinf(Z(j,:)))
@@ -112,7 +125,7 @@ for j = 1:length(fe)
         continue
     end
     n = size(ftOut,1);
-    if ~isnan(opts.fd.bootstrap.N) && n >= opts.fd.bootstrap.nmin
+    if opts.fd.bootstrap.N > 0 && ~isnan(opts.fd.bootstrap.N) && n >= opts.fd.bootstrap.nmin
         % Bootstrap confidence limits if requested, nmin samples or more, and
         % transfer function error estimates are not computed a different way.
         Nb = opts.fd.bootstrap.N;

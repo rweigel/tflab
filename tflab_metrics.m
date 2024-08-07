@@ -27,18 +27,18 @@ end
 
 opts = S.Options;
 if onsegments == 0
-    if isfield_(S,'Regression.ErrorEstimates')
-        % Compute Metrics.ErrorEstimates based on content of
-        % S.Regression.ErrorEstimates.Parametric
-        logmsg('Computing error estimates.\n');
-        Metrics.ErrorEstimates = error_estimates(S,0);
-    end
-    if isfield_(S,'Metrics.ErrorEstimates')
-        Metrics.ErrorEstimates = S.Metrics.ErrorEstimates;
-    else
-        Metrics.ErrorEstimates = error_estimates(S,0);
-    end
     if ~iscell(S.In)
+        if isfield_(S,'Regression.ErrorEstimates')
+            % Compute Metrics.ErrorEstimates based on content of
+            % S.Regression.ErrorEstimates.Parametric
+            logmsg('Computing error estimates.\n');
+            Metrics.ErrorEstimates = error_estimates(S,0);
+        end
+        if isfield_(S,'Metrics.ErrorEstimates')
+            Metrics.ErrorEstimates = S.Metrics.ErrorEstimates;
+        else
+            Metrics.ErrorEstimates = error_estimates(S,0);
+        end
         logmsg('Computing metrics on full unsegmented data using top-level Z.\n');
         In  = S.In;
         if isfield_(S,'Out_.Final') && onfinal == 1
@@ -120,6 +120,7 @@ if onfinal == 0
 else
     logmsg('Computing Out_.Predicted, Out_.ErrorFinal, PE, MSE, CC, SE, and Coherences.\n');
 end
+
 for k = 1:size(In,3) % Third dimension is segment
 
     if length(size(Z)) > 2
@@ -128,7 +129,7 @@ for k = 1:size(In,3) % Third dimension is segment
         [Zi,~] = zinterp(fe,Z,size(In,1));
     end
 
-    Predicted(:,:,k) = zpredict(Zi,In(:,:,k));
+    Predicted(:,:,k) = zpredict(Zi,In(:,:,k),size(Out,2));
 
     for j = 1:size(Out,2) % Second dimension is component
 

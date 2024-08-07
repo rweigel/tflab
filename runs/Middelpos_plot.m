@@ -1,11 +1,9 @@
-%function Middelpos_plot(rundir, filestr, print_figs)
+function Middelpos_plot(rundir, filestr, print_figs)
 
 logmsg('\n');
 for tfn = 1:4
     fname{tfn} = fullfile(rundir, sprintf('%s-tf%d.mat',filestr,tfn));
     TFs{tfn} = loadtf(fname{tfn});
-    %TFs{tfn} = tflab_preprocess(TFs{tfn});
-    %TFs{tfn} = tflab_metrics(TFs{tfn});
 end
 
 copts = struct();
@@ -16,7 +14,9 @@ copts = struct();
 
 if print_figs
     dock off;close all;
-    rmdir(copts.printOptions.printDir,'s');
+    if exist(copts.printOptions.printDir, 'dir')
+        rmdir(copts.printOptions.printDir,'s');
+    end
     mkdir(copts.printOptions.printDir);
 else
     dock on;figure(1);close all;
@@ -38,6 +38,8 @@ if (1)
     tsopts.type = 'error';
     figure();
         tsplot(TFs{1},tsopts);
+    figure();
+        tsplot(TFs{2},tsopts);
     figure();
         tsplot(TFs{3},tsopts);
 end
@@ -62,6 +64,10 @@ figure();
     snopts = copts;
     snplot(TFs(1:2),snopts);
 
+figure();
+    snopts = copts;
+    snplot(TFs,snopts);
+    
 %% Z plots
 figure();
     zopts = copts;
@@ -69,6 +75,12 @@ figure();
     %zopts.period_range = [1, 86400];
     zplot(TFs(1:2),zopts);
 
+figure();
+    zopts = copts;
+    zopts.type = 1;
+    %zopts.period_range = [1, 86400];
+    zplot(TFs,zopts);
+    
 figure();
     qqopts = copts;
     %qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
@@ -79,13 +91,8 @@ figure();
 figure();
     qqopts = copts;
     qqopts.type = 'combined';
-    qqplot_(TFs(1:2),qqopts);
+    qqplot_(TFs,qqopts);
 
 if print_figs == 1
     figHTML(copts.printOptions.printDir)
-end
-
-function rmtitle(axs)
-    set(gcf, 'CurrentAxes', axs(1));
-    title('');
 end
