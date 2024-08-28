@@ -4,7 +4,7 @@ function evalfreq_plot(N,varargin)
 %   evalfreq_plot(...) takes the same inputs as EVALFREQ() and creates a
 %   plot showing the frequency bands and centers.
 %
-%   See also EVALFREQ, EVALFREQ_LOG.
+%   See also EVALFREQ, EVALFREQ_DEMO, EVALFREQ_LOG.
 
 logscale = 0;
 period = 1;
@@ -24,7 +24,7 @@ end
 
 figure;clf;grid on;box on;hold on;
 for i = 1:length(fe)
-    Np = (2*Ne(i)+1);
+    Np = 2*Ne(i)+1;
     fs = f(Ic(i)-Ne(i):Ic(i)+Ne(i));
     fa{i} = fs;
     if period
@@ -37,7 +37,7 @@ for i = 1:length(fe)
     if logscale
         % Shift duplicates a small amount vertically.
         if i > 1 && Ne(i) == Ne(i-1)
-            Np = Np + i/10;
+            %Np = Np + i/10;
         end
         y = Np*ones(size(fs));
         plot(x,y,'go');
@@ -50,27 +50,29 @@ for i = 1:length(fe)
         plot(xe(i),i,'k.','MarkerSize',20);
     end
     if i == 1
-        % Hack for legend.
-        plot(nan,nan,'r.');
+        % Hack to make marker size for red dot larger in legend.
+        plot(nan,nan,'r.','MarkerSize',10);
     end
 end
-d = setdiff(f,cat(2,fa{:}));
-if period
-    plot(1./d,length(d)*ones(size(d)),'r.');
-    legend('DFT frequencies','Band','Center Frequency',...
-           'Un-used DFT frequencies','Location','NorthEast');
-    xlabel('period');
-else
-    plot(d,length(d)*ones(size(d)),'r.');
-    legend('DFT frequencies','Band','Center Frequency',...
-           'Un-used DFT frequencies','Location','SouthEast');    
-    xlabel('frequency');
+d = setdiff(f,cat(1,fa{:}));
+if length(d) > 0
+    if period
+        plot(1./d,length(d)*ones(size(d)),'r.');
+        legend('DFT frequencies','Band','Center Frequency',...
+               'Un-used DFT frequencies','Location','NorthEast');
+        xlabel('period');
+    else
+        plot(d,length(d)*ones(size(d)),'r.');
+        legend('DFT frequencies','Band','Center Frequency',...
+               'Un-used DFT frequencies','Location','SouthEast');    
+        xlabel('frequency');
+    end
 end
 
 if logscale
     set(gca,'XScale','log');
     set(gca,'YScale','log');
-    ylabel(sprintf('# of DFT points associated with band\n(overlapping bands shifted vertically)'));
+    ylabel(sprintf('# of DFT points associated with band'));%\n(overlapping bands shifted vertically)'));
 else
     set(gca,'YTickLabel',[])
     set(gca,'YTick',[])

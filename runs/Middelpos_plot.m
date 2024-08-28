@@ -1,7 +1,7 @@
 function Middelpos_plot(rundir, filestr, print_figs)
 
 logmsg('\n');
-for tfn = 1:4
+for tfn = 1:5
     fname{tfn} = fullfile(rundir, sprintf('%s-tf%d.mat',filestr,tfn));
     TFs{tfn} = loadtf(fname{tfn});
 end
@@ -22,6 +22,28 @@ else
     dock on;figure(1);close all;
 end
 
+%% Z plots
+if 0
+zopts = copts;
+zopts.type = 1;
+%zopts.period_range = [1, 86400];
+zplot(TFs{1},zopts);
+end
+
+if 1
+figure();
+    zopts = copts;
+    zopts.type = 1;
+    %zopts.period_range = [1, 86400];
+    zplot(TFs(1:2),zopts);
+else
+figure();
+    zopts = copts;
+    zopts.type = 1;
+    %zopts.period_range = [1, 86400];
+    zplot(TFs,zopts);
+end
+return
 %% Time series plots
 tsopts = copts;
 if (1)
@@ -30,7 +52,7 @@ if (1)
         tsplot(TFs{1},tsopts);
     figure();
         tsopts.type = 'detrended';
-        tsplot(TFs{3},tsopts);
+        tsplot(TFs{5},tsopts);
 end
 
 if (1)
@@ -55,9 +77,9 @@ figure();
     dftopts.type = 'original-averaged-phases';
     dftplot(TFs{1},dftopts);
 
-figure();
-    dftopts.type = 'error-averaged-magphase';
-    dftplot(TFs{1},dftopts);
+%figure();
+    %dftopts.type = 'error-averaged-magphase';
+    %dftplot(TFs,dftopts);
 
 %% SN plots
 figure();
@@ -91,7 +113,7 @@ figure();
 figure();
     qqopts = copts;
     qqopts.type = 'combined';
-    qqplot_(TFs,qqopts);
+    %qqplot_(TFs,qqopts);
 
 if print_figs == 1
     figHTML(copts.printOptions.printDir)

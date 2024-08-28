@@ -417,7 +417,7 @@ function s = labelstr_(labelstr, prefix, ltype)
     else
         s = ['\mbox{',labelstr,'}'];
     end
-    s = ['\widetilde{',prefix,' ',s,'}'];
+    s = [prefix,'\widetilde{',s,'}'];
     if startsWith(ltype,'magnitude')
         s = ['$|',s,'|$'];
     end

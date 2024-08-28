@@ -13,7 +13,6 @@ function [Ep,Z] = zpredict(Z,B,Nout)
 
 assert(size(B,1) == size(Z,1),'Required: size(B,1) == size(Z,1)');
 
-whos Z B
 if size(Z,2)/size(B,2) == Nout
     const_term = 0;
     Nin  = size(B,2);    

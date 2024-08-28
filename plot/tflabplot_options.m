@@ -1,23 +1,12 @@
 function opts = tflabplot_options(S,opts,plotfun)
 
-if iscell(S)
-    nOut = size(S{1}.Out,2);
-    nIn = size(S{1}.In,2);
-    filestr = S{1}.Options.filestr;
-    const_term = S{1}.Options.fd.regression.const_term;
-    for i = 2:length(S)
-        filestr = [filestr,';',S{i}.Options.filestr];
-        if S{i}.Options.fd.regression.const_term ~= const_term
-            % Would need to modify returned strings for labels for this to
-            % be handled.
-            error('Case where not all tfs have same const_term setting not handled.')
-        end
-    end
-else
-    nOut = size(S.Out,2);
-    nIn = size(S.In,2);
-    filestr = S.Options.filestr;
-    const_term = S.Options.fd.regression.const_term;
+if ~iscell(S)
+    S = {S};
+end
+
+filestr = S{1}.Options.filestr;
+for i = 2:length(S)
+    filestr = [filestr,';',S{i}.Options.filestr];
 end
 
 assert(isstruct(opts),'opts must be a struct.')
@@ -98,32 +87,55 @@ end
 
 dopts.printOptions.printName = [dopts.printOptions.printName,'-',filestr];
 
-if any(strcmp(plotfun,{'zplot','qqplot'}))
-    if nOut == 1
-        if nIn == 1
-            dopts.zstrs = {'Z'};
-            dopts.rhostrs = {'\rho^a'};
-            dopts.phistrs = {'\phi'};
-        end
-        if nIn == 2
-            dopts.zstrs = {'Z_{x}','Z_{y}'};
-            dopts.rhostrs = {'\rho^a_{x}','\rho^a_{y}'};
-            dopts.phistrs = {'\phi_{x}','\phi_{y}'};
-        end
-        if nIn == 3
-            dopts.zstrs = {'Z_{x}','Z_{y}','Z_{z}'};
-            dopts.rhostrs = {'\rho^a_{x}','\rho^a_{y}','\rho^a_{z}'};
-            dopts.phistrs = {'\phi_{x}','\phi_{y}','\phi_{z}'};
-        end
+if isfield(S{1},'Metadata')
+    for s = 1:length(S)
+        nOut(s) = size(S{s}.Out,2);
+        nIn(s) = size(S{s}.In,2);
+        dopts.instr = namestrs_(S{1}.Metadata.instr, nIn);
+        dopts.outstr = namestrs_(S{1}.Metadata.outstr, nOut);
     end
-    if nOut == 2 && nIn == 2
-        dopts.zstrs = {'Z_{xx}','Z_{xy}','Z_{yx}','Z_{yy}'};
-        dopts.rhostrs = {'\rho^a_{xx}','\rho^a_{xy}','\rho^a_{yx}','\rho^a_{yy}'};
-        dopts.phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{yx}','\phi_{yy}'};
-        if const_term == 1
-            dopts.zstrs = {'Z_{xx}','Z_{xy}','Z_{x0}', 'Z_{yx}','Z_{yy}', 'Z_{y0}'};
-            dopts.rhostrs = {'\rho^a_{xx}','\rho^a_{xy}','\rho^a_{x0}','\rho^a_{yx}','\rho^a_{yy}','\rho^a_{y0}'};
-            dopts.phistrs = {'\phi_{xx}','\phi_{xy}','\phi_{x0}','\phi_{yx}','\phi_{yy}','\phi_{y0}'};
+end
+
+if any(strcmp(plotfun,{'zplot','qqplot'}))
+    for s = 1:length(S)
+        nOut(s) = size(S{s}.Out,2);
+        nIn(s) = size(S{s}.In,2);
+        const_term = S{s}.Options.fd.regression.const_term;
+        if nOut(s) == 1
+            if nIn(s) == 1
+                dopts.zstrs{s} = {'Z'};
+                dopts.rhostrs{s} = {'\rho^a'};
+                dopts.phistrs{s} = {'\phi'};
+            end
+            if nIn(s) == 2
+                dopts.zstrs{s} = {'Z_{x}','Z_{y}'};
+                dopts.rhostrs{s} = {'\rho^a_{x}','\rho^a_{y}'};
+                dopts.phistrs{s} = {'\phi_{x}','\phi_{y}'};
+            end
+            if nIn(s) == 3
+                dopts.zstrs{s} = {'Z_{x}','Z_{y}','Z_{z}'};
+                dopts.rhostrs{s} = {'\rho^a_{x}','\rho^a_{y}','\rho^a_{z}'};
+                dopts.phistrs{s} = {'\phi_{x}','\phi_{y}','\phi_{z}'};
+            end
+            if const_term == 1
+                dopts.zstrs{s} = {dopts.zstrs{:}, '\delta E'};
+                dopts.rhostrs{s} = {dopts.rhostrs{:}, '\delta \rho'};
+                dopts.phistrs{s} = {dopts.phistrs{:},'\delta \phi'};
+            end
+        end
+        if nOut(s) == 2 && nIn(s) == 2
+            for i = 1:2
+                for j = 1:2
+                    dopts.zstrs{s}{i,j} = sprintf('Z_{%d%d}',i,j);
+                    dopts.rhostrs{s}{i,j} = sprintf('\\rho^a_{%d%d}',i,j);
+                    dopts.phistrs{s}{i,j} = sprintf('\\phi_{%d%d}',i,j);
+                end
+                if const_term == 1
+                    dopts.zstrs{s}{i,j+1} = sprintf('\\delta E_%d', i);
+                    dopts.rhostrs{s}{i,j+1} = sprintf('\\delta \\rho^a_%d', i);
+                    dopts.phistrs{s}{i,j+1} = sprintf('\\delta \\phi_%d', i);
+                end
+            end
         end
     end
 end
@@ -148,17 +160,6 @@ if any(strcmp(plotfun,{'dftplot','zplot','snplot'}))
     dopts.frequency_range = [0, 0.5]*freqsf;
 end
 
-if iscell(S)
-    if isfield(S{1},'Metadata')
-        dopts.instr = namestrs_(S{1}.Metadata.instr, nIn);
-        dopts.outstr = namestrs_(S{1}.Metadata.outstr, nOut);
-    end
-else
-    if isfield(S,'Metadata')
-        dopts.instr = namestrs_(S.Metadata.instr, nIn);
-        dopts.outstr = namestrs_(S.Metadata.outstr, nOut);
-    end
-end
 
 opts = updateFields(opts,dopts);
 

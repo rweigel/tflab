@@ -1,4 +1,4 @@
-function Middelpos_main(rundir, filestr, start, stop, const_term, Nboot)
+function Middelpos_main(rundir, filestr, start, stop, Nboot)
 
 % Read input/output data
 [B,E,t] = Middelpos_clean(start,stop,rundir,0);
@@ -25,47 +25,65 @@ meta = struct();
     meta.chainid   = 'SANSA';
     meta.stationid = 'Middelpos';
 
-%% TF1
-tfn = 1;
-logmsg('-- Computing TF%d --\n',tfn);
-pps = 86400;
-desc = sprintf('1 %d-day segment',size(B,1)/pps);
-opts{tfn} = tflab_options(1);
-    opts{tfn}.tflab.loglevel = 1;
-    opts{tfn}.fd.regression.const_term = const_term;
-    opts{tfn}.description = desc;
-    opts{tfn}.fd.bootstrap.N = Nboot;
-    opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
+tfn = 0;
+for const_term = 0:1
+    tfn = tfn+1;
+    logmsg('-- Computing TF%d --\n',tfn);
+    ppd = 86400;
+    desc = sprintf('1 %d-day segment',size(B,1)/ppd);
+    opts{tfn} = tflab_options(1);
+        opts{tfn}.tflab.loglevel = 1;
+        opts{tfn}.fd.regression.const_term = const_term;
+        opts{tfn}.description = desc;
+        opts{tfn}.fd.bootstrap.N = Nboot;
+        opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
+    
+    if const_term == 0
+        [~,t_latex] = evalfreq_log(size(B,1), opts{tfn}.fd.evalfreq.functionargs{:});
+        fid = fopen(fullfile(rundir,append(opts{tfn}.filestr,'-evalfreq_table.tex')),'w');
+        fprintf(fid, t_latex);
+        fclose(fid);
+    end
+    
+    TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
+    TFs{tfn}.Metadata = meta;
+    
+    savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
+    TFs{tfn} = [];
+end
 
-TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
-TFs{tfn}.Metadata = meta;
+for const_term = 0:1
+    tfn = tfn+1;
+    logmsg('-- Computing TF%d --\n',tfn);
+    pps = 86400;
+    desc = sprintf('%d %d-day segments',size(B,1)/pps,pps/86400);
+    opts{tfn} = tflab_options(1);
+        opts{tfn}.td.window.width = pps;
+        opts{tfn}.td.window.shift = pps;
+        opts{tfn}.fd.regression.const_term = const_term;
+        opts{tfn}.description = desc;
+        opts{tfn}.fd.bootstrap.N = Nboot;
+        opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
+        opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
+    
+    if const_term == 0        
+        [~,t_latex] = evalfreq_log(size(B,1), opts{tfn}.fd.evalfreq.functionargs{:});
+        fid = fopen(fullfile(rundir,append(opts{tfn}.filestr,'-evalfreq_table.tex')),'w');
+        fprintf(fid, t_latex);
+        fclose(fid);
+    end
 
-savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
-TFs{tfn} = [];
-
-%% TF2
-tfn = 2;
-logmsg('-- Computing TF%d --\n',tfn);
-pps = 86400;
-desc = sprintf('%d %d-day segments',size(B,1)/pps,pps/86400);
-opts{tfn} = tflab_options(1);
-    opts{tfn}.td.window.width = pps;
-    opts{tfn}.td.window.shift = pps;
-    opts{tfn}.fd.regression.const_term = const_term;
-    opts{tfn}.description = desc;
-    opts{tfn}.fd.bootstrap.N = Nboot;
-    opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
-    opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
-
-TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
-TFs{tfn}.Metadata = meta;
-
-savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
-TFs{tfn} = [];
+    TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
+    TFs{tfn}.Metadata = meta;
+    
+    savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
+    TFs{tfn} = [];
+end
 
 if 1
-    %% TF3
-    tfn = 3;
+    const_term = 0;
+
+    tfn = tfn+1;
     logmsg('-- Computing TF%d --\n',tfn);
     Tm = 1*86400;
     band = [1/Tm,0.5];
@@ -86,8 +104,7 @@ if 1
     savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
     TFs{tfn} = [];
     
-    %% TF4
-    tfn = 4;
+    tfn = tfn+1;
     logmsg('-- Computing TF%d --\n',tfn);
     pps = 86400;
     Tm = 1*86400;
@@ -108,30 +125,6 @@ if 1
         opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
     
     TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
-    TFs{tfn}.Metadata = meta;
-    
-    savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
-    TFs{tfn} = [];
-end
-
-if 0    
-    %% TF5
-    tfn = 5;
-    logmsg('-- Computing TF%d --\n',tfn);
-    meta.instr     = {'$B_x$'};
-    meta.outstr    = {'$E_y$'};
-    pps = 86400;
-    desc = sprintf('%d %d-day segments',size(B,1)/pps,pps/86400);
-    opts{tfn} = tflab_options(1);
-        opts{tfn}.td.window.width = pps;
-        opts{tfn}.td.window.shift = pps;
-        opts{tfn}.fd.regression.const_term = const_term;
-        opts{tfn}.description = desc;
-        opts{tfn}.fd.bootstrap.N = Nboot;
-        opts{tfn}.fd.bootstrap.nmin = size(B,1)/pps;
-        opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
-    
-    TFs{tfn} = tflab(B(:,1),E(:,2),opts{tfn});
     TFs{tfn}.Metadata = meta;
     
     savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));

@@ -1,10 +1,10 @@
-function evalfreq_log(N,varargin)
-%EVALFREQ_LOG
+function [t_simple, t_latex] = evalfreq_log(N,varargin)
+%EVALFREQ_LOG  Display table of evaluation frequencies and periods
 %
-%   [fe,Ic,Ne] = evalfreq_log(...) takes the same inputs as EVALFREQ(),
-%   returns the same outputs, and prints the frequencies.
+%   [fe,Ic,Ne] = EVALFREQ_LOG(N) takes the same inputs as evalfreq(),
+%   returns the same outputs, and prints a table.
 %
-%   See also EVALFREQ, EVALFREQ_PLOT.
+%   See also EVALFREQ, EVALFREQ_DEMO, EVALFREQ_PLOT.
 
 if nargin > 1
     [fe,Ic,Ne] = evalfreq(N,varargin{:});
@@ -28,14 +28,40 @@ end
 
 [~,f] = fftfreq(N);
 
-fprintf('evalfreq_log.m: __________________________________________\n');
-for i = 1:length(fe)
-    fprintf('evalfreq_log.m: fe = %.2g, flow = %.2g, fhigh = %.2g, Ne = %3d\n',...
-            fe(i),f(Ic(i)-Ne(i)),f(Ic(i)+Ne(i)),Ne(i));
+fprintf('evalfreq_log.m: %d DFT frequencies\n',N);
+t_simple = sprintf('   fe        fl        fu        Te        Tl        Th           il         ih      Ne\n');
+    
+t_latex = '';
+t_latex = append(t_latex,'\\begin{tabular}{c c c c c c c c c}',newline());
+t_latex = append(t_latex,'\\hline',newline());
+t_latex = append(t_latex,'$f_e$ [Hz] & $f_l$ [Hz] & $f_u$ [Hz] & $T_e$ [s] & $T_l$ [s] & $T_u$ [s] & $i_l$ & $i_u$ & $N_e$ \\\\',newline());
+t_latex = append(t_latex,'\\hline',newline());
+
+io = 1;
+if fe(1) == 0
+    io = 2;
 end
-fprintf('evalfreq_log.m: __________________________________________\n');
-for i = 1:length(fe) 
-    fprintf('evalfreq_log.m: Te = %.2f, Tlow = %.2f, Thigh = %.2f, Ne = %3d\n',...
-            1/fe(i),1/f(Ic(i)+Ne(i)),1/f(Ic(i)-Ne(i)),Ne(i));
+for i = io:length(fe)
+    tmp = sprintf('$%7.2e$ & $%7.2e$ & $%7.2e$ & $%7.2e$ & $%7.2e$ & $%7.2e$ & $%10d$ & $%10d$ & $%7d$',...
+                    fe(i),f(Ic(i)-Ne(i)),f(Ic(i)+Ne(i)),...
+                    1/fe(i),1/f(Ic(i)+Ne(i)),1/f(Ic(i)-Ne(i)),...
+                    Ic(i)-Ne(i),Ic(i)+Ne(i),... 
+                    2*Ne(i)+1);
+    tmp = append(tmp,'\\\\',newline());
+
+    % Regex is brittle.
+    tmpl = regexprep(tmp,'e(\+|-)([0-9].?)','\\\\cdot 10^{$1$2}');
+    tmpl = regexprep(tmpl,'\{-0','{-');
+    tmpl = regexprep(tmpl,'\{\+0','{');
+    t_latex = append(t_latex,tmpl);
+
+    tmp = replace(tmp,'\\','');
+    tmp = replace(tmp,'$','');
+    tmp = replace(tmp,' &','');
+    t_simple = append(t_simple,tmp);
+   
 end
-fprintf('evalfreq_log.m: __________________________________________\n');
+t_latex = append(t_latex,'\\hline \\\\',newline());
+t_latex = append(t_latex,'\\end{tabular}',newline());
+fprintf(t_simple);
+%fprintf(t_latex);

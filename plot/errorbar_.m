@@ -1,4 +1,4 @@
-function errorbar_(x,y,dyl,dyu,dir,varargin)
+function errorbar_(x,y,dyl,dyu,dir,ymin,varargin)
 %ERRORBAR_  Similar to ERRORBAR except handles loglog and semilogx
 
 if nargin < 4
@@ -9,6 +9,9 @@ if nargin < 5
     dir = 'y';
 end
 if nargin < 6
+    ymin = NaN;
+end
+if nargin < 7
     linestyle = {'k'};
 else
     linestyle = varargin;
@@ -22,9 +25,12 @@ if strcmp(scalex,'linear') && strcmp(scaley,'linear')
         plot([x(i),x(i)],[y(i)+dyu(i),y(i)-dyl(i)],linestyle{:});
     end
 end
-if strcmp(scalex,'log') && strcmp(scaley,'log')
-    Ip = find(y-dyl > 0);        % Positive lower error bar value
-    ymin = min(y(Ip) - dyl(Ip)); % Minimum positive lower error bar value
+if strcmp(scaley,'log')
+    Ip = [];
+    if isnan(ymin)
+        Ip = find(y-dyl > 0);        % Positive lower error bar value
+        ymin = min(y(Ip) - dyl(Ip)); % Minimum positive lower error bar value
+    end
     for i = 1:length(x)
         if isnan(y(i)) || isnan(dyl(i)) || isnan(dyu(i))
             continue;
@@ -34,7 +40,7 @@ if strcmp(scalex,'log') && strcmp(scaley,'log')
             ylow = y(i) - dyl(i);
         else
             add_head = 1;
-            if isempty(Ip)
+            if ~isnan(ymin) && isempty(Ip)
                 % No ymin is above zero. Place head one decade below
                 % lowest y.
                 ylow = min(y)/10;
