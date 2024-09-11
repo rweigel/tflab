@@ -1,4 +1,4 @@
-function errorbar_(x,y,dyl,dyu,dir,ymin,varargin)
+function errorbar_(x,y,dyl,dyu,dir,ymin,args)
 %ERRORBAR_  Similar to ERRORBAR except handles loglog and semilogx
 
 if nargin < 4
@@ -12,11 +12,10 @@ if nargin < 6
     ymin = NaN;
 end
 if nargin < 7
-    linestyle = {'k'};
-else
-    linestyle = varargin;
+    args = struct('Color', 'k');
 end
 
+linestyle = struct2cell(args);
 scalex = get(gca,'XScale');
 scaley = get(gca,'YScale');
 
@@ -40,17 +39,21 @@ if strcmp(scaley,'log')
             ylow = y(i) - dyl(i);
         else
             add_head = 1;
-            if ~isnan(ymin) && isempty(Ip)
+            if isnan(ymin) && isempty(Ip)
                 % No ymin is above zero. Place head one decade below
                 % lowest y.
                 ylow = min(y)/10;
             else
                 ylow = ymin;
+                if ymin ~= ylow
+                    ylow = ymin/10;
+                end
             end
         end
         loglog([x(i),x(i)],[y(i)+dyu(i),ylow],linestyle{:});
         if add_head
-            loglog(x(i),ylow,'ko','MarkerSize',10);
+            color = args.Color;
+            loglog(x(i),ylow,'o','MarkerSize',10, 'Color', color);
         end
     end
 end

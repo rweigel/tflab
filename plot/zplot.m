@@ -244,7 +244,7 @@ if length(S) > 1
         end
         ylabel(yl);
 
-        % errorbars_() must be called after scale type is set.
+        % ebars_() must be called after scale type is set.
         ebars_(h, x(kept), y(kept), dyl(kept), dyu(kept), 1, ylraw)
 
         adjust_yticks(1e-4);
@@ -270,7 +270,7 @@ if length(S) > 1
                 h(k) = plot(x{s}, y{s}, popts.line{:});
             end
 
-            if s == 1,grid on;box on;hold on;end
+            if k == 1,grid on;box on;hold on;end
         end
         idx = sub2ind(size(popts.zstrs{s}), comp(1), comp(2));
 
@@ -281,7 +281,7 @@ if length(S) > 1
             ylraw = popts.zstrs{s}{idx};
         end
         ylabel(yl);
-
+        
         if popts.type ~= 3 && ~popts.unwrap
             set(gca,'YScale','linear');
             set(gca,'YLim',[-180,180]);
@@ -327,7 +327,6 @@ function [x,y,dyu,dyl,kept] = xyvals_(S,popts,comp,panel,errorbar_method)
         end
         kept(end+1) = s;
         idx = sub2ind(size(popts.zstrs{s}), comp(1), comp(2));
-
         if strcmp(errorbar_method,'parametric')
             ErrorEstimates = S{s}.Metrics.ErrorEstimates.Parametric;
         end
@@ -365,8 +364,8 @@ function [x,y,dyu,dyl,kept] = xyvals_(S,popts,comp,panel,errorbar_method)
                 else
                     y{s} = (180/pi)*ang;
                 end
-                dyl{s} = y{s} - ErrorEstimates.PHICL95l(:,idx);
-                dyu{s} = ErrorEstimates.PHICL95u(:,idx) - y{s};
+                dyl{s} = abs(y{s} - ErrorEstimates.PHICL95l(:,idx));
+                dyu{s} = dyl{s};
             end
         end
 
