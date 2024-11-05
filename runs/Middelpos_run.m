@@ -3,10 +3,11 @@ close all % To reduce memory.
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-print_figs = 0;
-Nboot = 100;
+run_nums    = [2];
+print_figs  = 1;
+Nboot       = 100;
 
-for run_num = 0:0
+for run_num = run_nums
     
     switch run_num
         case 0

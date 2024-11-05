@@ -124,16 +124,17 @@ if any(strcmp(plotfun,{'zplot','qqplot'}))
             end
         end
         if nOut(s) == 2 && nIn(s) == 2
+            xy = ['x','y'];
             for i = 1:2
                 for j = 1:2
-                    dopts.zstrs{s}{i,j} = sprintf('Z_{%d%d}',i,j);
-                    dopts.rhostrs{s}{i,j} = sprintf('\\rho^a_{%d%d}',i,j);
-                    dopts.phistrs{s}{i,j} = sprintf('\\phi_{%d%d}',i,j);
+                    dopts.zstrs{s}{i,j} = sprintf('Z_{%s%s}',xy(i),xy(j));
+                    dopts.rhostrs{s}{i,j} = sprintf('\\rho^a_{%s%s}',xy(i),xy(j));
+                    dopts.phistrs{s}{i,j} = sprintf('\\phi_{%s%s}',xy(i),xy(j));
                 end
                 if const_term == 1
-                    dopts.zstrs{s}{i,j+1} = sprintf('\\delta E_%d', i);
-                    dopts.rhostrs{s}{i,j+1} = sprintf('\\delta \\rho^a_%d', i);
-                    dopts.phistrs{s}{i,j+1} = sprintf('\\delta \\phi_%d', i);
+                    dopts.zstrs{s}{i,j+1} = sprintf('\\delta E_%s', xy(i));
+                    dopts.rhostrs{s}{i,j+1} = sprintf('\\delta \\rho^a_%s', xy(i));
+                    dopts.phistrs{s}{i,j+1} = sprintf('\\delta \\phi_%s', xy(i));
                 end
             end
         end

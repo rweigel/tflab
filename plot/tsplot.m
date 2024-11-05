@@ -112,7 +112,7 @@ else
         t2 = index2mldn_(S, size(y2,1));
 
         trange = [t1(1),t1(end)];
-        lg1 = {'Measured', 'Predicted'};
+        lg1 = {'Measured', sprintf('Predicted with %s', S.Options.description)};
     else
         logmsg('Plotting input/output for single transfer function.\n')
         if strcmp(popts.type,'original')

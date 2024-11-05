@@ -21,29 +21,7 @@ if print_figs
 else
     dock on;figure(1);close all;
 end
-
-%% Z plots
-if 0
-zopts = copts;
-zopts.type = 1;
-%zopts.period_range = [1, 86400];
-zplot(TFs{1},zopts);
-end
-
-if 1
-figure();
-    zopts = copts;
-    zopts.type = 1;
-    %zopts.period_range = [1, 86400];
-    zplot(TFs(1:2),zopts);
-else
-figure();
-    zopts = copts;
-    zopts.type = 1;
-    %zopts.period_range = [1, 86400];
-    zplot(TFs,zopts);
-end
-return
+    
 %% Time series plots
 tsopts = copts;
 if (1)
@@ -84,7 +62,7 @@ figure();
 %% SN plots
 figure();
     snopts = copts;
-    snplot(TFs(1:2),snopts);
+    snplot(TFs([1,3]),snopts);
 
 figure();
     snopts = copts;
@@ -95,14 +73,16 @@ figure();
     zopts = copts;
     zopts.type = 1;
     %zopts.period_range = [1, 86400];
-    zplot(TFs(1:2),zopts);
+    zplot(TFs([1,3]),zopts);
 
 figure();
     zopts = copts;
     zopts.type = 1;
     %zopts.period_range = [1, 86400];
     zplot(TFs,zopts);
+
     
+%% qq plots    
 figure();
     qqopts = copts;
     %qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');

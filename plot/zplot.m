@@ -30,12 +30,16 @@ popts   = tflabplot_options(S, popts, 'zplot');
 
 if nargin < 3
     for s = 1:length(S)
-        cn = 1;
-        for i = 1:size(popts.zstrs{s},1)
-            for j = 1:size(popts.zstrs{s},2)
-                comps{cn} = [i,j];
-                cn = cn + 1;
-            end
+        nr(s) = size(popts.zstrs{s},1);
+        nc(s) = size(popts.zstrs{s},2);
+        logmsg('TF #%d is %dx%d\n',s,nr(s),nc(s));
+    end
+    % Compute list of all possible components to plot
+    cn = 1;
+    for i = 1:max(nr)
+        for j = 1:max(nc)
+            comps{cn} = [i,j];
+            cn = cn + 1;
         end
     end
 end    
@@ -189,9 +193,10 @@ if length(S) > 1
 
     if length(comps) == 1
         comp = comps{1};
-        logmsg('Plotting component Z_%d%d.\n',comp(1),comp(2));
+        logmsg('Plotting component Z_%d%d for TFs with this component.\n',comp(1),comp(2));
     else
-        logmsg('Plotting %d components for %d transfer functions.\n',length(comps),length(S))
+        msg = 'Plotting %d components for %d transfer functions.\n';
+        logmsg(msg,length(comps),length(S));
         for c = 1:length(comps)
             if c > 1
                 figure;
@@ -297,17 +302,18 @@ if length(S) > 1
         adjust_exponent();
         setx(popts,1,frequnit);
 
-    figsave_(popts,popts.zstrs{s}{idx});
+    var_name = replace(popts.zstrs{s}{idx},'\delta ','delta');
+    figsave_(popts,var_name);
 
 end % if iscell(S)
 
 end % function zplot()
 
 function ebars_(h, x, y, dyl, dyu, lw, yl)
-    if length(h) == 1
+    if isscalar(h)
         errorbars_(h(1),x{1},y{1},dyl{1},dyu{1},lw);
     elseif length(h) == 2
-        errorbars_(h,[0.97*x{1},1.03*x{2}],[y{1},y{2}],[dyl{1},dyl{2}],[dyu{1},dyu{2}],lw);
+        errorbars_(h,{0.97*x{1},1.03*x{2}},{y{1},y{2}},{dyl{1},dyl{2}},{dyu{1},dyu{2}},lw);
         %errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},lw);
     else
         logmsg('Not plotting error bars for %s because more than two being plotted.\n', yl);
