@@ -1,7 +1,7 @@
 % Demonstrating an error in MATLAB's regress function. When inputs are
 % complex, the confidence limits on the complex part of the computed
 % slopes are the same as the computed slope. This error is indicated
-% by a start in the table displayed when this script is executed.
+% by a star in the table displayed when this script is executed.
 
 N = 10;
 sigma = 0.1;
@@ -41,7 +41,7 @@ if 0
 
 end
 
-if 0
+if 1
     [x,y] = xy_(2,N,sigma);
     [Z,dZ,Info] = regress_ols(y,x,'regress');
     fprintf('\n2-D complex (4-D) using regress\n')

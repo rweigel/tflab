@@ -5,6 +5,10 @@ stationid = 'KAP103';
 
 KAP03_main;
 
+E = E(1:10*86400/5,:);
+B = B(1:10*86400/5,:);
+t = t(1:10*86400/5);
+
 %% Compute transfer functions
 
 %% First TF
@@ -21,7 +25,7 @@ TF1 = tflab(B(:,1:2),E,opts1);
 TF1.Metadata = meta;
 
 % Save results
-fname = fullfile(scriptdir(),'data',chainid,stationid,[TF1.Options.filestr,'.mat']);
+fname = fullfile(scriptdir(),'data',chainid,stationid,'tfs',[TF1.Options.filestr,'.mat']);
 savetf(TF1,fname);
 
 %% Second TF
@@ -38,7 +42,7 @@ TF2 = tflab(B(:,1:2),E,opts2);
 TF2.Metadata = meta;
 
 % Save results
-fname = fullfile(scriptdir(),'data',chainid,stationid,[TF2.Options.filestr,'.mat']);
+fname = fullfile(scriptdir(),'data',chainid,stationid,'tfs',[TF2.Options.filestr,'.mat']);
 savetf(TF2,fname);
 
 %% Read TF computed using BIRRP
@@ -86,10 +90,10 @@ if strcmp(chainid,'KAP03')
     TF3.fe = TF3.Metadata.EDI.fe*timedelta;
     TF3.In  = B(:,1:2);
     TF3.Out = E;
-    TF3 = tflab_metrics(TF3);
+    %TF3 = tflab_metrics(TF3);
 end
 
-fnamea = fullfile(scriptdir(),'data',chainid,stationid,[TF3.Options.filestr,'.mat']);
+fnamea = fullfile(scriptdir(),'data',chainid,stationid,'tfs',[TF3.Options.filestr,'.mat']);
 savetf(TF3,fnamea);
 
 %KAP03_plot;

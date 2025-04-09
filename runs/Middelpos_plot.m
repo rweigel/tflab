@@ -6,11 +6,42 @@ for tfn = 1:5
     TFs{tfn} = loadtf(fname{tfn});
 end
 
+outdir = fullfile(scriptdir(),'data','KAP03','KAP103','tfs');
+f = fullfile(outdir, sprintf('%s-%s.mat','KAP103','unknown-unknown-tf3'));
+TFs{6} = loadtf(f);
+%keyboard
+TFs{6}.In = TFs{1}.In;
+TFs{6}.Out = TFs{1}.Out;
+TFs{6}.Z = -TFs{6}.Z;
+TFs{6} = tflab_preprocess(TFs{6});
+TFs{6} = tflab_metrics(TFs{6});
+
+f = fullfile(outdir, sprintf('%s-%s.mat','KAP103','20031108-20031118-tf1'));
+TFs{7} = loadtf(f);
+TFs{7}.In = TFs{1}.In;
+TFs{7}.Out = TFs{1}.Out;
+TFs{7}.Z = -TFs{7}.Z;
+TFs{7} = tflab_preprocess(TFs{7});
+TFs{7} = tflab_metrics(TFs{7});
+
 copts = struct();
     copts.print = print_figs; % Set to 1 to print pdf of each figure created.
     copts.printOptions.printDir = fullfile(rundir,'figures');
     copts.printOptions.printFormats = {'pdf','png'};
     copts.title = '';
+
+keyboard
+    
+figure();
+    zopts = copts;
+    zopts.type = 1;
+    %zopts.period_range = [1, 86400];
+    zplot({TFs{1}, TFs{6}, TFs{7}},zopts);
+
+
+figure();
+    snopts = copts;
+    snplot(TFs,snopts);
 
 if print_figs
     dock off;close all;
@@ -21,7 +52,7 @@ if print_figs
 else
     dock on;figure(1);close all;
 end
-    
+
 %% Time series plots
 tsopts = copts;
 if (1)
@@ -36,12 +67,10 @@ end
 if (1)
     tsopts = copts;
     tsopts.type = 'error';
-    figure();
-        tsplot(TFs{1},tsopts);
-    figure();
-        tsplot(TFs{2},tsopts);
-    figure();
-        tsplot(TFs{3},tsopts);
+    for i = 1:length(TFs)
+        figure();
+            tsplot(TFs{i},tsopts);
+    end
 end
 
 %% DFT plots
@@ -81,7 +110,7 @@ figure();
     %zopts.period_range = [1, 86400];
     zplot(TFs,zopts);
 
-    
+
 %% qq plots    
 figure();
     qqopts = copts;

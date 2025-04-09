@@ -42,7 +42,7 @@ if nargin < 3
             cn = cn + 1;
         end
     end
-end    
+end
 
 % Single transfer function
 if length(S) == 1
@@ -70,7 +70,7 @@ if length(S) == 1
 
     for c = 1:length(comps)
         idx = sub2ind(size(popts.zstrs{1}), comps{c}(1), comps{c}(2));
-        ls1{c} = sprintf(template1,strings1{idx});
+        ls1{c} = sprintf(template1,strings1{idx})
         [x1,y1(:,c),dyu1(:,c),dyl1(:,c)] = xyvals_(S,popts,[comps{c}(1), comps{c}(2)],'top','parametric');
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
             [~,~,dyu1b(:,c),dyl1b(:,c)] = xyvals_(S,popts,[comps{c}(1), comps{c}(2)],'top','bootstrap');
@@ -95,7 +95,7 @@ if length(S) == 1
 
         if length(ls1) > 1
             ylabel(yl1);
-            legend(ls1,popts.legend{:});
+            %legend(ls1,popts.legend{:});
         else
             ylabel(sprintf('%s %s',ls1{1},yl1));
         end
@@ -108,6 +108,7 @@ if length(S) == 1
             set(gca,'YScale','log');
         end
 
+        
         % Must be called after scale type is set.
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
             errorbars_(h1,0.97*x1,y1,dyl1,dyu1,1);
@@ -155,7 +156,7 @@ if length(S) == 1
         % Must be called after scale type is set.
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
             errorbars_(h2,0.97*x2,y2,dyl2,dyu2,1);
-            errorbars_(h2,x2*1.03,y2,dyl2b,dyu2b,1);
+            errorbars_(h2,1.03*x2,y2,dyl2b,dyu2b,1);
         else
             errorbars_(h2,x2,y2,dyl2,dyu2,2);
         end
@@ -168,20 +169,10 @@ if length(S) == 1
         line(xlims,[0,0])
 
     if popts.print == 1
-        exts = {};
-        if length(popts.zstrs) == 2
-            exts = {'x','y'};
-        end
-        if length(popts.zstrs) == 4
-            exts = {'xx','xy','yx','yy'};
-        end
         ext = '';
-        for i = 1:length(comps)
-            if ~isempty(exts)
-                ext = [ext,exts{comps(i)}];
-            else
-                ext = [ext,num2str(comps(i))];
-            end
+        for c = 1:length(comps)
+           idx = sub2ind(size(popts.zstrs{1}), comps{c}(1), comps{c}(2));
+           ext = [ext,popts.zstrs{1}{idx}];
         end
         figsave_(popts,ext);
     end
@@ -207,7 +198,6 @@ if length(S) > 1
     end
 
     figprep();
-
     ax1 = subplot('Position', popts.PositionTop);
         [x,y,dyu,dyl,kept] = xyvals_(S,popts,comp,'top','parametric');
 
@@ -221,7 +211,6 @@ if length(S) > 1
             end
         end
         idx = sub2ind(size(popts.zstrs{s}), comp(1), comp(2));
-        
         legend(h,ls,popts.legend{:});
         title_(S,popts,'z');
 
@@ -278,7 +267,6 @@ if length(S) > 1
             if k == 1,grid on;box on;hold on;end
         end
         idx = sub2ind(size(popts.zstrs{s}), comp(1), comp(2));
-
         yl = sprintf('$%s$ [$^\\circ]$',popts.phistrs{s}{idx});
         ylraw = popts.phistrs{s}{idx};
         if popts.type == 3
@@ -312,11 +300,12 @@ end % function zplot()
 function ebars_(h, x, y, dyl, dyu, lw, yl)
     if isscalar(h)
         errorbars_(h(1),x{1},y{1},dyl{1},dyu{1},lw);
-    elseif length(h) == 2
-        errorbars_(h,{0.97*x{1},1.03*x{2}},{y{1},y{2}},{dyl{1},dyl{2}},{dyu{1},dyu{2}},lw);
+    elseif length(h) < 5
+        %errorbars_(h,{0.97*x{1},1.03*x{2}},{y{1},y{2}},{dyl{1},dyl{2}},{dyu{1},dyu{2}},lw);
         %errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},lw);
+        errorbars_(h, x, y, dyl, dyu, lw);
     else
-        logmsg('Not plotting error bars for %s because more than two being plotted.\n', yl);
+        logmsg('Not plotting error bars for %s because more than four TFs being plotted.\n', yl);
     end
 end
 
@@ -332,7 +321,9 @@ function [x,y,dyu,dyl,kept] = xyvals_(S,popts,comp,panel,errorbar_method)
             continue
         end
         kept(end+1) = s;
-        idx = sub2ind(size(popts.zstrs{s}), comp(1), comp(2));
+        % Note that it is comp(2), comp(1) not comp(1), comp(2)
+        % because matrixes have columns of Zxx, Zxy, Zyx, Zyy
+        idx = sub2ind(size(popts.zstrs{s}), comp(2), comp(1));
         if strcmp(errorbar_method,'parametric')
             ErrorEstimates = S{s}.Metrics.ErrorEstimates.Parametric;
         end

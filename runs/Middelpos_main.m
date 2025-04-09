@@ -3,6 +3,8 @@ function Middelpos_main(rundir, filestr, start, stop, Nboot)
 % Read input/output data
 [B,E,t] = Middelpos_clean(start,stop,rundir,0);
 
+E(:,2) = -E(:,2);
+
 % Make length an integer number of segments.
 pps = 86400;
 I = pps*floor(size(B,1)/pps);

@@ -4,8 +4,9 @@ addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 run_nums    = [2];
-print_figs  = 1;
-Nboot       = 100;
+print_figs  = 0;
+%Nboot       = 100;
+Nboot       = 0;
 
 for run_num = run_nums
     
@@ -19,6 +20,9 @@ for run_num = run_nums
         case 2
             start = '20120712';
             stop = '20121107';
+        case 3
+            start = '20170101'; % Problem with data after this date
+            stop = '20170104';
     end
     
     filestr = 'Middelpos';

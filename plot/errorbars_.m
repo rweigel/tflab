@@ -35,7 +35,7 @@ if strcmp(scaley,'log')
 end
 
 for j = 1:length(yc)
-    color = get(h(j),'Color');
+    color = get(h(j),'Color')
     args = struct('Color',color,'LineWidth',lw(j));
     errorbar_(xc{j},yc{j},dylc{j},dyuc{j},'y',ymin,args);
 end

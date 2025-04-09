@@ -160,9 +160,13 @@ if length(S) > 1
 
     ax1 = subplot('Position', popts.PositionTop);
         grid on;box on;hold on;
+        c = colororder;
         for s = 1:length(y1)
             marker = markeropts(length(S),s);
-            plot(x{s},y1{s}(:,comp),marker{:});
+            plot(x{s},y1{s}(:,comp),marker{:},'color', c(s,:));
+        end
+        for s = 1:length(y1)
+            plot(x{s}, y2{s}(:,comp)./(1-y2{s}(:,comp)), '-','color', c(s,:));
         end
         title_(S,popts,'sn');
         for s = 1:length(y1)
@@ -183,7 +187,6 @@ if length(S) > 1
         adjust_exponent();
         yline(1,'k');
         setx(popts,0,frequnit);
-
     ax2 = subplot('Position', popts.PositionBottom);
         grid on;box on;hold on;
         for s = 1:length(y2)
@@ -204,7 +207,7 @@ if length(S) > 1
                     lg{end+1} = popts.instr{1};
                 end
             end
-            ylabel(sprintf('Coherence with %s',outstr));
+            ylabel(sprintf('Squared Coherence with %s',outstr));
         else
             tmp = '%s Meas. to %s Pred. Coherence';
             ylabel(sprintf(tmp,outstr,outstr));

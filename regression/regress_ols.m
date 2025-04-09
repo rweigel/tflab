@@ -42,7 +42,7 @@ if strcmp(algorithm,'regress')
         logmsg('ftIn or ftOut is complex. Using regress-real.\n');
         % As demonstrated in regress_demo_complex_bug.m, ZCL is wrong when
         % ftE or ftB is complex.
-        [Z,dZ,Info] = regress_ols(ftE,ftB,'regress-real');
+        [Z,Info] = regress_ols(ftE,ftB,'regress-real');
         return
     end
     [Z,ZCL95,Info.Residuals,Rint,Stats] = regress(ftE,ftB);

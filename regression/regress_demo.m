@@ -19,9 +19,9 @@ my = 1; % Slope in input y
 
 % Anonymous function zao adds outliers to z
 % Set last value of z to 10
-zao = @(z) [z(1:end-1); 10];
+zao = @(z) [z(1:end-2); 10; -10];
 % For no outliers, use
-% zao = @(z) z;
+%zao = @(z) z;
 
 % Standard deviation of noise on inputs and output
 exo = 0.5;
@@ -46,17 +46,27 @@ for k = 1:Nr
     % Compute output and add noise
     z = mx*x + my*y + ez;
 
-    % Add outliers
+    % Add outlier
     z = zao(z);
 
-    [m1(:,k), r1(:,k)] = regress_ols(z, [x,y], 'backslash');
-    [m2(:,k), r2(:,k)] = regress_ols(z, [x,y], 'regress');
-    [m3(:,k), r3(:,k)] = regress_tls(z, [x,y]);
+    [m1(:,k), info1] = regress_ols(z, [x,y], 'backslash');
+    [m2(:,k), info2] = regress_ols(z, [x,y], 'regress');
+    [m3(:,k), info3] = regress_tls(z, [x,y]);
 
-    [m4(:,k), r4(:,k), w4(:,k)] = regress_robustfit_tflab( z,[x,y],robustfit_tflab_options);
-    [m5(:,k), r5(:,k), w5(:,k)] = regress_robustfit_matlab(z,[x,y],robustfit_matlab_options{:});
-
+    [m4(:,k), info4] = regress_robustfit_tflab( z,[x,y],robustfit_tflab_options);
+    [m5(:,k), info5] = regress_robustfit_matlab(z,[x,y],robustfit_matlab_options{:});
+    
+    r1(:,k) = info1.Residuals;
+    r2(:,k) = info2.Residuals;
+    r3(:,k) = info3.Residuals;
+    r4(:,k) = info4.Residuals;
+    r5(:,k) = info5.Residuals;
 end
+m1a = mean(m1,2);
+m2a = mean(m2,2);
+m3a = mean(m3,2);
+m4a = mean(m4,2);
+m5a = mean(m5,2);
 
 % TODO: Use table() function
 hline = [repmat('-',1,57),'\n'];
@@ -65,21 +75,28 @@ fprintf(hline);
 fprintf('Parameter estimates\n');
 fprintf(hline);
 fprintf('fit #  param  %s\n',columns);
+dimlabels = {'mx','my'};
 for k = 1:Nr
-    dimlabels = {'mx','my'};
     for dim = 1:2
-        m_means = mean([m1(dim,k); m2(dim,k); m3(dim,k); m4(dim,k); m5(dim,k)], 2);
+        ms = [m1(dim,k); m2(dim,k); m3(dim,k); m4(dim,k); m5(dim,k)];
         fprintf('%4d    %s     %5.2f    %5.2f   %5.2f     %5.2f       %5.2f\n',...
-                k,dimlabels{dim},m_means);
+                k,dimlabels{dim},ms);
     end
 end
 
+msa = [m1a(dim); m2a(dim); m3a(dim); m4a(dim); m5a(dim)];
+
+fprintf('\n');
+for dim = 1:2
+    fprintf('        %s     %5.2f    %5.2f   %5.2f     %5.2f       %5.2f\n',...
+            dimlabels{dim},msa);
+end
 fprintf('\n');
 fprintf(hline);
 fprintf('Weighted residuals (average of across %d fits)\n', Nr);
 fprintf(hline);
 fprintf('              %s\n',columns);
-fprintf('               %5.2f    %5.2f   %5.2f     %5.2f       %5.2f\n',...
+fprintf('               %6.3f    %6.3f   %6.3f     %6.3f       %6.3f\n',...
          mean([r1(:),r2(:),r3(:),r4(:),r5(:)])');
 fprintf('\n\n');
 

@@ -1,4 +1,4 @@
-function [Z,R,W,stats] = regress_robustfit_matlab(ftE,ftB,varargin)
+function [Z,Info] = regress_robustfit_matlab(ftE,ftB,varargin)
 
 [nr,nc] = size(ftE);
 
@@ -9,14 +9,13 @@ if nr <= nc
     % standard deviation can be computed. But need to document why in
     % general nr <= nc is the appropriate constraint.
     [Z,~,R] = regress(ftE,ftB);
-    stats = [];
-    W = [];
+    Info.Residuals = R;
 else
     % Note robustfit() uses robustfit(input, output)
     % and regress() uses regress(output, input) (order of arguments differs)
     [Z,stats] = robustfit(ftB,ftE,varargin{:});
-    W = stats.w;
+    Info.Weights = stats.w;
     % Unweighted residuals
-    R = ftE - ftB*Z;
+    Info.Residuals = ftE - ftB*Z;
 end
 

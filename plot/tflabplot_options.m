@@ -13,7 +13,7 @@ assert(isstruct(opts),'opts must be a struct.')
 
 dopts = struct(); % Defalt opts
 
-%dopts.title = '';
+dopts.title = '';
 
 % Print options passed to tflab's figsave()
 dopts.print = 0;

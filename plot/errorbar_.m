@@ -50,9 +50,9 @@ if strcmp(scaley,'log')
                 end
             end
         end
-        loglog([x(i),x(i)],[y(i)+dyu(i),ylow],linestyle{:});
+        color = args.Color;
+        loglog([x(i),x(i)],[y(i)+dyu(i),ylow],linestyle{:}, 'Color', color);
         if add_head
-            color = args.Color;
             loglog(x(i),ylow,'o','MarkerSize',10, 'Color', color);
         end
     end

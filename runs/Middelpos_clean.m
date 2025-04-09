@@ -4,9 +4,10 @@ if nargin < 4
     usecache = 1;
 end
 
+usecache = 0;
+
 mat_raw = fullfile(rundir,'measurements-raw.mat');
 mat_cleaned = fullfile(rundir,'measurements-cleaned.mat');
-
 
 if ~exist(rundir,'dir')
     mkdir(rundir);
@@ -20,7 +21,10 @@ if exist(mat_cleaned,'file') && usecache
     return
 end
 
-if ~exist(mat_raw,'file')
+if exist(mat_raw,'file') && usecache
+    fprintf('Reading: %s\n',mat_raw);
+    load(mat_raw);
+else
     datadir = fullfile(rundir,'..','measurements');
     if ~exist(datadir,'dir')
         error('Data directory not found: %s',datadir)
@@ -35,9 +39,6 @@ if ~exist(mat_raw,'file')
     end
     fprintf('Writing: %s\n',mat_cleaned);
     save(mat_raw,'B','E','t');
-else
-    fprintf('Reading: %s\n',mat_raw);
-    load(mat_raw);
 end
 
 msg = 'Despiking E\n';

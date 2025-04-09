@@ -9,8 +9,8 @@ if nargin < 3 || averaged == 0
     return
 end
 
-x = x.*window(@parzenwin, size(x,1));
-y = y.*window(@parzenwin, size(y,1));
+%x = x.*window(@parzenwin, size(x,1));
+%y = y.*window(@parzenwin, size(y,1));
 
 [dftsegsx,f,fe] = dftbands(x, opts);
 dftsegsy = dftbands(y, opts);
@@ -28,6 +28,7 @@ for s = 1:length(f)
         % If only one DFT value, coherence is 1 by definition. This
         % avoids cxy = NaN when either dftsegsx{s} or dftsegsy{s} are
         % identically zero.
+        %cxy(s,1) = 1;
         cxy(s,1) = 1;
         continue
     end
@@ -57,6 +58,7 @@ function cxy = coh(x, y)
     end
     syy = abs(sum(y.*conj(y)));
     sxy = abs(sum(conj(x).*y));
-    cxy = sxy/sqrt(sxx*syy);
+    %cxy = sxy/sqrt(sxx*syy);
+    cxy = sxy.^2/(sxx*syy);
 end
 

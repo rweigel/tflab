@@ -1,4 +1,4 @@
-function [Z,dZ,Info] = regress_robustfit_tflab(ftE,ftB,varargin)
+function [Z,Info] = regress_robustfit_tflab(ftE,ftB,varargin)
 %REGRESS_ROBUSTFIT_TFLAB Robust regression with hard cut-off
 %
 %   REGRESS_ROBUSTFIT_TFLAB(ftE,ftB) uses robust regression with a Huber
@@ -210,12 +210,10 @@ while 1
 end
 
 Info = struct();
-Info.Residuals_ = R;
 Info.Weights = stats.W(end,:);
 
-dZ = [];
 Z = Z(end,:);
 
 % Un-weighted residuals
-R = ftE - ftB*transpose(Z);
+Info.Residuals = ftE - ftB*transpose(Z);
 
