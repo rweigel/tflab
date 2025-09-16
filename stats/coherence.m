@@ -34,7 +34,7 @@ for s = 1:length(f)
     end
     cxy(s,1) = coh(dftsegsx{s}, dftsegsy{s});
     n = size(dftsegsx{s},1);
-    if opts.fd.bootstrap.N > 0 && ~isnan(opts.fd.bootstrap.N) && n >= opts.fd.bootstrap.nmin
+    if isfield(opts.fd, 'bootstrap') && opts.fd.bootstrap.N > 0 && ~isnan(opts.fd.bootstrap.N) && n >= opts.fd.bootstrap.nmin
         % MATLAB stats toolbox is required for bootstrp function, so not used here.
         Nb = 100;
         V = nan(Nb,1);

@@ -83,6 +83,9 @@ for s = 1:length(S)
             f = S{s}.DFT.f_;
             fe{s} = S{s}.DFT.fe_;
         else
+            if ~strcmp(tparts{1}, 'original')
+                error('"%s" is not a valid option', tparts{1})
+            end
             % original
             segsIn = S{s}.DFT.In;
             segsOut = S{s}.DFT.Out;
@@ -94,6 +97,7 @@ for s = 1:length(S)
             [DFTIn{s},dDFTIn{s}]  = dftaverage(segsIn, wIn);
             [DFTOut{s},dDFTOut{s}] = dftaverage(segsOut, wOut);
         else
+            %keyboard
             tmp = cat(1,f{:});
             fe{s,1} = tmp(:);
             DFTIn{s} = cat(1,segsIn{:});
@@ -105,7 +109,6 @@ for s = 1:length(S)
             DFTIn{s} = DFTIn{s}(:,comp);
             DFTOut{s} = DFTOut{s}(:,comp);
         end
-
         if strcmp(tparts{3},'phases')
             y1{s} = (180/pi)*angle(DFTIn{s});
             y2{s} = (180/pi)*angle(DFTOut{s});
@@ -119,7 +122,7 @@ for s = 1:length(S)
             y1{s} = real(DFTIn{s});
             y2{s} = real(DFTOut{s});
             if strcmp(tparts{2},'averaged')
-                dy1{s} = real(dDFTIn{s});
+                dy1{s} = real(dDFTIn{s}); % TODO: Need to average!
                 dy2{s} = real(dDFTOut{s});
             end
         end
@@ -127,7 +130,7 @@ for s = 1:length(S)
             y1{s} = imag(DFTIn{s});
             y2{s} = imag(DFTOut{s});
             if strcmp(tparts{2},'averaged')
-                dy1{s} = real(dDFTIn{s});
+                dy1{s} = real(dDFTIn{s}); % TODO: Need to average!
                 dy2{s} = real(dDFTOut{s});
             end
         end
@@ -147,6 +150,7 @@ for s = 1:length(S)
     end
     if popts.vs_period
         x{s} = 1./(fe{s}*S{s}.Metadata.freqsf);
+        %x{s} = 1./(fe{s});
     else
         x{s} = fe{s}*S{s}.Metadata.freqsf;
     end
@@ -238,7 +242,7 @@ if ~strcmp(tparts{1},'error')
         end
         if exist('dy1','var')
             % Must be called after scales are set if logy used.
-            errorbars_(h1,x,y1,dy1/2,dy1/2,1);
+            errorbars_(h1,x,y1,dy1,dy1,1);
         end
         ylabel(yl1);
         adjust_ylim('upper');
@@ -256,9 +260,9 @@ if ~strcmp(tparts{1},'error')
         end
         if exist('dy2','var')
             % Must be called after scales are set if log used.
-            errorbars_(h1,x,y2,dy2/2,dy2/2,1);
+            errorbars_(h1,x,y2,dy2,dy2,1);
         end
-        ylabel(yl2);
+        ylabel(yl2);        
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
@@ -269,6 +273,7 @@ if length(S) > 1 && size(S{1}.In,2) > 1
     popts.printOptions.printName = sprintf('%s-%d',popts.printOptions.printName, comp);
 end
 
+drawnow
 figsave_(popts);
 
 if strcmp(tparts{1},'error')
@@ -289,7 +294,7 @@ function h = plot_(x,y,popts)
     if iscell(x) && iscell(y)
         hold on;
         for s = 1:length(x)
-        	h = plot(x{s},y{s},popts.line{:});
+        	h(s) = plot(x{s},y{s},popts.line{:});
         end
         hold off;
     else
@@ -350,23 +355,24 @@ end
 function [yl1, yl2] = ylabel_(S,what,popts,comp)
 
     meta = S{1}.Metadata;
-
+    angle = '$\angle$ $[^\circ]$';
+    
     if length(S) > 1
         if strcmp(what,'magnitudes')
-            yl1 = [labelstr_(popts.instr{comp}), ' ',meta.inunit];
-            yl2 = [labelstr_(popts.outstr{comp}),' ',meta.outunit];
+            yl1 = [labelstr_(popts.instr{comp}), ' [',meta.inunit, ']'];
+            yl2 = [labelstr_(popts.outstr{comp}),' [',meta.outunit ']'];
         end
         if strcmp(what,'phases')
-            yl1 = labelstr_(popts.instr{comp},'','angle');
-            yl2 = labelstr_(popts.outstr{comp},'','angle');
+            yl1 = labelstr_(popts.instr{comp},' ', angle);
+            yl2 = labelstr_(popts.outstr{comp},' ', angle);
         end
         if strcmp(what,'reals')
-            yl1 = [labelstr_(popts.instr{comp},'','real'), ' ',meta.inunit];
-            yl2 = [labelstr_(popts.outstr{comp},'','real'),' ',meta.outunit];
+            yl1 = [labelstr_(popts.instr{comp},'','real'), ' [',meta.inunit, ']'];
+            yl2 = [labelstr_(popts.outstr{comp},'','real'),' [',meta.outunit, ']'];
         end
         if strcmp(what,'imaginaries')
-            yl1 = [labelstr_(popts.instr{comp}),'','imaginary', ' ',meta.inunit];
-            yl2 = [labelstr_(popts.outstr{comp}),'','imaginary',' ',meta.outunit];
+            yl1 = [labelstr_(popts.instr{comp}),'','imaginary', ' [',meta.inunit, ']'];
+            yl2 = [labelstr_(popts.outstr{comp}),'','imaginary',' [',meta.outunit, ']'];
         end
     else
         yl1 = single_(S{1}.In, what, comp, popts.instr, meta.inunit);
@@ -383,10 +389,10 @@ function [yl1, yl2] = ylabel_(S,what,popts,comp)
             end
         else
             if any(strcmp(what,{'magnitudes','reals','imaginaries'}))
-                yl = [labelstr_(instr{comp},' ',what),' ',inunit];
+                yl = [labelstr_(instr{comp},' ',what),' [',inunit, ']'];
             end
             if strcmp(what,'phases')
-                yl = labelstr_(instr{comp},'','angle');
+                yl = labelstr_(instr{comp},' ', angle);
             end
         end
     end
@@ -397,14 +403,14 @@ function [yl1, yl2] = ylabelerror_(S,what,popts,comp)
 
     if strcmp(what,'magphase')
         l1 = labelstr_(popts.outstr{comp},'\Delta','magnitude');
-        yl1 = [l1,' ',unitstr(meta.outunit)];
+        yl1 = [l1,' [',unitstr(meta.outunit), ']'];
         yl2 = labelstr_(popts.outstr{comp},'\Delta','angle');
     else
         % Real and Imaginary
         l1 = labelstr_(popts.outstr{comp},'\Delta','real');
-        yl1 = [l1,' ',unitstr(meta.outunit)];
+        yl1 = [l1,' [',unitstr(meta.outunit), ']'];
         l2 = labelstr_(popts.outstr{comp},'\Delta','imaginary');
-        yl2 = [l2,' ',unitstr(meta.outunit)];
+        yl2 = [l2,' [',unitstr(meta.outunit), ']'];
     end
 end
 

@@ -1,6 +1,24 @@
 function adjust_yticks(t,ax,no_lead_number, listen)
 % ADJUST_YTICKS - Change labels of yticks when increment is small
 
+ax = gca();
+
+if strcmp(get(ax,'YScale'),'log')
+    ytick = get(ax,'YTick');
+    if isscalar(ytick)
+        % Force at least three tick labels
+        ylim = get(ax,'YLim');
+        ytickl = ceil(log10(ylim(1)));
+        yticku = floor(log10(ylim(2)));
+        ytick = 10.^(ytickl:yticku);
+        if length(ytick) > 3
+            delta = floor(length(ytick)/3);
+            ytick = ytick(1:delta:end);
+        end
+        set(ax,'YTick', ytick)
+    end
+end
+
 return;
 
 direction = 'y';
@@ -18,8 +36,6 @@ end
 if nargin < 3
     no_lead_number = 1;
 end
-
-ax = gca();
 
 set(ax, 'YTickMode', 'auto', 'YTickLabelMode', 'auto');
 

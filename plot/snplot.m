@@ -166,7 +166,7 @@ if length(S) > 1
             plot(x{s},y1{s}(:,comp),marker{:},'color', c(s,:));
         end
         for s = 1:length(y1)
-            plot(x{s}, y2{s}(:,comp)./(1-y2{s}(:,comp)), '-','color', c(s,:));
+            %plot(x{s}, y2{s}(:,comp)./(1-y2{s}(:,comp)), '-','color', c(s,:));
         end
         title_(S,popts,'sn');
         for s = 1:length(y1)

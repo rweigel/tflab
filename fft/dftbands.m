@@ -1,9 +1,9 @@
 function [bands, f, fe] = dftbands(x, Ic, Ne)
 %DFTBANDS Compute DFT and split into bands
 %
-%   [bands, f, fe] = DFTBANDS(x, Ic, Ne) computes xdft = fftu(x)
+%   [bands, f, fe] = DFTBANDS(x, Ic, Ne) computes dft = fftu(x)
 %   and splits the result into bands determined by
-%   bands{j,1} = xdft(Ic(j)-Ne(j):Ic(j)+Ne(j),:)
+%   bands{j,1} = dft(Ic(j)-Ne(j):Ic(j)+Ne(j),:).
 %
 %   Example:
 %
@@ -24,9 +24,9 @@ if nargin == 2
 end
 
 [dftu, fu] = fftu(x);
-
 for j = 1:length(Ic)
     r = Ic(j)-Ne(j):Ic(j)+Ne(j); % Index range
     bands{j,1} = dftu(r,:);
     f{j,1} = fu(r,:);
 end
+

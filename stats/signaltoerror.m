@@ -27,7 +27,7 @@ p = 100*[p, 1-p];
 for s = 1:length(f)
     se(s,1) = sig2err(dftsig{s}, dfterr{s});
     n = size(dftsig{s},1);
-    if opts.fd.bootstrap.N > 0 && ~isnan(opts.fd.bootstrap.N) && n >= opts.fd.bootstrap.nmin
+    if isfield(opts.fd, 'bootstrap') && opts.fd.bootstrap.N > 0 && ~isnan(opts.fd.bootstrap.N) && n >= opts.fd.bootstrap.nmin
         % MATLAB stats toolbox is required for bootstrp function, not used here.
         Nb = 100;
         V = nan(Nb,1);

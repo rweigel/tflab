@@ -27,15 +27,20 @@ lw = repmat(lw, length(yc));
 
 ymin = NaN;
 scaley = get(gca,'YScale');
+xlim = get(gca,'XLim');
 if strcmp(scaley,'log')
+    x = cat(1,xc{:});
+    Ix = find(x < xlim(2) & x > xlim(1)); % Plotted values of x
     y = cat(1,yc{:});
+    y = y(Ix);
     dyl = cat(1,dylc{:});
+    dyl = dyl(Ix);
     Ip = find(y-dyl > 0);        % Positive lower error bar value
     ymin = min(y(Ip) - dyl(Ip));
 end
 
 for j = 1:length(yc)
-    color = get(h(j),'Color')
+    color = get(h(j),'Color');
     args = struct('Color',color,'LineWidth',lw(j));
     errorbar_(xc{j},yc{j},dylc{j},dyuc{j},'y',ymin,args);
 end

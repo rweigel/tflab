@@ -4,8 +4,6 @@ if nargin < 4
     usecache = 1;
 end
 
-usecache = 0;
-
 mat_raw = fullfile(rundir,'measurements-raw.mat');
 mat_cleaned = fullfile(rundir,'measurements-cleaned.mat');
 
@@ -30,13 +28,16 @@ else
         error('Data directory not found: %s',datadir)
     end
     addpath(fullfile(scriptdir(),'readers'));
+    % LEMI instrument was configured with lengths = 1 m. Here we correct
+    % to set distance between ends of electric field probes to be 100 m.
     if startsWith(start, "2012") && startsWith(stop, "2012")
-        [B,E,t] = LEMI_read(datadir,'t82',start,stop,[50,50]);
+        [B,E,t] = LEMI_read(datadir,'t82',start,stop,[100,100]);
     elseif str2num(start(1:4)) >= 2017
-        [B,E,t] = LEMI_read(datadir,'t81',start,stop,[50,50]);
+        [B,E,t] = LEMI_read(datadir,'t81',start,stop,[100,100]);
     else
         error('Time range not handled.')
     end
+    size(B)
     fprintf('Writing: %s\n',mat_cleaned);
     save(mat_raw,'B','E','t');
 end
@@ -47,15 +48,27 @@ fprintf(logfile,msg);
 E = despike(E,0.1,[1,5],logfile);
 
 % TODO: Report on largest gap
-ti = [1:size(B,1)]';
+ts  = round(86400*(t-t(1))); % Time in seconds since start
+ti = ts(1):ts(end); % Interpolation grid
+msg = sprintf('Max dt = %d [s]\\n', max(diff(ts)));
+logmsg(msg)
+fprintf(logfile, msg);
+
 for i = 1:size(B,2)
     tg = find(~isnan(B(:,i)));
-    B(:,i) = interp1(tg,B(tg,i),ti);
+    msg = sprintf('B(:,%d) has %d NaNs\\n', i, length(t)-length(tg));
+    logmsg(msg)
+    fprintf(logfile, msg);
+    B(:,i) = interp1(ts(tg),B(tg,i),ti);
 end
 for i = 1:size(E,2)
     tg = find(~isnan(E(:,i)));
-    E(:,i) = interp1(tg,E(tg,i),ti);
+    msg = sprintf('E(:,%d) has %d NaNs\\n', i, length(t)-length(tg));
+    logmsg(msg)
+    fprintf(logfile, msg);
+    E(:,i) = interp1(ts(tg),E(tg,i),ti);
 end
+t = t(1) + ti/86400; % Interpolation grid time in datenum
 
 for i = 1:size(E,2)
     I = find(isnan(E(:,i)));

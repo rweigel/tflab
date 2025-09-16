@@ -15,15 +15,16 @@ if nargin < 7
     args = struct('Color', 'k');
 end
 
-linestyle = struct2cell(args);
+fields = fieldnames(args);
+linestyle = {};
+for f = 1:length(fields)
+    linestyle{end+1} = fields{f};
+    linestyle{end+1} = args.(fields{f});
+end
+
 scalex = get(gca,'XScale');
 scaley = get(gca,'YScale');
 
-if strcmp(scalex,'linear') && strcmp(scaley,'linear')
-    for i = 1:length(x)
-        plot([x(i),x(i)],[y(i)+dyu(i),y(i)-dyl(i)],linestyle{:});
-    end
-end
 if strcmp(scaley,'log')
     Ip = [];
     if isnan(ymin)
@@ -39,31 +40,17 @@ if strcmp(scaley,'log')
             ylow = y(i) - dyl(i);
         else
             add_head = 1;
-            if isnan(ymin) && isempty(Ip)
-                % No ymin is above zero. Place head one decade below
-                % lowest y.
-                ylow = min(y)/10;
-            else
-                ylow = ymin;
-                if ymin ~= ylow
-                    ylow = ymin/10;
-                end
-            end
+            % Place head ymin/5 below lowest y.
+            ylow = ymin/5;
         end
         color = args.Color;
-        loglog([x(i),x(i)],[y(i)+dyu(i),ylow],linestyle{:}, 'Color', color);
+        plot([x(i),x(i)],[y(i)+dyu(i),ylow],linestyle{:});
         if add_head
-            loglog(x(i),ylow,'o','MarkerSize',10, 'Color', color);
+            plot(x(i),ylow,'o','MarkerSize',10, 'Color', color);
         end
     end
-end
-if strcmp(scalex,'log') && strcmp(scaley,'linear')
+else
     for i = 1:length(x)
-        semilogx([x(i),x(i)],[y(i)+dyu(i),y(i)-dyl(i)],linestyle{:});
-    end
-end
-if strcmp(scalex,'linear') && strcmp(scaley,'log')
-    for i = 1:length(x)
-        semilogy([x(i),x(i)],[y(i)+dyu(i),y(i)-dyl(i)],linestyle{:});
+        plot([x(i),x(i)],[y(i)+dyu(i),y(i)-dyl(i)],linestyle{:});
     end
 end

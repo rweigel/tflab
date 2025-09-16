@@ -284,11 +284,11 @@ if length(S) > 1
             adjust_ylim('both');
         end
         
+        setx(popts,1,frequnit);
         ebars_(h, x(kept), y(kept), dyl(kept), dyu(kept), 1, ylraw)
 
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts,1,frequnit);
 
     var_name = replace(popts.zstrs{s}{idx},'\delta ','delta');
     figsave_(popts,var_name);
@@ -321,9 +321,10 @@ function [x,y,dyu,dyl,kept] = xyvals_(S,popts,comp,panel,errorbar_method)
             continue
         end
         kept(end+1) = s;
-        % Note that it is comp(2), comp(1) not comp(1), comp(2)
-        % because matrixes have columns of Zxx, Zxy, Zyx, Zyy
-        idx = sub2ind(size(popts.zstrs{s}), comp(2), comp(1));
+        % Matrixes have columns of Z11, Z12, Z13, ..., Z21, Z22, Z23, ...
+        nr = size(popts.zstrs{s}, 1); % number of rows
+        nc = size(popts.zstrs{s}, 2); % number of columns
+        idx = (comp(1) - 1)*nc + comp(2);
         if strcmp(errorbar_method,'parametric')
             ErrorEstimates = S{s}.Metrics.ErrorEstimates.Parametric;
         end

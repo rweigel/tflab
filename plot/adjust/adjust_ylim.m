@@ -40,8 +40,10 @@ end
 
 if debug
     fprintf('adjust_ylim():\n');
+    format long
     ytick
     ylim
+    format("default")
 end
 
 if strcmp(pos, 'upper') || strcmp(pos, 'both')
@@ -49,7 +51,7 @@ if strcmp(pos, 'upper') || strcmp(pos, 'both')
         if length(ytick) > 1
             ylim(end) = ylim(end)*10^(0.5*(log10(ytick(end))-log10(ytick(end-1))));
         else
-            ylim(end) = 10*ytick;
+            ylim(end) = 10*ylim(end);
         end
     else
         if (ylim(1) == -ylim(end)) && ~strcmp(pos, 'both')
@@ -66,7 +68,7 @@ if strcmp(pos,'lower') || strcmp(pos, 'both')
             ylim(1) = ylim(1)/10^(0.5*(log10(ytick(2))-log10(ytick(1))));
             ylim(1) = 0.5*10^(log10(ylim(1)) - 0.5*(log10(ytick(2))-log10(ytick(1))));
         else
-           ylim(end) = ytick/10'
+           ylim(end) = ylim(end)/10';
         end
     else
         if (ylim(1) == -ylim(end)) && ~strcmp(pos, 'both')
