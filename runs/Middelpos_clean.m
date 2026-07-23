@@ -37,7 +37,6 @@ else
     else
         error('Time range not handled.')
     end
-    size(B)
     fprintf('Writing: %s\n',mat_cleaned);
     save(mat_raw,'B','E','t');
 end
@@ -47,7 +46,6 @@ logmsg(msg);
 fprintf(logfile,msg);
 E = despike(E,0.1,[1,5],logfile);
 
-% TODO: Report on largest gap
 ts  = round(86400*(t-t(1))); % Time in seconds since start
 ti = ts(1):ts(end); % Interpolation grid
 msg = sprintf('Max dt = %d [s]\\n', max(diff(ts)));
@@ -69,6 +67,8 @@ for i = 1:size(E,2)
     E(:,i) = interp1(ts(tg),E(tg,i),ti);
 end
 t = t(1) + ti/86400; % Interpolation grid time in datenum
+
+logmsg(sprintf('# of days: %.2f\n', length(ti)/86400))
 
 for i = 1:size(E,2)
     I = find(isnan(E(:,i)));

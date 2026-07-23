@@ -1,8 +1,7 @@
 function Middelpos_main(rundir, filestr, start, stop, Nboot)
 
 % Read input/output data
-[B,E,t] = Middelpos_clean(start,stop,rundir,0);
-
+[B,E,t] = Middelpos_clean(start,stop,rundir,1);
 E(:,1) = -E(:,1);
 
 % Make length an integer number of segments.
@@ -46,7 +45,7 @@ for const_term = 0:1
         opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
     
     if const_term == 0
-        [~,t_latex] = evalfreq_log(size(B,1), opts{tfn}.fd.evalfreq.functionargs{:});
+        [~,t_latex] = evalfreq_log(ppd, opts{tfn}.fd.evalfreq.functionargs{:});
         fid = fopen(fullfile(rundir,append(opts{tfn}.filestr,'-evalfreq_table.tex')),'w');
         fprintf(fid, t_latex);
         fclose(fid);

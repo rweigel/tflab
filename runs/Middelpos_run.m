@@ -3,11 +3,13 @@ close all % To reduce memory.
 addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
-rerun       = 0;
 run_nums    = [5];
+Nboot       = 100;
+%Nboot       = 0;
+
+rerun       = 0;
+plot_figs   = 0;
 print_figs  = 1;
-%Nboot       = 100;
-Nboot       = 0;
 
 for run_num = run_nums
 
@@ -27,7 +29,7 @@ for run_num = run_nums
         case 4 % 4 days
             start = '20120714';
             stop = '20120718';
-        case 5 % All days before file with much missing data
+        case 5 % All days before file with much missing data. Used for paper.
             start = '20120712';
             stop = '20120904';
     end
@@ -39,6 +41,9 @@ for run_num = run_nums
     if rerun == 1 || ~exist(rundir, 'dir')
         Middelpos_main(rundir, filestr, start, stop, Nboot);
     end
-    Middelpos_plot(rundir, filestr, print_figs);
+
+    if plot_figs || print_figs
+        Middelpos_plot(rundir, filestr, print_figs);
+    end
 
 end
