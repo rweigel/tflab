@@ -19,8 +19,11 @@ end
 xl = get(gca,'XLim');
 yl = get(gca,'YLim');
 
-at = [60,   60*60, 60*60*6, 60*60*12, 60*60*24, 60*60*24*5, 60*60*24*10, 60*60*24*30];
-ls = {'1m','1h' , '6h',    '12h',    '1d',     '5d',       '10d',       '30d'};
+%at = [60,   60*60, 60*60*6, 60*60*12, 60*60*24, 60*60*24*5, 60*60*24*10, 60*60*24*30];
+%ls = {'1m','1h' , '6h',    '12h',    '1d',     '5d',       '10d',       '30d'};
+at = [60,   60*60, 60*60*6, 60*60*24, 60*60*24*5, 60*60*24*10, 60*60*24*30];
+ls = {'1m','1h' , '6h',     '1d',     '5d',       '10d',       '30d'};
+
 %at = at*freqsf;
 
 for i = 1:length(at)
@@ -29,7 +32,7 @@ for i = 1:length(at)
     end
     plot([at(i),at(i)],yl,'--','Color',[0.5,0.5,0.5]);
     if show_labels == 1
-        text(at(i),yl(1),ls{i},'VerticalAlignment','bottom', 'FontSize', 12);
+        text(at(i),yl(1),ls{i},'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right', 'FontSize', 16);
     end
 end
 

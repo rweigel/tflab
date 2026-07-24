@@ -6,7 +6,7 @@ for tfn = 1:5
     TFs{tfn} = loadtf(fname{tfn});
 end
 
-period_range = [1, 86400 + 3600];
+period_range = [3, 1e5];
 
 copts = struct();
     copts.print = print_figs; % Set to 1 to print pdf of each figure created.
@@ -24,16 +24,31 @@ else
     dock on;figure(1);close all;
 end
 
-if 1
+all_plots = 0;
+
+%% Z plots
+figure();
+    zopts = copts;
+    zopts.type = 1;
+    zopts.period_range = period_range;
+    zplot(TFs([1,3]),zopts);
+
+if all_plots
+    figure();
+        zopts = copts;
+        zopts.type = 1;
+        zopts.period_range = period_range;
+        zplot(TFs,zopts);
+end
+return
+
 %% Time series plots
 tsopts = copts;
-if (1)
-    figure();
-        tsopts.type = 'original';
-        tsplot(TFs{1},tsopts);
-end
+figure();
+    tsopts.type = 'original';
+    tsplot(TFs{1},tsopts);
 
-if (1)
+if (all_plots)
     tsopts = copts;
     tsopts.type = 'error';
     for i = 1:length(TFs)
@@ -48,14 +63,17 @@ figure();
     dftopts.type = 'original-averaged';
     dftplot(TFs{1},dftopts);
 
-figure();
-    dftopts = copts;
-    dftopts.type = 'original-averaged-phases';
-    dftplot(TFs{1},dftopts);
-
+if (all_plots)
+    figure();
+        dftopts = copts;
+        dftopts.type = 'original-averaged-phases';
+        dftplot(TFs{1},dftopts);
+end
 %figure();
     %dftopts.type = 'error-averaged-magphase';
     %dftplot(TFs,dftopts);
+
+    
 
 %% SN plots
 figure();
@@ -69,33 +87,20 @@ figure();
     snopts.type = 1;
     snopts.period_range = period_range;
     snplot(TFs,snopts);
-    
-%% Z plots
-figure();
-    zopts = copts;
-    zopts.type = 1;
-    zopts.period_range = period_range;
-    zplot(TFs([1,3]),zopts);
-
-figure();
-    zopts = copts;
-    zopts.type = 1;
-    zopts.period_range = period_range;
-    zplot(TFs,zopts);
-
 
 %% qq plots    
-figure();
-    qqopts = copts;
-    %qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
-    fidx = 20; % frequency number
-    comp = 2;  % component (x = 1, y = 2)
-    qqplot_(TFs{1},qqopts,comp,fidx);
-
-figure();
-    qqopts = copts;
-    qqopts.type = 'combined';
-    %qqplot_(TFs,qqopts);
+if (all_plots)
+    figure();
+        qqopts = copts;
+        %qqopts.printOptions.printDir = fullfile(rundir,'figures','qqplot');
+        fidx = 20; % frequency number
+        comp = 2;  % component (x = 1, y = 2)
+        qqplot_(TFs{1},qqopts,comp,fidx);
+    
+    figure();
+        qqopts = copts;
+        qqopts.type = 'combined';
+        %qqplot_(TFs,qqopts);
 end
 
 if 1
