@@ -1,4 +1,4 @@
-function adjust_ylim(pos)
+function adjust_ylim(pos,f)
 % ADJUST_YLIM
 %
 %   Expand axis limits so horizontal legend or vertical line labels are
@@ -11,6 +11,10 @@ function adjust_ylim(pos)
 %
 
 % TODO: One should be able to compute exact adjustment needed.
+
+if nargin < 2
+    f = 0.6;
+end
 
 direction = 'y';
 
@@ -49,7 +53,7 @@ end
 if strcmp(pos, 'upper') || strcmp(pos, 'both')
     if strcmp(get(ax,'YScale'),'log')
         if length(ytick) > 1
-            ylim(end) = ylim(end)*10^(0.5*(log10(ytick(end))-log10(ytick(end-1))));
+            ylim(end) = ylim(end)*10^(f*(log10(ytick(end))-log10(ytick(end-1))));
         else
             ylim(end) = 10*ylim(end);
         end
@@ -65,8 +69,8 @@ end
 if strcmp(pos,'lower') || strcmp(pos, 'both')
     if strcmp(get(ax,'YScale'),'log')
         if length(ytick) > 1
-            ylim(1) = ylim(1)/10^(0.5*(log10(ytick(2))-log10(ytick(1))));
-            ylim(1) = 0.5*10^(log10(ylim(1)) - 0.5*(log10(ytick(2))-log10(ytick(1))));
+            ylim(1) = ylim(1)/10^(f*(log10(ytick(2))-log10(ytick(1))));
+            ylim(1) = f*10^(log10(ylim(1)) - f*(log10(ytick(2))-log10(ytick(1))));
         else
            ylim(end) = ylim(end)/10';
         end

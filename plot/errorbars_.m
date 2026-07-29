@@ -44,3 +44,9 @@ for j = 1:length(yc)
     args = struct('Color',color,'LineWidth',lw(j));
     errorbar_(xc{j},yc{j},dylc{j},dyuc{j},'y',ymin,args);
 end
+
+if ~isnan(ymin)
+    % Get lowest y value of plotted data.
+    yl = get(gca,'YLim');
+    set(gca,'YLim',[ymin/5, yl(2)]);
+end

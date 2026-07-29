@@ -28,6 +28,8 @@ S = tflab_metadata(S);
 frequnit = S{1}.Metadata.frequnit;
 popts   = tflabplot_options(S, popts, 'zplot');
 
+fontsize = 21.5;
+
 if nargin < 3
     for s = 1:length(S)
         nr(s) = size(popts.zstrs{s},1);
@@ -197,7 +199,8 @@ if length(S) > 1
         return
     end
 
-    figprep();
+    figprep(fontsize);
+    set(gca, 'ActivePositionProperty', 'outerposition');
     ax1 = subplot('Position', popts.PositionTop);
         [x,y,dyu,dyl,kept] = xyvals_(S,popts,comp,'top','parametric');
 
@@ -222,7 +225,7 @@ if length(S) > 1
         end
         yunitstr_ = unitstr_(S{1}.Metadata);
         if popts.type == 1
-            yl = sprintf('$|%s|$%s',popts.zstrs{s}{idx},yunitstr_);
+            yl = sprintf('$|%s|$ %s',popts.zstrs{s}{idx},yunitstr_);
             ylraw = popts.zstrs{s}{idx};
         end
         if popts.type == 2
@@ -244,10 +247,15 @@ if length(S) > 1
         adjust_yticks(1e-4);
         adjust_exponent('y');
 
-        if popts.type == 3
-            adjust_ylim('both');
+        if fontsize > 18
+            f = 0.78;
         else
-            adjust_ylim('upper');
+            f = 0.5;
+        end
+        if popts.type == 3
+            adjust_ylim('both', f);
+        else
+            adjust_ylim('upper', f);
         end
         setx(popts,0,frequnit);
 
@@ -274,7 +282,7 @@ if length(S) > 1
             ylraw = popts.zstrs{s}{idx};
         end
         ylabel(yl);
-        
+
         if popts.type ~= 3 && ~popts.unwrap
             set(gca,'YScale','linear');
             set(gca,'YLim',[-180,180]);
@@ -283,7 +291,7 @@ if length(S) > 1
         if popts.type == 1
             adjust_ylim('both');
         end
-        
+
         setx(popts,1,frequnit);
         ebars_(h, x(kept), y(kept), dyl(kept), dyu(kept), 1, ylraw)
 

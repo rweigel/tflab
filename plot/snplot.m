@@ -38,6 +38,8 @@ show_xcoh = 1;
 S = tflab_metadata(S);
 popts = tflabplot_options(S,popts,'snplot');
 
+fontsize = popts.fontsize;
+
 frequnit = S{1}.Metadata.frequnit;
 
 onfinal = 0;
@@ -45,7 +47,7 @@ onfinal = 0;
 if length(S) == 1
 
     % Single transfer function
-    figprep();
+    figprep(fontsize);
     lg = legend_(S{1},popts);
 
     if (nargin > 2)
@@ -83,7 +85,7 @@ if length(S) == 1
         adjust_ylim('upper');
         adjust_yticks();
         adjust_exponent();
-        setx(popts,0,frequnit);
+        setx(popts,0,frequnit,fontsize);
 
     ax2 = subplot('Position', popts.PositionBottom);
         semilogx(x,y2,popts.line{:});
@@ -136,14 +138,14 @@ if length(S) == 1
         yline(1,'k');
         adjust_ylim('upper');
         adjust_exponent('x');
-        setx(popts,1,frequnit);
+        setx(popts,1,frequnit,fontsize);
 
     figsave_(popts,S{1}.Metadata.outstr{comp})
 end
 
 if length(S) > 1
     % Multiple TFs
-    figprep();
+    figprep(fontsize);
 
     lg = legend_(S,popts);
     [x,y1,y2,y3,y1clu,y1cll] = xyvals_(S,popts,onfinal);
@@ -180,13 +182,18 @@ if length(S) > 1
         end
         legend(lg,popts.legend{:});
         ylabel(sprintf('%s Signal to Error',outstr));
-        adjust_ylim('upper');
+        if isfield(popts, 'ylims') && isfield(popts.ylims, 'top')
+            yl = popts.ylims.top{comp};
+            set(gca,'YLim',yl);
+        else
+            adjust_ylim('upper');
+            yl = get(gca,'YLim');
+            set(gca,'YLim',[0,yl(end)]);
+        end
         adjust_yticks();
-        yl = get(gca,'YLim');
-        set(gca,'YLim',[0,yl(end)]);
         adjust_exponent();
         yline(1,'k');
-        setx(popts,0,frequnit);
+        setx(popts,0,frequnit,fontsize);
     ax2 = subplot('Position', popts.PositionBottom);
         grid on;box on;hold on;
         for s = 1:length(y2)
@@ -216,10 +223,15 @@ if length(S) > 1
             set(gca,'XScale','log');
         end
         legend(lg,popts.legend{:});
-        set(gca,'YLim',[0,1]);
-        adjust_ylim('upper');
+        if isfield(popts, 'ylims') && isfield(popts.ylims, 'bottom')
+            yl = popts.ylims.bottom{comp};
+            set(gca,'YLim',yl);
+        else
+            set(gca,'YLim',[0,1]);
+            adjust_ylim('upper');
+        end
         adjust_exponent('x');
-        setx(popts,1,frequnit);
+        setx(popts,1,frequnit,fontsize);
 
     figsave_(popts,S{1}.Metadata.outstr{comp})
 

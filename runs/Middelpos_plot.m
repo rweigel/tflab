@@ -1,7 +1,12 @@
 function Middelpos_plot(rundir, filestr, print_figs)
 
+all_plots = 0;
+tfns = 1:5;
+if all_plots == 0
+    tfns = [1, 3];
+end
 logmsg('\n');
-for tfn = 1:5
+for tfn = tfns
     fname{tfn} = fullfile(rundir, sprintf('%s-tf%d.mat',filestr,tfn));
     TFs{tfn} = loadtf(fname{tfn});
 end
@@ -24,25 +29,18 @@ else
     dock on;figure(1);close all;
 end
 
-all_plots = 0;
 
-%% Z plots
+
 figure();
-    zopts = copts;
-    zopts.type = 1;
-    zopts.period_range = period_range;
-    zplot(TFs([1,3]),zopts);
-
-if all_plots
-    figure();
-        zopts = copts;
-        zopts.type = 1;
-        zopts.period_range = period_range;
-        zplot(TFs,zopts);
-end
+    snopts = copts;
+    snopts.type = 1;
+    snopts.period_range = period_range;
+    snopts.fontsize = 21.5;
+    snopts.ylims = struct();
+    snopts.ylims.top = {[0, 8], [0, 6]};
+    snplot(TFs([1,3]),snopts);
 return
-
-%% Time series plots
+ %% Time series plots
 tsopts = copts;
 figure();
     tsopts.type = 'original';
@@ -69,11 +67,25 @@ if (all_plots)
         dftopts.type = 'original-averaged-phases';
         dftplot(TFs{1},dftopts);
 end
+
 %figure();
     %dftopts.type = 'error-averaged-magphase';
     %dftplot(TFs,dftopts);
 
-    
+%% Z plots
+figure();
+    zopts = copts;
+    zopts.type = 1;
+    zopts.period_range = period_range;
+    zplot(TFs([1,3]),zopts);
+
+if all_plots
+    figure();
+        zopts = copts;
+        zopts.type = 1;
+        zopts.period_range = period_range;
+        zplot(TFs,zopts);
+end
 
 %% SN plots
 figure();
@@ -82,13 +94,15 @@ figure();
     snopts.period_range = period_range;
     snplot(TFs([1,3]),snopts);
 
-figure();
-    snopts = copts;
-    snopts.type = 1;
-    snopts.period_range = period_range;
-    snplot(TFs,snopts);
+if (all_plots)
+    figure();
+        snopts = copts;
+        snopts.type = 1;
+        snopts.period_range = period_range;
+        snplot(TFs,snopts);
+end
 
-%% qq plots    
+%% qq plots
 if (all_plots)
     figure();
         qqopts = copts;
@@ -96,7 +110,7 @@ if (all_plots)
         fidx = 20; % frequency number
         comp = 2;  % component (x = 1, y = 2)
         qqplot_(TFs{1},qqopts,comp,fidx);
-    
+
     figure();
         qqopts = copts;
         qqopts.type = 'combined';

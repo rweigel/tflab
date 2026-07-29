@@ -22,6 +22,7 @@ dopts.printOptions.printDir = '';
 dopts.printOptions.printFormats = {'pdf'};
 dopts.printOptions.export_fig = {};
 dopts.Position = [0 0 600 600];
+dopts.fontsize = 12;
 
 % Line options passed to plot()
 dopts.line = {'marker', '.', 'markersize', 15, 'linestyle', 'none'};

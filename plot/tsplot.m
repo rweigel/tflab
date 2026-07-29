@@ -61,7 +61,7 @@ if iscell(S) && length(S) == 1
     S = S{1};
 end
 
-figprep();
+figprep(12);
 
 if iscell(S)
     if ~strcmp(tparts{1},'error')
@@ -190,7 +190,7 @@ if ~iscell(S) && strcmp(tparts{1},'error')
     for j = 1:size(S.Out,2)
         if j > 1
             figure();
-            figprep();
+            figprep(12);
         end
         outunit = '';
         if ~isempty(info.outunit)

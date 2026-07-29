@@ -41,6 +41,8 @@ argcheck_(S, popts)
 % TODO: Check all same. If not convert to same.
 frequnit = S{1}.Metadata.frequnit;
 
+fontsize = 12;
+
 tparts = split(popts.type,'-');
 for s = 1:length(S)
     opts = S{s}.Options;
@@ -175,7 +177,7 @@ for s = 1:length(S)
     end
 end
 
-figprep();
+figprep(12);
 if strcmp(tparts{1},'error')
 
     lg = '';
@@ -203,7 +205,7 @@ if strcmp(tparts{1},'error')
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts,0,frequnit);
+        setx(popts,0,frequnit,fontsize);
 
     ax(2) = subplot('Position',popts.PositionBottom);
         plot_(x,y2,popts);
@@ -222,7 +224,7 @@ if strcmp(tparts{1},'error')
         end
         adjust_ylim('both');
         adjust_exponent('y');
-        setx(popts,1,frequnit);
+        setx(popts,1,frequnit,fontsize);
 end
 
 if ~strcmp(tparts{1},'error')
@@ -248,7 +250,7 @@ if ~strcmp(tparts{1},'error')
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts,0,frequnit);
+        setx(popts,0,frequnit,fontsize);
 
     ax(2) = subplot('Position',popts.PositionBottom);
         plot_(x,y2,popts);
@@ -262,11 +264,11 @@ if ~strcmp(tparts{1},'error')
             % Must be called after scales are set if log used.
             errorbars_(h1,x,y2,dy2,dy2,1);
         end
-        ylabel(yl2);        
+        ylabel(yl2);
         adjust_ylim('upper');
         adjust_yticks(1e-4);
         adjust_exponent();
-        setx(popts,1,frequnit);
+        setx(popts,1,frequnit,fontsize);
 end
 
 if length(S) > 1 && size(S{1}.In,2) > 1
