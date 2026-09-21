@@ -7,6 +7,9 @@ end
 mat_raw = fullfile(rundir,'measurements-raw.mat');
 mat_cleaned = fullfile(rundir,'measurements-cleaned.mat');
 
+%write_cleaned_csv(mat_raw);
+usecache = 0;
+
 if ~exist(rundir,'dir')
     mkdir(rundir);
 end
@@ -39,6 +42,7 @@ else
     end
     fprintf('Writing: %s\n',mat_cleaned);
     save(mat_raw,'B','E','t');
+    write_cleaned_csv(mat_raw);
 end
 
 msg = 'Despiking E\n';
@@ -47,7 +51,7 @@ fprintf(logfile,msg);
 E = despike(E,0.1,[1,5],logfile);
 
 ts  = round(86400*(t-t(1))); % Time in seconds since start
-ti = ts(1):ts(end); % Interpolation grid
+ti = [ts(1):ts(end)]'; % Interpolation grid
 msg = sprintf('Max dt = %d [s]\\n', max(diff(ts)));
 logmsg(msg)
 fprintf(logfile, msg);
@@ -86,4 +90,23 @@ infile = mat_raw;
 outfile = mat_cleaned;
 logmsg('Writing: %s\n',mat_cleaned);
 save(mat_cleaned,'B','E','t','infile','outfile')
+write_cleaned_csv(mat_cleaned);
+
 fclose(logfile);
+
+function write_cleaned_csv(infile)
+    [rundir, basename, ext] = fileparts(infile);
+    d = load(infile);
+
+    csv_cleaned = fullfile(rundir,sprintf('%s.csv', basename));
+
+    utc = string(datetime(d.t, 'ConvertFrom', 'datenum', 'TimeZone', 'UTC', ...
+        'Format', "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+
+    measurements = table(utc, d.B(:,1), d.B(:,2), d.B(:,3), d.E(:,1), d.E(:,2), ...
+        'VariableNames', {'UTC', 'Bx', 'By', 'Bz', 'Ex', 'Ey'});
+
+    fprintf("Writing: %s\n", csv_cleaned);
+    writetable(measurements,csv_cleaned);
+end
+end

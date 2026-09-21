@@ -7,7 +7,7 @@ run_nums    = [5];
 Nboot       = 100;
 %Nboot       = 0;
 
-rerun       = 0;
+rerun       = 1;
 plot_figs   = 0;
 print_figs  = 1;
 
@@ -33,11 +33,11 @@ for run_num = run_nums
             start = '20120712';
             stop = '20120904';
     end
-    
+
     filestr = 'Middelpos';
     dirstr  = sprintf('tfs-%s-%s',start,stop);
     rundir  = fullfile(scriptdir(),'data',filestr,dirstr);
-    
+
     if rerun == 1 || ~exist(rundir, 'dir')
         Middelpos_main(rundir, filestr, start, stop, Nboot);
     end

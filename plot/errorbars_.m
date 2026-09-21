@@ -1,4 +1,4 @@
-function errorbars_(h,x,y,dyl,dyu,lw)
+function errorbars_(h,x,y,dyl,dyu,lw,nan_ms)
 %ERRORBARS_  Errorbars using same colors as markers
 
 if isempty(dyl)
@@ -43,7 +43,15 @@ for j = 1:length(yc)
     color = get(h(j),'Color');
     args = struct('Color',color,'LineWidth',lw(j));
     errorbar_(xc{j},yc{j},dylc{j},dyuc{j},'y',ymin,args);
+
+    % Put white circle on top of yc when dyc is NaN.
+    idx = isnan(dylc{j}) | isnan(dyuc{j});
+    if any(idx)
+        plot(xc{j}(idx),yc{j}(idx),'w.','MarkerSize',nan_ms);
+    end
+
 end
+
 
 if ~isnan(ymin)
     % Get lowest y value of plotted data.

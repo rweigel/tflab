@@ -214,7 +214,13 @@ if length(S) > 1
                     lg{end+1} = popts.instr{1};
                 end
             end
-            ylabel(sprintf('Squared Coherence with %s',outstr));
+            if fontsize > 16
+                coh_str = 'Coh.';
+            else
+                coh_str = 'Coherence';
+            end
+            ylabel(sprintf('Squared %s with %s',coh_str,outstr));
+
         else
             tmp = '%s Meas. to %s Pred. Coherence';
             ylabel(sprintf(tmp,outstr,outstr));
@@ -223,11 +229,14 @@ if length(S) > 1
             set(gca,'XScale','log');
         end
         legend(lg,popts.legend{:});
+        yline(0,'k');
+        yline(1,'k');
+        set(gca,'YTick', 0:0.2:1)
         if isfield(popts, 'ylims') && isfield(popts.ylims, 'bottom')
             yl = popts.ylims.bottom{comp};
             set(gca,'YLim',yl);
         else
-            set(gca,'YLim',[0,1]);
+            set(gca,'YLim',[-0.2,1]);
             adjust_ylim('upper');
         end
         adjust_exponent('x');

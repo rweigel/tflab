@@ -29,18 +29,13 @@ else
     dock on;figure(1);close all;
 end
 
-
-
 figure();
-    snopts = copts;
-    snopts.type = 1;
-    snopts.period_range = period_range;
-    snopts.fontsize = 21.5;
-    snopts.ylims = struct();
-    snopts.ylims.top = {[0, 8], [0, 6]};
-    snplot(TFs([1,3]),snopts);
+    dftopts = copts;
+    dftopts.period_range = [3, 3e5];
+    dftopts.type = 'original-averaged';
+    dftplot(TFs{3},dftopts);
 return
- %% Time series plots
+%% Time series plots
 tsopts = copts;
 figure();
     tsopts.type = 'original';
@@ -58,6 +53,7 @@ end
 %% DFT plots
 figure();
     dftopts = copts;
+    dftopts.period_range = [3, 3e5];
     dftopts.type = 'original-averaged';
     dftplot(TFs{1},dftopts);
 
@@ -92,6 +88,11 @@ figure();
     snopts = copts;
     snopts.type = 1;
     snopts.period_range = period_range;
+    snopts.fontsize = 21.5;
+    snopts.ylims = struct();
+    snopts.ylims.top = {[0, 8], [0, 6]};
+    TFs{1}.Options.description = replace(TFs{1}.Options.description, 'segment', 'seg.');
+    TFs{3}.Options.description = replace(TFs{3}.Options.description, 'segments', 'segs.');
     snplot(TFs([1,3]),snopts);
 
 if (all_plots)
@@ -133,6 +134,11 @@ if 1
     TFs{7} = tflab_metrics(TFs{7});
     %TFs{6}.Z = TFs{6}.Z/10;
     %TFs{7}.Z = TFs{7}.Z/10;
+    TFs{1}.Options.description = 'Middelpos 1 55d seg.';
+    TFs{6}.Options.description = 'KAP03 BIRRP';
+    TFs{6}.Options.description = 'KAP03 1 26d seg.';
+
+
     figure();
         zopts = copts;
         zopts.type = 1;

@@ -95,11 +95,29 @@ for s = 1:length(S)
             fe{s} = S{s}.DFT.fe;
         end
         if strcmp(tparts{2},'averaged')
-            [wIn,wOut] = dftweights(f, segsIn, segsOut, opts);
-            [DFTIn{s},dDFTIn{s}]  = dftaverage(segsIn, wIn);
-            [DFTOut{s},dDFTOut{s}] = dftaverage(segsOut, wOut);
+            if isfield(S{s},'Segment')
+                a = tflab_preprocess(S{s});
+                segsIn = {};
+                segsOut = {};
+                for sx = 1:length(a.Segment.DFT.In)
+                    tmpIn = [];
+                    tmpOut = [];
+                    for c = 1:size(a.Segment.DFT.In{sx},2)
+                        tmpIn(:,c) = reshape(a.Segment.DFT.In{sx}(:,c,:), 1, []);
+                        tmpOut(:,c) = reshape(a.Segment.DFT.Out{sx}(:,c,:), 1, []);
+                    end
+                    segsIn{sx} = abs(tmpIn);
+                    segsOut{sx} = abs(tmpOut);
+                end
+                fe{s} = a.Segment.fe;
+                [DFTIn{s},dDFTIn{s}]  = dftaverage(segsIn);
+                [DFTOut{s},dDFTOut{s}] = dftaverage(segsOut);
+            else
+                [wIn,wOut] = dftweights(f, segsIn, segsOut, opts);
+                [DFTIn{s},dDFTIn{s}]  = dftaverage(segsIn, wIn);
+                [DFTOut{s},dDFTOut{s}] = dftaverage(segsOut, wOut);
+            end
         else
-            %keyboard
             tmp = cat(1,f{:});
             fe{s,1} = tmp(:);
             DFTIn{s} = cat(1,segsIn{:});
@@ -111,38 +129,47 @@ for s = 1:length(S)
             DFTIn{s} = DFTIn{s}(:,comp);
             DFTOut{s} = DFTOut{s}(:,comp);
         end
+        sf = (size(S{s}.In,1)-1)/2;
+        if isfield(S{s},'Segment')
+            sf = sf/size(S{s}.Segment.Z,3);
+        end
+        Nmin = 20;
         if strcmp(tparts{3},'phases')
             y1{s} = (180/pi)*angle(DFTIn{s});
             y2{s} = (180/pi)*angle(DFTOut{s});
-
             if strcmp(tparts{2},'averaged')
                 dy1{s} = error_estimates_derived(fe{s},DFTIn{s},DFTIn{s}-dDFTIn{s},DFTIn{s}+dDFTIn{s},'angle');
                 dy2{s} = error_estimates_derived(fe{s},DFTOut{s},DFTOut{s}-dDFTOut{s},DFTOut{s}+dDFTOut{s},'angle');
             end
         end
         if strcmp(tparts{3},'reals')
-            y1{s} = real(DFTIn{s});
-            y2{s} = real(DFTOut{s});
+            y1{s} = real(DFTIn{s})/sf;
+            y2{s} = real(DFTOut{s})/sf;
             if strcmp(tparts{2},'averaged')
-                dy1{s} = real(dDFTIn{s}); % TODO: Need to average!
-                dy2{s} = real(dDFTOut{s});
+                dy1{s} = real(dDFTIn{s})/sf;
+                dy2{s} = real(dDFTOut{s})/sf;
             end
         end
         if strcmp(tparts{3},'imaginaries')
-            y1{s} = imag(DFTIn{s});
-            y2{s} = imag(DFTOut{s});
+            y1{s} = imag(DFTIn{s})/sf;
+            y2{s} = imag(DFTOut{s})/sf;
             if strcmp(tparts{2},'averaged')
-                dy1{s} = real(dDFTIn{s}); % TODO: Need to average!
-                dy2{s} = real(dDFTOut{s});
+                dy1{s} = imag(dDFTIn{s})/sf;
+                dy2{s} = imag(dDFTOut{s})/sf;
             end
         end
         if strcmp(tparts{3},'magnitudes')
-            sf = (size(S{s}.In,1)-1)/2;
+
             y1{s} = abs(DFTIn{s})/sf;
             y2{s} = abs(DFTOut{s})/sf;
             if strcmp(tparts{2},'averaged')
                 dy1{s} = (1/sf)*error_estimates_derived(fe{s},DFTIn{s},DFTIn{s}-dDFTIn{s},DFTIn{s}+dDFTIn{s},'magnitude');
                 dy2{s} = (1/sf)*error_estimates_derived(fe{s},DFTOut{s},DFTOut{s}-dDFTOut{s},DFTOut{s}+dDFTOut{s},'magnitude');
+                Ne = length(S{s}.DFT.f);
+                if Ne < Nmin
+                    dy1{s} = nan*dy1{s};
+                    dy2{s} = nan*dy2{s};
+                end
             end
             if fe{s}(end) == 0.5
                 y1{s}(end) = y1{s}(end)/2;
@@ -232,6 +259,13 @@ if ~strcmp(tparts{1},'error')
     [lg1, lg2] = legend_(S,tparts{3},popts);
     [yl1, yl2] = ylabel_(S,tparts{3},popts,comp);
 
+    % Get markersize from popts.line, which is in form
+    % 1×6 cell array
+    %  {'marker'}    {'.'}    {'markersize'}    {[15]}    {'linestyle'}    {'none'}
+    % Find index of 'markersize' in popts.line, then get the next element.
+    ms_idx = find(strcmp(popts.line,'markersize'));
+    nan_ms = 0.25*popts.line{ms_idx+1};
+
     ax(1) = subplot('Position',popts.PositionTop);
         h1 = plot_(x,y1,popts);
         colororder_(ax(1),y1);
@@ -244,7 +278,14 @@ if ~strcmp(tparts{1},'error')
         end
         if exist('dy1','var')
             % Must be called after scales are set if logy used.
-            errorbars_(h1,x,y1,dy1,dy1,1);
+            errorbars_(h1,x,y1,dy1,dy1,1,nan_ms);
+            % Put white circle on top of y1 when dy1 is NaN.
+            for j = 1:size(y1,2)
+                idx = isnan(dy1(:,j));
+                if any(idx)
+                    plot(x(idx),y1(idx,j),'w.','MarkerSize',nan_ms);
+                end
+            end
         end
         ylabel(yl1);
         adjust_ylim('upper');
@@ -262,7 +303,7 @@ if ~strcmp(tparts{1},'error')
         end
         if exist('dy2','var')
             % Must be called after scales are set if log used.
-            errorbars_(h1,x,y2,dy2,dy2,1);
+            errorbars_(h1,x,y2,dy2,dy2,1,nan_ms);
         end
         ylabel(yl2);
         adjust_ylim('upper');

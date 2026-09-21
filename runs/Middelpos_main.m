@@ -3,6 +3,7 @@ function Middelpos_main(rundir, filestr, start, stop, Nboot)
 % Read input/output data
 [B,E,t] = Middelpos_clean(start,stop,rundir,1);
 E(:,1) = -E(:,1);
+keyboard
 
 % Make length an integer number of segments.
 pps = 86400;
@@ -43,17 +44,17 @@ for const_term = 0:1
         opts{tfn}.description = desc;
         opts{tfn}.fd.bootstrap.N = Nboot;
         opts{tfn}.filestr = sprintf('%s-tf%d',filestr,tfn);
-    
+
     if const_term == 0
         [~,t_latex] = evalfreq_log(ppd, opts{tfn}.fd.evalfreq.functionargs{:});
         fid = fopen(fullfile(rundir,append(opts{tfn}.filestr,'-evalfreq_table.tex')),'w');
         fprintf(fid, t_latex);
         fclose(fid);
     end
-    
+
     TFs{tfn} = tflab(B(:,1:2),E,opts{tfn});
     TFs{tfn}.Metadata = meta;
-    
+
     savetf(TFs{tfn}, fullfile(rundir,opts{tfn}.filestr));
     TFs{tfn} = [];
 end

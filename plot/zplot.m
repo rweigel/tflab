@@ -30,6 +30,9 @@ popts   = tflabplot_options(S, popts, 'zplot');
 
 fontsize = 21.5;
 
+ms_idx = find(strcmp(popts.line,'markersize'));
+nan_ms = 0.25*popts.line{ms_idx+1};
+
 if nargin < 3
     for s = 1:length(S)
         nr(s) = size(popts.zstrs{s},1);
@@ -113,10 +116,10 @@ if length(S) == 1
         
         % Must be called after scale type is set.
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
-            errorbars_(h1,0.97*x1,y1,dyl1,dyu1,1);
-            errorbars_(h1,x1*1.03,y1,dyl1b,dyu1b,1);
+            errorbars_(h1,0.97*x1,y1,dyl1,dyu1,1,nan_ms);
+            errorbars_(h1,x1*1.03,y1,dyl1b,dyu1b,1,nan_ms);
         else
-            errorbars_(h1,x1,y1,dyl1,dyu1,2);
+            errorbars_(h1,x1,y1,dyl1,dyu1,2,nan_ms);
         end
 
         adjust_yticks(1e-4);
@@ -157,10 +160,10 @@ if length(S) == 1
 
         % Must be called after scale type is set.
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
-            errorbars_(h2,0.97*x2,y2,dyl2,dyu2,1);
-            errorbars_(h2,1.03*x2,y2,dyl2b,dyu2b,1);
+            errorbars_(h2,0.97*x2,y2,dyl2,dyu2,1,nan_ms);
+            errorbars_(h2,1.03*x2,y2,dyl2b,dyu2b,1,nan_ms);
         else
-            errorbars_(h2,x2,y2,dyl2,dyu2,2);
+            errorbars_(h2,x2,y2,dyl2,dyu2,2,nan_ms);
         end
 
         %adjust_yticks(1e-4);
@@ -242,7 +245,7 @@ if length(S) > 1
         ylabel(yl);
 
         % ebars_() must be called after scale type is set.
-        ebars_(h, x(kept), y(kept), dyl(kept), dyu(kept), 1, ylraw)
+        ebars_(h, x(kept), y(kept), dyl(kept), dyu(kept), 1, ylraw, nan_ms);
 
         adjust_yticks(1e-4);
         adjust_exponent('y');
@@ -293,7 +296,7 @@ if length(S) > 1
         end
 
         setx(popts,1,frequnit);
-        ebars_(h, x(kept), y(kept), dyl(kept), dyu(kept), 1, ylraw)
+        ebars_(h, x(kept), y(kept), dyl(kept), dyu(kept), 1, ylraw, nan_ms);
 
         adjust_yticks(1e-4);
         adjust_exponent();
@@ -305,13 +308,13 @@ end % if iscell(S)
 
 end % function zplot()
 
-function ebars_(h, x, y, dyl, dyu, lw, yl)
+function ebars_(h, x, y, dyl, dyu, lw, yl, nan_ms)
     if isscalar(h)
-        errorbars_(h(1),x{1},y{1},dyl{1},dyu{1},lw);
+        errorbars_(h(1),x{1},y{1},dyl{1},dyu{1},lw,nan_ms);
     elseif length(h) < 5
         %errorbars_(h,{0.97*x{1},1.03*x{2}},{y{1},y{2}},{dyl{1},dyl{2}},{dyu{1},dyu{2}},lw);
         %errorbars_(h(2),1.03*x{2},y{2},dyl{2},dyu{2},lw);
-        errorbars_(h, x, y, dyl, dyu, lw);
+        errorbars_(h,x,y,dyl,dyu,lw,nan_ms);
     else
         logmsg('Not plotting error bars for %s because more than four TFs being plotted.\n', yl);
     end
