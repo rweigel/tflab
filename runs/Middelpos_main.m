@@ -3,7 +3,6 @@ function Middelpos_main(rundir, filestr, start, stop, Nboot)
 % Read input/output data
 [B,E,t] = Middelpos_clean(start,stop,rundir,1);
 E(:,1) = -E(:,1);
-keyboard
 
 % Make length an integer number of segments.
 pps = 86400;

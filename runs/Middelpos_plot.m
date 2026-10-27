@@ -29,11 +29,13 @@ else
     dock on;figure(1);close all;
 end
 
+%% DFT plots
 figure();
     dftopts = copts;
     dftopts.period_range = [3, 3e5];
-    dftopts.type = 'original-averaged';
+    dftopts.type = 'original-averaged-magnitudes';
     dftplot(TFs{3},dftopts);
+
 return
 %% Time series plots
 tsopts = copts;

@@ -4,10 +4,10 @@ addpath(fullfile(fileparts(mfilename('fullpath'))),'..');
 tflab_setpaths();
 
 run_nums    = [5];
-Nboot       = 100;
-%Nboot       = 0;
+%Nboot       = 100;
+Nboot       = 0;
 
-rerun       = 1;
+rerun       = 0;
 plot_figs   = 0;
 print_figs  = 1;
 

@@ -7,9 +7,6 @@ end
 mat_raw = fullfile(rundir,'measurements-raw.mat');
 mat_cleaned = fullfile(rundir,'measurements-cleaned.mat');
 
-%write_cleaned_csv(mat_raw);
-usecache = 0;
-
 if ~exist(rundir,'dir')
     mkdir(rundir);
 end

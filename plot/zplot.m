@@ -113,7 +113,7 @@ if length(S) == 1
             set(gca,'YScale','log');
         end
 
-        
+
         % Must be called after scale type is set.
         if isfield_(S{1},'Metrics.ErrorEstimates.Bootstrap')
             errorbars_(h1,0.97*x1,y1,dyl1,dyu1,1,nan_ms);
@@ -172,6 +172,9 @@ if length(S) == 1
 
         xlims = get(gca(),'XLim');
         line(xlims,[0,0])
+
+    shade_se_(ax1,S,popts,comps);
+    shade_se_(ax2,S,popts,comps);
 
     if popts.print == 1
         ext = '';
@@ -301,12 +304,61 @@ if length(S) > 1
         adjust_yticks(1e-4);
         adjust_exponent();
 
+    shade_se_(ax1,S(kept),popts,{comp});
+    shade_se_(ax2,S(kept),popts,{comp});
+
     var_name = replace(popts.zstrs{s}{idx},'\delta ','delta');
     figsave_(popts,var_name);
 
 end % if iscell(S)
 
 end % function zplot()
+
+function shade_se_(axes_handle,S,popts,comps)
+
+    xlimits = get(axes_handle,'XLim');
+    ylimits = get(axes_handle,'YLim');
+    output_components = unique(cellfun(@(component) component(1),comps));
+    for series = 1:length(S)
+        if ~isfield_(S{series},'Metrics.SNCLl') || ~isfield_(S{series},'Metrics.SNCLu')
+            continue
+        end
+        metrics = S{series}.Metrics;
+        coordinates = metrics.fe(:)*S{series}.Metadata.freqsf;
+        if popts.vs_period
+            coordinates = 1./coordinates;
+        end
+        lower_bound = min(metrics.SNCLl,metrics.SNCLu);
+        valid = isfinite(coordinates) & coordinates > 0;
+        lower_bound = lower_bound(valid,output_components);
+        [coordinates,order] = sort(coordinates(valid));
+        selected = any(lower_bound(order,:) > 1,2);
+        if length(coordinates) < 2 || ~any(selected)
+            continue
+        end
+        if strcmp(get(axes_handle,'XScale'),'log')
+            midpoints = exp((log(coordinates(1:end-1)) + log(coordinates(2:end)))/2);
+        else
+            midpoints = (coordinates(1:end-1) + coordinates(2:end))/2;
+        end
+        edges = [coordinates(1);midpoints;coordinates(end)];
+        transitions = diff([false;selected;false]);
+        starts = find(transitions == 1);
+        stops = find(transitions == -1);
+        for interval = 1:length(starts)
+            left = max(edges(starts(interval)),xlimits(1));
+            right = min(edges(stops(interval)),xlimits(2));
+            if left >= right
+                continue
+            end
+            shading = patch(axes_handle,[left,right,right,left], ...
+                [ylimits(1),ylimits(1),ylimits(2),ylimits(2)],[0.5,0.5,0.5], ...
+                'EdgeColor','none','HandleVisibility','off','HitTest','off');
+            uistack(shading,'bottom');
+        end
+    end
+    set(axes_handle,'XLim',xlimits,'YLim',ylimits);
+end
 
 function ebars_(h, x, y, dyl, dyu, lw, yl, nan_ms)
     if isscalar(h)

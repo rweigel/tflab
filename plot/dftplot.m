@@ -75,7 +75,7 @@ for s = 1:length(S)
             S{s} = tflab_preprocess(S{s});
         end
         if any(strcmp(tparts{1},{'detrended','windowed','whitened','zeropadded','final'}))
-            % Capatilize first letter
+            % Capitalize first letter
             tparts1uc = [upper(tparts{1}(1)),tparts{1}(2:end)];
             if ~isfield(S{s}.DFT,'In_') ||  ~isfield(S{s}.DFT.In_,tparts1uc)
                 error('Time series was not %s.',tparts{1});
@@ -95,14 +95,24 @@ for s = 1:length(S)
             fe{s} = S{s}.DFT.fe;
         end
         if strcmp(tparts{2},'averaged')
-            if isfield(S{s},'Segment')
+            if ~isfield(S{s},'Segment') && strcmp(tparts{3},'magnitudes')
+                % Average DFT coefficients in windows around eval freqs
+                [wIn,wOut] = dftweights(f, segsIn, segsOut, opts);
+                logmsg("Computing average DFT coefficients and CIs on unsegmented data\n")
+                [DFTIn{s},dDFTIn{s}]  = dftaverage(segsIn, wIn);
+                [DFTOut{s},dDFTOut{s}] = dftaverage(segsOut, wOut);
+            else
+                % Compute Segment DFTs, which are not kept after used for regression.
                 a = tflab_preprocess(S{s});
                 segsIn = {};
                 segsOut = {};
-                for sx = 1:length(a.Segment.DFT.In)
+                delta = {};
+                for sx = 1:length(a.Segment.DFT.In) % Loop over fe
                     tmpIn = [];
                     tmpOut = [];
-                    for c = 1:size(a.Segment.DFT.In{sx},2)
+                    for c = 1:size(a.Segment.DFT.In{sx},2) % Loop over components
+                        % Combine all DFT coefficients for each component
+                        % (combine DFTs in each band across all segments).
                         tmpIn(:,c) = reshape(a.Segment.DFT.In{sx}(:,c,:), 1, []);
                         tmpOut(:,c) = reshape(a.Segment.DFT.Out{sx}(:,c,:), 1, []);
                     end
@@ -112,10 +122,6 @@ for s = 1:length(S)
                 fe{s} = a.Segment.fe;
                 [DFTIn{s},dDFTIn{s}]  = dftaverage(segsIn);
                 [DFTOut{s},dDFTOut{s}] = dftaverage(segsOut);
-            else
-                [wIn,wOut] = dftweights(f, segsIn, segsOut, opts);
-                [DFTIn{s},dDFTIn{s}]  = dftaverage(segsIn, wIn);
-                [DFTOut{s},dDFTOut{s}] = dftaverage(segsOut, wOut);
             end
         else
             tmp = cat(1,f{:});
@@ -129,6 +135,7 @@ for s = 1:length(S)
             DFTIn{s} = DFTIn{s}(:,comp);
             DFTOut{s} = DFTOut{s}(:,comp);
         end
+
         sf = (size(S{s}.In,1)-1)/2;
         if isfield(S{s},'Segment')
             sf = sf/size(S{s}.Segment.Z,3);
@@ -163,12 +170,17 @@ for s = 1:length(S)
             y1{s} = abs(DFTIn{s})/sf;
             y2{s} = abs(DFTOut{s})/sf;
             if strcmp(tparts{2},'averaged')
-                dy1{s} = (1/sf)*error_estimates_derived(fe{s},DFTIn{s},DFTIn{s}-dDFTIn{s},DFTIn{s}+dDFTIn{s},'magnitude');
-                dy2{s} = (1/sf)*error_estimates_derived(fe{s},DFTOut{s},DFTOut{s}-dDFTOut{s},DFTOut{s}+dDFTOut{s},'magnitude');
-                Ne = length(S{s}.DFT.f);
-                if Ne < Nmin
-                    dy1{s} = nan*dy1{s};
-                    dy2{s} = nan*dy2{s};
+                if ~isfield(S{s},'Segment') && strcmp(tparts{3},'magnitudes')
+                    dy1{s} = (1/sf)*error_estimates_derived(fe{s},DFTIn{s},DFTIn{s}-dDFTIn{s},DFTIn{s}+dDFTIn{s},'magnitude');
+                    dy2{s} = (1/sf)*error_estimates_derived(fe{s},DFTOut{s},DFTOut{s}-dDFTOut{s},DFTOut{s}+dDFTOut{s},'magnitude');
+                else
+                    dy1{s} = (1/sf)*error_estimates_derived(fe{s},DFTIn{s},DFTIn{s}-dDFTIn{s},DFTIn{s}+dDFTIn{s},'magnitude');
+                    dy2{s} = (1/sf)*error_estimates_derived(fe{s},DFTOut{s},DFTOut{s}-dDFTOut{s},DFTOut{s}+dDFTOut{s},'magnitude');
+                    Ne = length(S{s}.DFT.f);
+                    if Ne < Nmin
+                        dy1{s} = nan*dy1{s};
+                        dy2{s} = nan*dy2{s};
+                    end
                 end
             end
             if fe{s}(end) == 0.5
@@ -399,7 +411,7 @@ function [yl1, yl2] = ylabel_(S,what,popts,comp)
 
     meta = S{1}.Metadata;
     angle = '$\angle$ $[^\circ]$';
-    
+
     if length(S) > 1
         if strcmp(what,'magnitudes')
             yl1 = [labelstr_(popts.instr{comp}), ' [',meta.inunit, ']'];

@@ -29,7 +29,7 @@ b
 bint
 stats
 
-% Based on inspection of code from regress.m, 
+% Based on inspection of code from MATLAB's regress.m, 
 % Draper and Smith, 1981, Applied Regression Analysis, p94 (which regress.m references)
 % and https://www.mathworks.com/matlabcentral/fileexchange/202-mregress
 % (but see 2009 comment by D'Errico in Reviews).

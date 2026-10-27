@@ -11,7 +11,7 @@ function lims = bootcl(x,fn,N,p,use_bootstrp)
 %
 %   lims = BOOTCL(X,FN)
 %   lims = BOOTCL(X,FN,N)
-%   lims = BOOTCL(X,FN,N,F)
+%   lims = BOOTCL(X,FN,N,[PCT_LOWER PCT_UPPER])
 %
 
 x = squeeze(x);
@@ -35,6 +35,7 @@ if nargin < 4
     p = normcdf(-2);
     p = 100*[p, 1-p];
 end
+
 if nargin < 5
     use_bootstrp = 1;
 end
@@ -53,8 +54,14 @@ else
     end
 end
 
-l = prctile(xb,p(1));
-u = prctile(xb,p(2));
+% If complex, compute limits for real and imaginary parts separately
+if ~isreal(xb)
+    l = prctile(real(xb),p(1)) + 1i*prctile(imag(xb),p(1));
+    u = prctile(real(xb),p(2)) + 1i*prctile(imag(xb),p(2));
+else
+    l = prctile(xb,p(1));
+    u = prctile(xb,p(2));
+end
 
 % TODO: Use pivot
 % https://www2.stat.duke.edu/~banks/111-lectures.dir/lect13.pdf
